@@ -8,7 +8,6 @@ from app.models.event import Event, EventParticipants
 bp = Blueprint("events", __name__)
 
 def _parse_dt(s: str):
-    # Accepts ISO8601; allow trailing Z
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
 @bp.get("")
@@ -62,7 +61,7 @@ def create_event():
 
 @bp.post("/<uuid:event_id>/join")
 def join_event(event_id):
-    user_id = request.headers.get("X-Demo-User", None)  # MVP header-based user
+    user_id = request.headers.get("X-Demo-User", None)
     if not user_id:
         return jsonify({"error": "unauthorized"}), 401
     with SessionLocal() as s:

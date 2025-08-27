@@ -9,7 +9,6 @@ class Base(DeclarativeBase):
     pass
 
 def ensure_postgis_extension():
-    # Only valid for Postgres; safe to attempt
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
         conn.commit()

@@ -13,7 +13,6 @@ def create_app() -> Flask:
     CORS(app)
     app.config["JWT_SECRET"] = settings.JWT_SECRET
 
-    # Optional bootstrap: ensure postgis + tables exist (MVP convenience)
     if os.getenv("BOOTSTRAP_DB", "1") == "1":
         try:
             ensure_postgis_extension()
@@ -21,7 +20,6 @@ def create_app() -> Flask:
         except Exception as e:
             app.logger.warning(f"DB bootstrap skipped/failed: {e}")
 
-    # Register blueprints
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(events_bp, url_prefix="/events")
