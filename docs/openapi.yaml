@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Sports Meetup API
+  version: "0.1.0"
+
+servers:
+  - url: https://api.example.com
+
+paths:
+  /health:
+    get:
+      responses:
+        "200":
+          description: OK
+
+  /auth/signup:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+
+  /auth/login:
+    post:
+      responses:
+        "200":
+          description: OK
+
+  /auth/refresh:
+    post:
+      responses:
+        "200":
+          description: OK
+
+  /events:
+    get:
+      parameters:
+        - name: lat
+          in: query
+          schema:
+            type: number
+        - name: lng
+          in: query
+          schema:
+            type: number
+        - name: radius
+          in: query
+          schema:
+            type: number
+            default: 5
+        - name: sport
+          in: query
+          schema:
+            type: string
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: OK
+    post:
+      responses:
+        "201":
+          description: Created
+
+  /events/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    get:
+      responses:
+        "200":
+          description: OK
+    delete:
+      responses:
+        "204":
+          description: No Content
+
+  /events/{id}/join:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    post:
+      responses:
+        "200":
+          description: Joined
+
+  /events/{id}/leave:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    delete:
+      responses:
+        "200":
+          description: Left
