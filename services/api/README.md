@@ -37,3 +37,14 @@ curl -X POST http://localhost:8080/events -H 'Content-Type: application/json'   
 - `JWT_SECRET`: token signing secret
 - `BOOTSTRAP_DB`: `1` to auto ensure PostGIS + create tables on boot
 - `FLASK_RUN_PORT`: default `8080`
+
+
+# API v3 Changes
+- JWT auth decorator (`app/core/auth.py`)
+- New: GET /auth/me
+- Events:
+  - POST /events (Bearer required, sets host_id)
+  - POST /events/{id}/join (Bearer required, capacity check, dedupe)
+  - DELETE /events/{id}/leave (Bearer required)
+  - GET /events/{id} (single)
+  - GET /events supports limit/offset and returns attending count

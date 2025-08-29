@@ -1,116 +1,222 @@
 openapi: 3.0.3
 info:
   title: Sports Meetup API
-  version: "0.1.0"
-
+  version: 0.1.0
 servers:
-  - url: https://api.example.com
-
+  - url: http://localhost:8080
 paths:
   /health:
     get:
+      summary: Health check
       responses:
-        "200":
+        '200':
           description: OK
-
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
   /auth/signup:
     post:
+      summary: Sign up
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupIn'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tokens'
+        '409':
+          description: Email taken
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginIn'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tokens'
+        '401':
+          description: Invalid credentials
+  /auth/refresh:
+    post:
+      summary: Refresh token
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                refresh_token:
+                  type: string
       responses:
-        "201":
-          description: Created
-
-  /auth/login:
-    post:
-      responses:
-        "200":
+        '200':
           description: OK
-
-  /auth/refresh:
-    post:
-      responses:
-        "200":
-          description: OK
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tokens'
+        '401':
+          description: Invalid token
   /events:
     get:
+      summary: List events near a point
       parameters:
-        - name: lat
-          in: query
+        - in: query
+          name: lat
+          required: true
           schema:
             type: number
-        - name: lng
-          in: query
+        - in: query
+          name: lng
+          required: true
           schema:
             type: number
-        - name: radius
-          in: query
+        - in: query
+          name: radius
           schema:
             type: number
             default: 5
-        - name: sport
-          in: query
+            description: radius in km
+        - in: query
+          name: sport
           schema:
-            type: string
-        - name: start
-          in: query
+            $ref: '#/components/schemas/Sport'
+        - in: query
+          name: start
           schema:
             type: string
             format: date-time
-        - name: end
-          in: query
+        - in: query
+          name: end
           schema:
             type: string
             format: date-time
       responses:
-        "200":
+        '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventOut'
+        '400':
+          description: lat_lng_required
     post:
+      summary: Create event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreateIn'
       responses:
-        "201":
+        '201':
           description: Created
-
-  /events/{id}:
-    parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-    get:
-      responses:
-        "200":
-          description: OK
-    delete:
-      responses:
-        "204":
-          description: No Content
-
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
   /events/{id}/join:
-    parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
     post:
+      summary: Join event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       responses:
-        "200":
+        '200':
           description: Joined
-
   /events/{id}/leave:
-    parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
     delete:
+      summary: Leave event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       responses:
-        "200":
+        '200':
           description: Left
+components:
+  schemas:
+    Tokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+    SignupIn:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        display_name:
+          type: string
+          nullable: true
+    LoginIn:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    Sport:
+      type: string
+      enum: [basketball, badminton, running, gym, tennis]
+    EventCreateIn:
+      type: object
+      required: [title, sport, starts_at, ends_at, capacity, lat, lng]
+      properties:
+        title: { type: string }
+        sport: { $ref: '#/components/schemas/Sport' }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1 }
+        lat: { type: number }
+        lng: { type: number }
+        address: { type: string, nullable: true }
+    EventOut:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        sport: { $ref: '#/components/schemas/Sport' }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        capacity: { type: integer }
+        address: { type: string, nullable: true }

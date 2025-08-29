@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from passlib.hash import bcrypt
@@ -7,6 +7,7 @@ from app.core.db import SessionLocal
 from app.core.config import settings
 from app.models.user import User
 from app.schemas.auth import SignupIn, LoginIn
+from app.core.auth import require_auth
 
 bp = Blueprint("auth", __name__)
 
@@ -48,3 +49,12 @@ def refresh():
         return jsonify({"error": "invalid_token"}), 401
     a, r = _issue_tokens(payload["sub"])
     return jsonify({"access_token": a, "refresh_token": r})
+
+@bp.get("/me")
+@require_auth
+def me():
+    with SessionLocal() as s:
+        u = s.get(User, g.user_id)
+        if not u:
+            return jsonify({"error": "not_found"}), 404
+        return jsonify({"id": str(u.id), "email": u.email, "display_name": u.display_name})
