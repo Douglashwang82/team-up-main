@@ -1,29 +1,35 @@
-version: "3.9"
 services:
   db:
     image: postgis/postgis:16-3.4
-    container_name: sports-postgis
+    container_name: teamup-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: sportsmeet
+      POSTGRES_DB: team_up
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d team_up"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   api:
     build: .
-    container_name: sports-api
+    container_name: teamup-api
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/sportsmeet
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/team_up
       JWT_SECRET: change_me
       BOOTSTRAP_DB: "1"
       FLASK_RUN_PORT: "8080"
     ports:
       - "8080:8080"
+volumes:
+  pgdata:
