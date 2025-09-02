@@ -23,5 +23,8 @@
     "apps/*",
     "packages/*",
     "services/*"
-  ]
+  ],
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.23.1"
+  }
 }

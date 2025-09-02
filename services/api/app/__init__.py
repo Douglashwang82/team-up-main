@@ -10,7 +10,7 @@ from .routes.events import bp as events_bp
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
     app.config["JWT_SECRET"] = settings.JWT_SECRET
 
     if os.getenv("BOOTSTRAP_DB", "1") == "1":
