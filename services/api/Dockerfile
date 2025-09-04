@@ -12,3 +12,7 @@ EXPOSE 8080
 ENV PYTHONUNBUFFERED=1
 
 CMD ["gunicorn","-w","2","-b","0.0.0.0:8080","wsgi:app"]
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

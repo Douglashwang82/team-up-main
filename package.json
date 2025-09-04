@@ -4,13 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "openapi:lint": "spectral lint services/api/openapi.yaml",
+    "client:clean": "rimraf packages/api-client/src packages/api-client/dist",
+    "client:gen": "openapi-generator-cli generate -g typescript-fetch -i docs/openapi.yaml -o packages/api-client/src/gen --global-property=apis,models,supportingFiles,apiTests=false,modelTests=false,apiDocs=false,modelDocs=false --additional-properties=typescriptThreePlus=true,modelPropertyNaming=original,enumPropertyNaming=original,useSingleRequestParameter=true,withInterfaces=true",
+    "client:build": "pnpm -C packages/api-client build",
+    "codegen": "pnpm openapi:lint && pnpm client:clean && pnpm client:gen && pnpm client:build",
+    "web:dev": "pnpm -C apps/web dev"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
+    "@stoplight/spectral-cli": "^6.15.0",
     "@types/node": "^20.19.11",
     "eslint": "^9.34.0",
     "prettier": "^3.6.2",

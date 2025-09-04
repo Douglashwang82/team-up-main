@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from app.core.db import SessionLocal
 from app.models.event import Event, EventParticipants
+from app.models.user import User
 from app.core.auth import require_auth
 
 bp = Blueprint("events", __name__)
@@ -121,3 +122,74 @@ def leave_event(event_id):
         ))
         s.commit()
     return jsonify({"status": "left"})
+
+@bp.get("/<uuid:event_id>/participants")
+def event_participants(event_id):
+    with SessionLocal() as s:
+        rows = s.execute(
+            select(User.id, User.display_name, User.email)
+            .select_from(EventParticipants.join(User, EventParticipants.c.user_id == User.id))
+            .where(EventParticipants.c.event_id == event_id)
+        ).all()
+        return jsonify([
+            {"id": str(r[0]), "display_name": r[1], "email": r[2]}
+            for r in rows
+        ])
+
+@bp.get("/all")
+@require_auth
+def list_all_events():
+    """
+    Fetch all events (no location filter).
+    Query params:
+      - sport: optional, e.g. basketball
+      - start, end: ISO8601 strings (inclusive start, inclusive end)
+      - limit: default 50, max 500
+      - offset: default 0
+      - order: 'asc' (default) or 'desc' by starts_at
+    """
+    sport = request.args.get("sport")
+    start = request.args.get("start")
+    end   = request.args.get("end")
+    limit = min(int(request.args.get("limit", 50)), 500)
+    offset = max(int(request.args.get("offset", 0)), 0)
+    order = (request.args.get("order") or "asc").lower()
+    order_by = Event.starts_at.asc() if order != "desc" else Event.starts_at.desc()
+
+    with SessionLocal() as s:
+        q = select(Event)
+        if sport:
+            q = q.where(Event.sport == sport)
+        if start:
+            q = q.where(Event.starts_at >= _parse_dt(start))
+        if end:
+            q = q.where(Event.ends_at <= _parse_dt(end))
+
+        rows = s.execute(
+            q.order_by(order_by).offset(offset).limit(limit)
+        ).scalars().all()
+
+        # one query to get attending counts for these ids
+        ids = [e.id for e in rows]
+        counts = {}
+        if ids:
+            cnt_rows = s.execute(
+                select(EventParticipants.c.event_id, func.count())
+                .where(EventParticipants.c.event_id.in_(ids))
+                .group_by(EventParticipants.c.event_id)
+            ).all()
+            counts = {r[0]: r[1] for r in cnt_rows}
+
+        def _to_dict(e: Event):
+            return {
+                "id": str(e.id),
+                "title": e.title,
+                "sport": e.sport,
+                "starts_at": e.starts_at.isoformat(),
+                "ends_at": e.ends_at.isoformat(),
+                "capacity": e.capacity,
+                "attending": counts.get(e.id, 0),
+                "address": e.address,
+            }
+
+        return jsonify([_to_dict(e) for e in rows])

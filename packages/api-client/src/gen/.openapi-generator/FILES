@@ -1,0 +1,15 @@
+.openapi-generator-ignore
+apis/DefaultApi.ts
+apis/index.ts
+index.ts
+models/AuthRefreshPostRequest.ts
+models/EventCreateIn.ts
+models/EventOut.ts
+models/EventsPost201Response.ts
+models/HealthGet200Response.ts
+models/LoginIn.ts
+models/SignupIn.ts
+models/Sport.ts
+models/Tokens.ts
+models/index.ts
+runtime.ts
