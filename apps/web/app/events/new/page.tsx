@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { apis } from '@/lib/api';
 
 export default function NewEvent(){
   const [title,setTitle]=useState('Basketball 5v5');
@@ -15,7 +15,7 @@ export default function NewEvent(){
   async function create(e:React.FormEvent){
     e.preventDefault(); setStatus(null);
     try{
-      const res = await api.events.create({title,sport: sport as any, starts_at:new Date(startsAt).toISOString(), ends_at:new Date(endsAt).toISOString(), capacity, lat, lng});
+      const res = await apis.events.eventsPost({eventCreateIn: {title,sport: sport as any, starts_at:new Date(startsAt), ends_at:new Date(endsAt), capacity, lat, lng}});
       setStatus('Created: '+res.id);
     }catch(e:any){ setStatus(e?.message||'Failed'); }
   }

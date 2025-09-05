@@ -32,37 +32,37 @@ export interface EventOut {
      * @type {string}
      * @memberof EventOut
      */
-    id?: string;
+    id: string;
     /**
      * 
      * @type {string}
      * @memberof EventOut
      */
-    title?: string;
+    title: string;
     /**
      * 
      * @type {Sport}
      * @memberof EventOut
      */
-    sport?: Sport;
+    sport: Sport;
     /**
      * 
      * @type {Date}
      * @memberof EventOut
      */
-    starts_at?: Date;
+    starts_at: Date;
     /**
      * 
      * @type {Date}
      * @memberof EventOut
      */
-    ends_at?: Date;
+    ends_at: Date;
     /**
      * 
      * @type {number}
      * @memberof EventOut
      */
-    capacity?: number;
+    capacity: number;
     /**
      * 
      * @type {string}
@@ -77,6 +77,12 @@ export interface EventOut {
  * Check if a given object implements the EventOut interface.
  */
 export function instanceOfEventOut(value: object): value is EventOut {
+    if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('title' in value) || value['title'] === undefined) return false;
+    if (!('sport' in value) || value['sport'] === undefined) return false;
+    if (!('starts_at' in value) || value['starts_at'] === undefined) return false;
+    if (!('ends_at' in value) || value['ends_at'] === undefined) return false;
+    if (!('capacity' in value) || value['capacity'] === undefined) return false;
     return true;
 }
 
@@ -90,12 +96,12 @@ export function EventOutFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'title': json['title'] == null ? undefined : json['title'],
-        'sport': json['sport'] == null ? undefined : SportFromJSON(json['sport']),
-        'starts_at': json['starts_at'] == null ? undefined : (new Date(json['starts_at'])),
-        'ends_at': json['ends_at'] == null ? undefined : (new Date(json['ends_at'])),
-        'capacity': json['capacity'] == null ? undefined : json['capacity'],
+        'id': json['id'],
+        'title': json['title'],
+        'sport': SportFromJSON(json['sport']),
+        'starts_at': (new Date(json['starts_at'])),
+        'ends_at': (new Date(json['ends_at'])),
+        'capacity': json['capacity'],
         'address': json['address'] == null ? undefined : json['address'],
     };
 }
@@ -114,8 +120,8 @@ export function EventOutToJSONTyped(value?: EventOut | null, ignoreDiscriminator
         'id': value['id'],
         'title': value['title'],
         'sport': SportToJSON(value['sport']),
-        'starts_at': value['starts_at'] == null ? undefined : ((value['starts_at']).toISOString()),
-        'ends_at': value['ends_at'] == null ? undefined : ((value['ends_at']).toISOString()),
+        'starts_at': ((value['starts_at']).toISOString()),
+        'ends_at': ((value['ends_at']).toISOString()),
         'capacity': value['capacity'],
         'address': value['address'],
     };

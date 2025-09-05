@@ -24,19 +24,21 @@ export interface Tokens {
      * @type {string}
      * @memberof Tokens
      */
-    access_token?: string;
+    access_token: string;
     /**
      * 
      * @type {string}
      * @memberof Tokens
      */
-    refresh_token?: string;
+    refresh_token: string;
 }
 
 /**
  * Check if a given object implements the Tokens interface.
  */
 export function instanceOfTokens(value: object): value is Tokens {
+    if (!('access_token' in value) || value['access_token'] === undefined) return false;
+    if (!('refresh_token' in value) || value['refresh_token'] === undefined) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function TokensFromJSONTyped(json: any, ignoreDiscriminator: boolean): To
     }
     return {
         
-        'access_token': json['access_token'] == null ? undefined : json['access_token'],
-        'refresh_token': json['refresh_token'] == null ? undefined : json['refresh_token'],
+        'access_token': json['access_token'],
+        'refresh_token': json['refresh_token'],
     };
 }
 

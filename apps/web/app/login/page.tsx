@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { apis} from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage(){
@@ -12,7 +12,7 @@ export default function LoginPage(){
   async function onSubmit(e:React.FormEvent){
     e.preventDefault(); setLoading(true); setError(null);
     try{
-      const {access_token,refresh_token}=await api.auth.login({email,password});
+      const {access_token,refresh_token}=await apis.auth.authLoginPost({loginIn: { email, password }});
       localStorage.setItem('access_token',access_token);
       localStorage.setItem('refresh_token',refresh_token);
       router.push('/events');

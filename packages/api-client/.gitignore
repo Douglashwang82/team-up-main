@@ -1,0 +1,22 @@
+# Ignore build output
+dist/
+
+# Ignore dependencies
+node_modules/
+
+# Ignore OpenAPI generator artifacts
+.openapi-generator/
+
+# Ignore TypeScript cache
+*.tsbuildinfo
+
+# Ignore logs
+*.log
+
+# Ignore environment files
+.env*
+
+# Ignore IDE/editor files
+.vscode/
+.DS_Store
+*.swp

@@ -1,0 +1,29 @@
+{
+  "name": "@team-up-main/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "rimraf dist src",
+    "gen": "openapi-generator-cli generate -g typescript-fetch -i ../../services/api/openapi.yaml -o src --additional-properties=supportsES6=true,useSingleRequestParameter=true,modelPropertyNaming=original,enumPropertyNaming=original,typescriptThreePlus=true",
+    "build": "tsc -p tsconfig.json",
+    "codegen": "pnpm clean && pnpm gen && pnpm build",
+    "lint": "eslint . --ext .ts",
+    "fix": "eslint . --ext .ts --fix && prettier --write ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "rimraf": "^5.0.5",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "@openapitools/openapi-generator-cli": "^2.23.1"
+  }
+}

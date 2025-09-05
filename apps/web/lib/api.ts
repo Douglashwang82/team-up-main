@@ -13,7 +13,7 @@ import {
   // 下面的類名依你的 OpenAPI tag 生成，常見如：
   // EventsApi, AuthApi, HealthApi ...
   // 如果你的類名不同，改成實際輸出的名稱即可。
-  DefaultApi,
+  AuthApi, EventsApi, HealthApi
 } from '@team-up-main/api-client';
 
 const basePath =
@@ -84,10 +84,10 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
 // 共用設定（所有產生的 API 都用它）
 const config = new Configuration({
   basePath,
-  // 若你的 OpenAPI 有 bearerAuth/securitySchemes，產生器會自動把這個 token 套成 Authorization
-  accessToken: async () => {
+  // Must be: string | Promise<string> | ((name?, scopes?) => string | Promise<string>)
+  accessToken: (_name?: string, _scopes?: string[]) => {
     const t = getAccessToken();
-    return t || undefined;
+    return t ?? '';             // always a string
   },
   fetchApi: customFetch,
 });

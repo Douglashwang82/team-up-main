@@ -7,6 +7,7 @@ servers:
 paths:
   /health:
     get:
+      tags: [Health]
       summary: Health check
       responses:
         '200':
@@ -15,12 +16,15 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [status]
                 properties:
                   status:
                     type: string
                     example: ok
+
   /auth/signup:
     post:
+      tags: [Auth]
       summary: Sign up
       requestBody:
         required: true
@@ -37,8 +41,10 @@ paths:
                 $ref: '#/components/schemas/Tokens'
         '409':
           description: Email taken
+
   /auth/login:
     post:
+      tags: [Auth]
       summary: Login
       requestBody:
         required: true
@@ -55,8 +61,10 @@ paths:
                 $ref: '#/components/schemas/Tokens'
         '401':
           description: Invalid credentials
+
   /auth/refresh:
     post:
+      tags: [Auth]
       summary: Refresh token
       requestBody:
         required: true
@@ -64,6 +72,7 @@ paths:
           application/json:
             schema:
               type: object
+              required: [refresh_token]
               properties:
                 refresh_token:
                   type: string
@@ -76,20 +85,20 @@ paths:
                 $ref: '#/components/schemas/Tokens'
         '401':
           description: Invalid token
+
   /events:
     get:
+      tags: [Events]
       summary: List events near a point
       parameters:
         - in: query
           name: lat
           required: true
-          schema:
-            type: number
+          schema: { type: number }
         - in: query
           name: lng
           required: true
-          schema:
-            type: number
+          schema: { type: number }
         - in: query
           name: radius
           schema:
@@ -102,14 +111,10 @@ paths:
             $ref: '#/components/schemas/Sport'
         - in: query
           name: start
-          schema:
-            type: string
-            format: date-time
+          schema: { type: string, format: date-time }
         - in: query
           name: end
-          schema:
-            type: string
-            format: date-time
+          schema: { type: string, format: date-time }
       responses:
         '200':
           description: OK
@@ -122,6 +127,7 @@ paths:
         '400':
           description: lat_lng_required
     post:
+      tags: [Events]
       summary: Create event
       requestBody:
         required: true
@@ -136,68 +142,66 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [id]
                 properties:
                   id:
                     type: string
                     format: uuid
+
   /events/{id}/join:
     post:
+      tags: [Events]
       summary: Join event
       parameters:
         - in: path
           name: id
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         '200':
           description: Joined
+
   /events/{id}/leave:
     delete:
+      tags: [Events]
       summary: Leave event
       parameters:
         - in: path
           name: id
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         '200':
           description: Left
+
 components:
   schemas:
     Tokens:
       type: object
+      required: [access_token, refresh_token]
       properties:
-        access_token:
-          type: string
-        refresh_token:
-          type: string
+        access_token: { type: string }
+        refresh_token: { type: string }
+
     SignupIn:
       type: object
       required: [email, password]
       properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          minLength: 6
-        display_name:
-          type: string
-          nullable: true
+        email: { type: string, format: email }
+        password: { type: string, minLength: 6 }
+        display_name: { type: string, nullable: true }
+
     LoginIn:
       type: object
       required: [email, password]
       properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
+        email: { type: string, format: email }
+        password: { type: string }
+
     Sport:
       type: string
       enum: [basketball, badminton, running, gym, tennis]
+
     EventCreateIn:
       type: object
       required: [title, sport, starts_at, ends_at, capacity, lat, lng]
@@ -210,8 +214,10 @@ components:
         lat: { type: number }
         lng: { type: number }
         address: { type: string, nullable: true }
+
     EventOut:
       type: object
+      required: [id, title, sport, starts_at, ends_at, capacity]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }

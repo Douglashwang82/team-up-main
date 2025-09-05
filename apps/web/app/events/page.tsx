@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { apis } from '@/lib/api';
 import type { EventOut as ApiEventOut, Sport } from '@team-up-main/api-client';
 
 type EventOut = ApiEventOut;
@@ -31,7 +31,7 @@ export default function EventsPage() {
     setLoading(true);
     setError(null);
     try {
-      const list = await api.events.list({ lat: Number(lat), lng: Number(lng), radius: Number(radius) || 5, sport: sport || undefined, limit: 20 });
+      const list = await apis.events.eventsGet({ lat: Number(lat), lng: Number(lng), radius: Number(radius) || 5, sport: sport || undefined });
       setEvents(list);
     } catch (err: any) {
       setError(err?.message || 'Failed to load events');
@@ -85,8 +85,8 @@ export default function EventsPage() {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
               <div>
                 <div style={{fontWeight:700}}>{ev.title}</div>
-                <div className="small">{ev.sport} • {new Date(ev.starts_at).toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
-                {typeof ev.attending === 'number' && <div className="small">Attending {ev.attending}/{ev.capacity}</div>}
+                <div className="small">{ev.sport} • {ev?.starts_at.toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
+                {typeof ev.capacity === 'number' && <div className="small">Attending {ev.capacity}/{ev.capacity}</div>}
                 {ev.address && <div className="small">{ev.address}</div>}
               </div>
               <JoinButtons id={ev.id} />
@@ -105,7 +105,7 @@ function JoinButtons({ id }: { id: string }) {
   async function join() {
     setLoading(true); setMessage(null);
     try {
-      await api.events.join(id);
+      await apis.events.eventsIdJoinPost({id});
       setMessage('Joined');
     } catch (e: any) {
       setMessage(e?.message ?? 'Failed');
@@ -116,7 +116,7 @@ function JoinButtons({ id }: { id: string }) {
   async function leave() {
     setLoading(true); setMessage(null);
     try {
-      await api.events.leave(id);
+      await apis.events.eventsIdLeaveDelete({id});
       setMessage('Left');
     } catch (e: any) {
       setMessage(e?.message ?? 'Failed');

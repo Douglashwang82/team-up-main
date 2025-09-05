@@ -24,13 +24,14 @@ export interface AuthRefreshPostRequest {
      * @type {string}
      * @memberof AuthRefreshPostRequest
      */
-    refresh_token?: string;
+    refresh_token: string;
 }
 
 /**
  * Check if a given object implements the AuthRefreshPostRequest interface.
  */
 export function instanceOfAuthRefreshPostRequest(value: object): value is AuthRefreshPostRequest {
+    if (!('refresh_token' in value) || value['refresh_token'] === undefined) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function AuthRefreshPostRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'refresh_token': json['refresh_token'] == null ? undefined : json['refresh_token'],
+        'refresh_token': json['refresh_token'],
     };
 }
 

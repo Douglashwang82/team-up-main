@@ -24,13 +24,14 @@ export interface EventsPost201Response {
      * @type {string}
      * @memberof EventsPost201Response
      */
-    id?: string;
+    id: string;
 }
 
 /**
  * Check if a given object implements the EventsPost201Response interface.
  */
 export function instanceOfEventsPost201Response(value: object): value is EventsPost201Response {
+    if (!('id' in value) || value['id'] === undefined) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function EventsPost201ResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
     };
 }
 

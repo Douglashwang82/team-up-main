@@ -24,13 +24,14 @@ export interface HealthGet200Response {
      * @type {string}
      * @memberof HealthGet200Response
      */
-    status?: string;
+    status: string;
 }
 
 /**
  * Check if a given object implements the HealthGet200Response interface.
  */
 export function instanceOfHealthGet200Response(value: object): value is HealthGet200Response {
+    if (!('status' in value) || value['status'] === undefined) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function HealthGet200ResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'status': json['status'] == null ? undefined : json['status'],
+        'status': json['status'],
     };
 }
 

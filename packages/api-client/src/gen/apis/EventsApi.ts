@@ -15,48 +15,21 @@
 
 import * as runtime from '../runtime';
 import type {
-  AuthRefreshPostRequest,
   EventCreateIn,
   EventOut,
   EventsPost201Response,
-  HealthGet200Response,
-  LoginIn,
-  SignupIn,
   Sport,
-  Tokens,
 } from '../models/index';
 import {
-    AuthRefreshPostRequestFromJSON,
-    AuthRefreshPostRequestToJSON,
     EventCreateInFromJSON,
     EventCreateInToJSON,
     EventOutFromJSON,
     EventOutToJSON,
     EventsPost201ResponseFromJSON,
     EventsPost201ResponseToJSON,
-    HealthGet200ResponseFromJSON,
-    HealthGet200ResponseToJSON,
-    LoginInFromJSON,
-    LoginInToJSON,
-    SignupInFromJSON,
-    SignupInToJSON,
     SportFromJSON,
     SportToJSON,
-    TokensFromJSON,
-    TokensToJSON,
 } from '../models/index';
-
-export interface AuthLoginPostRequest {
-    loginIn: LoginIn;
-}
-
-export interface AuthRefreshPostOperationRequest {
-    authRefreshPostRequest: AuthRefreshPostRequest;
-}
-
-export interface AuthSignupPostRequest {
-    signupIn: SignupIn;
-}
 
 export interface EventsGetRequest {
     lat: number;
@@ -80,57 +53,12 @@ export interface EventsPostRequest {
 }
 
 /**
- * DefaultApi - interface
+ * EventsApi - interface
  * 
  * @export
- * @interface DefaultApiInterface
+ * @interface EventsApiInterface
  */
-export interface DefaultApiInterface {
-    /**
-     * 
-     * @summary Login
-     * @param {LoginIn} loginIn 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApiInterface
-     */
-    authLoginPostRaw(requestParameters: AuthLoginPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Tokens>>;
-
-    /**
-     * Login
-     */
-    authLoginPost(requestParameters: AuthLoginPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Tokens>;
-
-    /**
-     * 
-     * @summary Refresh token
-     * @param {AuthRefreshPostRequest} authRefreshPostRequest 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApiInterface
-     */
-    authRefreshPostRaw(requestParameters: AuthRefreshPostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Tokens>>;
-
-    /**
-     * Refresh token
-     */
-    authRefreshPost(requestParameters: AuthRefreshPostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Tokens>;
-
-    /**
-     * 
-     * @summary Sign up
-     * @param {SignupIn} signupIn 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApiInterface
-     */
-    authSignupPostRaw(requestParameters: AuthSignupPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Tokens>>;
-
-    /**
-     * Sign up
-     */
-    authSignupPost(requestParameters: AuthSignupPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Tokens>;
-
+export interface EventsApiInterface {
     /**
      * 
      * @summary List events near a point
@@ -142,7 +70,7 @@ export interface DefaultApiInterface {
      * @param {Date} [end] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApiInterface
+     * @memberof EventsApiInterface
      */
     eventsGetRaw(requestParameters: EventsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>>;
 
@@ -157,7 +85,7 @@ export interface DefaultApiInterface {
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApiInterface
+     * @memberof EventsApiInterface
      */
     eventsIdJoinPostRaw(requestParameters: EventsIdJoinPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
 
@@ -172,7 +100,7 @@ export interface DefaultApiInterface {
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApiInterface
+     * @memberof EventsApiInterface
      */
     eventsIdLeaveDeleteRaw(requestParameters: EventsIdLeaveDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
 
@@ -187,7 +115,7 @@ export interface DefaultApiInterface {
      * @param {EventCreateIn} eventCreateIn 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApiInterface
+     * @memberof EventsApiInterface
      */
     eventsPostRaw(requestParameters: EventsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventsPost201Response>>;
 
@@ -196,143 +124,12 @@ export interface DefaultApiInterface {
      */
     eventsPost(requestParameters: EventsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventsPost201Response>;
 
-    /**
-     * 
-     * @summary Health check
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApiInterface
-     */
-    healthGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HealthGet200Response>>;
-
-    /**
-     * Health check
-     */
-    healthGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HealthGet200Response>;
-
 }
 
 /**
  * 
  */
-export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
-
-    /**
-     * Login
-     */
-    async authLoginPostRaw(requestParameters: AuthLoginPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Tokens>> {
-        if (requestParameters['loginIn'] == null) {
-            throw new runtime.RequiredError(
-                'loginIn',
-                'Required parameter "loginIn" was null or undefined when calling authLoginPost().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/auth/login`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: LoginInToJSON(requestParameters['loginIn']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => TokensFromJSON(jsonValue));
-    }
-
-    /**
-     * Login
-     */
-    async authLoginPost(requestParameters: AuthLoginPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Tokens> {
-        const response = await this.authLoginPostRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Refresh token
-     */
-    async authRefreshPostRaw(requestParameters: AuthRefreshPostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Tokens>> {
-        if (requestParameters['authRefreshPostRequest'] == null) {
-            throw new runtime.RequiredError(
-                'authRefreshPostRequest',
-                'Required parameter "authRefreshPostRequest" was null or undefined when calling authRefreshPost().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/auth/refresh`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: AuthRefreshPostRequestToJSON(requestParameters['authRefreshPostRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => TokensFromJSON(jsonValue));
-    }
-
-    /**
-     * Refresh token
-     */
-    async authRefreshPost(requestParameters: AuthRefreshPostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Tokens> {
-        const response = await this.authRefreshPostRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Sign up
-     */
-    async authSignupPostRaw(requestParameters: AuthSignupPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Tokens>> {
-        if (requestParameters['signupIn'] == null) {
-            throw new runtime.RequiredError(
-                'signupIn',
-                'Required parameter "signupIn" was null or undefined when calling authSignupPost().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/auth/signup`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: SignupInToJSON(requestParameters['signupIn']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => TokensFromJSON(jsonValue));
-    }
-
-    /**
-     * Sign up
-     */
-    async authSignupPost(requestParameters: AuthSignupPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Tokens> {
-        const response = await this.authSignupPostRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
+export class EventsApi extends runtime.BaseAPI implements EventsApiInterface {
 
     /**
      * List events near a point
@@ -509,35 +306,6 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
      */
     async eventsPost(requestParameters: EventsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventsPost201Response> {
         const response = await this.eventsPostRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Health check
-     */
-    async healthGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HealthGet200Response>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/health`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => HealthGet200ResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Health check
-     */
-    async healthGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HealthGet200Response> {
-        const response = await this.healthGetRaw(initOverrides);
         return await response.value();
     }
 

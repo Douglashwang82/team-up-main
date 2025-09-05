@@ -1,3 +1,5 @@
 /* tslint:disable */
 /* eslint-disable */
-export * from './DefaultApi';
+export * from './AuthApi';
+export * from './EventsApi';
+export * from './HealthApi';
