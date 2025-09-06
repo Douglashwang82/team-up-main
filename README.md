@@ -82,3 +82,29 @@ docs/
 ## License
 
 MIT (or your choice)
+
+
+## Workflow
+1. Check sprint
+2. Define/adjust openapi config
+3. Backend work:
+   1. update/adjust endpoints
+   2. update/adjust alembic migrations. (revision, update head)
+   3. verify openapi config
+   4. run pnpm --filter ./services/api dev
+4. Api-client
+   1. run codegen
+   2. run build
+5. Frontend
+   1. update api-client
+   2. add/adjust pages
+   3. run dev
+6. Test
+   1. Postman test raw api
+   2. Run E2E flow
+   3. verify happy paths
+7. Version Control
+   1. commit
+   2. review
+   3. merge
+8. Deploy
