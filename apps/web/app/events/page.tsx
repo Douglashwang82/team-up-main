@@ -9,6 +9,7 @@ const SPORTS: readonly Sport[] = ['basketball','badminton','running','gym','tenn
 
 
 export default function EventsPage() {
+  console.log('Rendering EventsPage component');
   const [lat, setLat] = useState<number | ''>('');
   const [lng, setLng] = useState<number | ''>('');
   const [radius, setRadius] = useState<number>(5);
@@ -22,6 +23,7 @@ export default function EventsPage() {
       navigator.geolocation?.getCurrentPosition((pos) => {
         setLat(parseFloat(pos.coords.latitude.toFixed(5)));
         setLng(parseFloat(pos.coords.longitude.toFixed(5)));
+        console.log('setting');
       });
     }
   }, [lat, lng]);
@@ -31,6 +33,7 @@ export default function EventsPage() {
     setLoading(true);
     setError(null);
     try {
+      console.log('Fetching events with:', { lat, lng, radius, sport });
       const list = await apis.events.eventsGet({ lat: Number(lat), lng: Number(lng), radius: Number(radius) || 5, sport: sport || undefined });
       setEvents(list);
     } catch (err: any) {

@@ -34,16 +34,33 @@ let refreshPromise: Promise<void> | null = null;
 
 /**
  * 自訂 fetch：
- * 1) 先照常送出
- * 2) 若 401，且有 refresh_token → 呼叫 /auth/refresh
+ * 1) 先照常送出, 若有Access Token就帶上 Authorization Header
+ * 2) 若回傳 401，且有 refresh_token，則呼叫 /auth/refresh 換新 Access Token
  * 3) 更新 localStorage 後，帶新 Access Token 重送原請求一次
+ * 4) 若刷新失敗，則維持原 401 回應不變，讓呼叫端自行處理（例如導向登入頁面）
  */
 async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
-  const res = await fetch(input, init);
+  // Always send Authorization header if access token exists
+  const at = getAccessToken();
+  const origReq = new Request(input as any, init);
+  const headers = new Headers(origReq.headers);
+  if (at && !headers.get('Authorization')) headers.set('Authorization', `Bearer ${at}`);
+
+  let res = await fetch(origReq, { ...init, headers });
   if (res.status !== 401) return res;
 
+  if (!res.ok) {
+  // Login failed, clear tokens
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+  }
+  // Optionally, show error to user
+}
+
+  // If 401 and refresh token exists, try to refresh
   const rt = getRefreshToken();
-  if (!rt) return res; // 沒 refresh_token，就讓 401 照常回傳
+  if (!rt) return res;
 
   if (!refreshPromise) {
     refreshPromise = (async () => {
@@ -62,23 +79,22 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
         if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
       }
     })().finally(() => {
-      // 完成或失敗都重置，讓下一次 401 能再觸發
       refreshPromise = null;
     });
   }
 
   try {
-    await refreshPromise; // 等刷新完成
+    await refreshPromise;
   } catch {
-    return res; // 刷新失敗就維持原 401
+    return res;
   }
 
-  // 用最新 token 重送一次原請求
-  const at = getAccessToken();
-  const origReq = new Request(input as any, init);
-  const headers = new Headers(origReq.headers);
-  if (at && !headers.get('Authorization')) headers.set('Authorization', `Bearer ${at}`);
-  return fetch(origReq, { ...init, headers });
+  // Retry original request with new access token
+  const newAt = getAccessToken();
+  const retryReq = new Request(input as any, init);
+  const retryHeaders = new Headers(retryReq.headers);
+  if (newAt && !retryHeaders.get('Authorization')) retryHeaders.set('Authorization', `Bearer ${newAt}`);
+  return fetch(retryReq, { ...init, headers: retryHeaders });
 }
 
 // 共用設定（所有產生的 API 都用它）
