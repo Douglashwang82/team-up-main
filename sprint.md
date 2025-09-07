@@ -80,7 +80,7 @@
 
 ### 1. 認證系統
 - [x] JWT middleware：簽發/驗證 access_token + refresh_token
-- [ ] `POST /auth/signup`：使用者註冊
+- [x] `POST /auth/signup`：使用者註冊
 - [x] `POST /auth/login`：使用者登入，回傳 Tokens
 - [x] `POST /auth/refresh`：刷新 access_token
 - [ ] `GET /auth/me`：回傳目前使用者資訊
