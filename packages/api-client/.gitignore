@@ -20,3 +20,6 @@ node_modules/
 .vscode/
 .DS_Store
 *.swp
+
+# Ignore generated source files
+src/gen/

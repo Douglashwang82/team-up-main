@@ -60,3 +60,32 @@ def me():
         if not u:
             return jsonify({"error": "not_found"}), 404
         return jsonify({"id": str(u.id), "email": u.email, "display_name": u.display_name})
+
+@bp.patch("/me")
+@require_auth
+def update_me():
+    """
+    Updates the authenticated user's display name.
+
+    Returns:
+        JSON response with:
+            - id (str): User ID
+            - email (str): User email
+            - display_name (str): User display name
+        or error message if user not found.
+    """
+    data = request.get_json()
+    if data is None:
+        data = {}
+    with SessionLocal() as s:
+        u = s.get(User, g.user_id)
+        if not u:
+            return jsonify({"error": "not_found"}), 404
+        u.display_name = data.get("display_name", u.display_name)
+    try:
+        s.commit()
+    except Exception as e:
+        s.rollback()
+        return jsonify({"error": "update_failed", "details": str(e)}), 500
+    print('successfully updated user profile:', {"id": str(u.id), "email": u.email, "display_name": u.display_name})
+    return jsonify({"id": str(u.id), "email": u.email, "display_name": u.display_name})
