@@ -99,8 +99,8 @@
 - [x] 前端 `apps/web` 串接 API client（含 refresh token 機制）
 
 ### 4. 測試 / 驗證
-- [ ] Postman / curl 測試所有 API
-- [ ] E2E 測試流程：
+- [x] Postman / curl 測試所有 API
+- [x] E2E 測試流程：
   1. signup / login
   2. create event
   3. list events
