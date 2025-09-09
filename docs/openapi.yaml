@@ -9,6 +9,7 @@ paths:
     get:
       tags: [Health]
       summary: Health check
+      operationId: healthCheck
       responses:
         '200':
           description: OK
@@ -26,6 +27,7 @@ paths:
     post:
       tags: [Auth]
       summary: Sign up
+      operationId: signup
       requestBody:
         required: true
         content:
@@ -46,6 +48,7 @@ paths:
     post:
       tags: [Auth]
       summary: Login
+      operationId: login
       requestBody:
         required: true
         content:
@@ -61,10 +64,12 @@ paths:
                 $ref: '#/components/schemas/Tokens'
         '401':
           description: Invalid credentials
+
   /auth/me:
     get:
       tags: [Auth]
       summary: Get current user info
+      operationId: getMe
       responses:
         '200':
           description: OK
@@ -88,6 +93,7 @@ paths:
     patch:
       tags: [Auth]
       summary: Update current user info
+      operationId: updateMe
       requestBody:
         required: true
         content:
@@ -117,12 +123,13 @@ paths:
                     type: string
                     nullable: true
         '401':
-          description: Unauthorized   
+          description: Unauthorized
 
   /auth/refresh:
     post:
       tags: [Auth]
       summary: Refresh token
+      operationId: refreshToken
       requestBody:
         required: true
         content:
@@ -147,6 +154,7 @@ paths:
     get:
       tags: [Events]
       summary: List events near a point
+      operationId: listEvents
       parameters:
         - in: query
           name: lat
@@ -186,6 +194,7 @@ paths:
     post:
       tags: [Events]
       summary: Create event
+      operationId: createEvent
       requestBody:
         required: true
         content:
@@ -209,6 +218,7 @@ paths:
     post:
       tags: [Events]
       summary: Join event
+      operationId: joinEvent
       parameters:
         - in: path
           name: id
@@ -222,6 +232,7 @@ paths:
     delete:
       tags: [Events]
       summary: Leave event
+      operationId: leaveEvent
       parameters:
         - in: path
           name: id
@@ -230,10 +241,12 @@ paths:
       responses:
         '200':
           description: Left
+
   /events/{id}:
     get:
       tags: [Events]
       summary: Get event details
+      operationId: getEventById
       parameters:
         - in: path
           name: id
@@ -248,6 +261,7 @@ paths:
                 $ref: '#/components/schemas/EventOut'
         '404':
           description: Event not found
+
 components:
   schemas:
     Tokens:
