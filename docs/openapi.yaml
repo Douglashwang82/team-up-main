@@ -230,7 +230,24 @@ paths:
       responses:
         '200':
           description: Left
-
+  /events/{id}:
+    get:
+      tags: [Events]
+      summary: Get event details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventOut'
+        '404':
+          description: Event not found
 components:
   schemas:
     Tokens:
