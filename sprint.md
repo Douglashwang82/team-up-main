@@ -127,3 +127,54 @@
 | Day 11–12 | E2E 測試（完整流程） |
 | Day 13–14 | Bugfix, Code Review, Merge |
 ---
+
+# 🏀 Team_Up - Sprint 3
+
+## 🎯 Sprint Goal
+建立基本的 **登入 → 瀏覽活動 → 參加活動** 流程，強化活動 API 與前端串接，完成 E2E MVP。
+
+---
+
+## 📌 Backlog
+
+### 1. Events 功能進階
+- [ ] 在 `events` schema 增加 **capacity** 欄位
+- [ ] 加入 **活動狀態**：可報名 / 進行中 / 已結束
+- [ ] **報名檢查**：加入活動需判斷剩餘名額
+- [ ] **活動搜尋 / 篩選**：依運動種類、日期
+- [ ] **活動清單排序**：預設依時間排序（最近 → 最遠）
+
+### 2. 前端串接 MVP
+- [ ] **登入頁**：呼叫 `auth.login` / `auth.signup`，token 存入 localStorage
+- [ ] **活動列表頁**：呼叫 `events.list`，顯示活動卡片
+- [ ] **活動詳情頁**：呼叫 `events.get`，顯示細節與報名按鈕
+- [ ] **加入/退出活動**：呼叫 `events.join` / `events.leave`
+- [ ] **Token refresh 支援**：401 時自動 refresh 後重試
+
+### 3. API Client 改善
+- [ ] 完善 `withRefresh` 機制
+- [ ] 在 wrapper 提供直覺的 `api.auth.me()`、`api.events.list()` 方法
+- [ ] 統一 **環境變數**：`NEXT_PUBLIC_API_URL`、`NEXT_PUBLIC_API_BASE_URL`
+
+### 4. 開發工具 & CI
+- [ ] CI 增加 **codegen 驗證**：確保 `openapi.yaml` 與 client 一致
+- [ ] CI 增加 **前端 lint/build** 檢查
+- [ ] （可選）初版 E2E 測試（Playwright/Cypress）
+
+---
+
+## ✅ Definition of Done
+1. `capacity` 與活動狀態邏輯完成，API 回傳 status 與剩餘名額  
+2. 前端可完成「登入 → 瀏覽活動 → 參加活動」完整流程  
+3. Token refresh 機制正常運作  
+4. CI 能跑通 `pnpm codegen` + `pnpm -r build`  
+
+---
+
+## 🕒 Timeline (2 週 Sprint)
+- **Day 1–3**: 後端 capacity / 狀態 / filter / sort  
+- **Day 4–6**: 前端登入頁、活動清單、詳情頁  
+- **Day 7–8**: 加入/退出活動 + token refresh  
+- **Day 9–10**: 整合 E2E MVP 測試  
+- **Day 11–12**: CI codegen & 前端 build 驗證  
+- **Day 13–14**: Bugfix、Code Review、Merge  
