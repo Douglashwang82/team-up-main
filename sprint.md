@@ -83,18 +83,19 @@
 - [x] `POST /auth/signup`：使用者註冊
 - [x] `POST /auth/login`：使用者登入，回傳 Tokens
 - [x] `POST /auth/refresh`：刷新 access_token
-- [ ] `GET /auth/me`：回傳目前使用者資訊
+- [x] `GET /auth/me`：回傳目前使用者資訊
+- [X] `PATCH /auth/me`: 修改目前使用者資訊
 
 ### 2. 活動系統 MVP
 - [x] `GET /events`：支援查詢 (lat/lng/radius/sport/start/end) + 分頁
 - [x] `POST /events`：建立活動（需登入）
-- [ ] `POST /events/{id}/join`：加入活動（需登入、檢查重複與名額）
-- [ ] `DELETE /events/{id}/leave`：退出活動（需登入）
-- [ ] `GET /events/{id}`（可選）：取得單一活動詳細資訊
+- [x] `POST /events/{id}/join`：加入活動（需登入、檢查重複與名額）
+- [x] `DELETE /events/{id}/leave`：退出活動（需登入）
+- [x] `GET /events/{id}`（可選）：取得單一活動詳細資訊
 
 ### 3. API 規格 & Client
-- [ ] 更新 `openapi.yaml`：新增 `tags`、`operationId`、補上 `required`
-- [ ] 重新 codegen → 產出 `AuthApi`, `EventsApi`, `HealthApi`
+- [x] 更新 `openapi.yaml`：新增 `tags`、`operationId`、補上 `required`
+- [x]  重新 codegen → 產出 `AuthApi`, `EventsApi`, `HealthApi`
 - [x] 前端 `apps/web` 串接 API client（含 refresh token 機制）
 
 ### 4. 測試 / 驗證
