@@ -24,6 +24,7 @@ export default function NewEvent(){
     <input value={title} onChange={e=>setTitle(e.target.value)} />
     <input value={startsAt} onChange={e=>setStartsAt(e.target.value)} type='datetime-local' />
     <input value={endsAt} onChange={e=>setEndsAt(e.target.value)} type='datetime-local' />
+    <input value={capacity} onChange={e=>setCapacity(Number(e.target.value))} type='number' />
     <button>Create</button>
     {status && <p>{status}</p>}
   </form></div>);
