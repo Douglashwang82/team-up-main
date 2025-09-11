@@ -20,6 +20,7 @@ class Event(Base):
     location:  Mapped[object] = mapped_column(Geography(geometry_type="POINT", srid=4326), nullable=False)
     address:   Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    status: Mapped[str] = mapped_column(Enum("upcoming", "ongoing", "past", "cancelled", name="event_status"), default="upcoming", nullable=False)
 
 EventParticipants = Table(
     "event_participants",

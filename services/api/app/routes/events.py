@@ -52,6 +52,7 @@ def list_events():
                 "capacity": e.capacity,
                 "attending": counts.get(e.id, 0),
                 "address": e.address,
+                "status": e.status,
             }
         return jsonify([_to_dict(e) for e in rows])
 
@@ -73,6 +74,7 @@ def get_event(event_id):
             "attending": attending,
             "host_id": str(e.host_id) if e.host_id else None,
             "address": e.address,
+            "status": e.status,
         })
 
 @bp.post("")
@@ -106,6 +108,8 @@ def join_event(event_id):
                          .where(EventParticipants.c.event_id == event_id)) or 0
         if count >= e.capacity:
             return jsonify({"error": "full"}), 409
+        if e.status != "upcoming":
+            return jsonify({"error": "not_upcoming"}), 409
         try:
             s.execute(EventParticipants.insert().values(event_id=event_id, user_id=g.user_id))
             s.commit()
@@ -190,6 +194,7 @@ def list_all_events():
                 "capacity": e.capacity,
                 "attending": counts.get(e.id, 0),
                 "address": e.address,
+                "status": e.status,
             }
 
         return jsonify([_to_dict(e) for e in rows])
