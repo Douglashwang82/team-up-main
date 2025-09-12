@@ -15,7 +15,7 @@ export default function NewEvent(){
   async function create(e:React.FormEvent){
     e.preventDefault(); setStatus(null);
     try{
-      const res = await apis.events.eventsPost({eventCreateIn: {title,sport: sport as any, starts_at:new Date(startsAt), ends_at:new Date(endsAt), capacity, lat, lng}});
+      const res = await apis.events.createEvent({eventCreateIn: {title,sport: sport as any, starts_at:new Date(startsAt), ends_at:new Date(endsAt), capacity, lat, lng}});
       setStatus('Created: '+res.id);
     }catch(e:any){ setStatus(e?.message||'Failed'); }
   }

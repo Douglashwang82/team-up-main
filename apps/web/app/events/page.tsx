@@ -34,7 +34,7 @@ export default function EventsPage() {
     setError(null);
     try {
       console.log('Fetching events with:', { lat, lng, radius, sport });
-      const list = await apis.events.eventsGet({ lat: Number(lat), lng: Number(lng), radius: Number(radius) || 5, sport: sport || undefined });
+      const list = await apis.events.listEvents({ lat: Number(lat), lng: Number(lng), radius: Number(radius) || 5, sport: sport || undefined });
       setEvents(list);
     } catch (err: any) {
       setError(err?.message || 'Failed to load events');
@@ -108,7 +108,7 @@ function JoinButtons({ id }: { id: string }) {
   async function join() {
     setLoading(true); setMessage(null);
     try {
-      await apis.events.eventsIdJoinPost({id});
+      await apis.events.joinEvent({id});
       setMessage('Joined');
     } catch (e: any) {
       setMessage(e?.message ?? 'Failed');
@@ -119,7 +119,7 @@ function JoinButtons({ id }: { id: string }) {
   async function leave() {
     setLoading(true); setMessage(null);
     try {
-      await apis.events.eventsIdLeaveDelete({id});
+      await apis.events.leaveEvent({id});
       setMessage('Left');
     } catch (e: any) {
       setMessage(e?.message ?? 'Failed');

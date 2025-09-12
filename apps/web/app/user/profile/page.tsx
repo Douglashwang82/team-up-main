@@ -31,7 +31,7 @@ export default function UserProfilePage() {
       setError(null)
       try {
 
-        const me: any = await (apis as any).auth.authMeGet();
+        const me: any = await apis.auth.getMe();
 
         if (!alive) return
         setUser(me)
@@ -70,8 +70,8 @@ export default function UserProfilePage() {
       // Example with SDK once available: await apis.users.updateMe({ updateUserIn: { display_name: displayName } })
 
       // Temporary fallback (raw fetch):
-      const updatedMe = await (apis as any).auth.authMePatch({
-        authMePatchRequest: {
+      const updatedMe = await apis.auth.updateMe({
+        updateMeRequest: {
           display_name: displayName || null,
         },
       })

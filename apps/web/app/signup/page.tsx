@@ -29,7 +29,7 @@ export default function SignupPage() {
       // If you kept generator default names (no operationId): authSignupPost
       // and useSingleRequestParameter=true -> body name becomes `signupIn`
       // Adjust to match your generated method if you've set operationId.
-      const tokens = await (apis as any).auth.authSignupPost({
+      const tokens = await (apis as any).auth.signup({
         signupIn: {
           email,
           password,
