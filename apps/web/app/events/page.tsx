@@ -9,7 +9,6 @@ const SPORTS: readonly Sport[] = ['basketball','badminton','running','gym','tenn
 
 
 export default function EventsPage() {
-  console.log('Rendering EventsPage component');
   const [lat, setLat] = useState<number | ''>('');
   const [lng, setLng] = useState<number | ''>('');
   const [radius, setRadius] = useState<number>(5);
@@ -17,24 +16,58 @@ export default function EventsPage() {
   const [events, setEvents] = useState<EventOut[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [start, setStart] = useState<string>('');
+  const [end, setEnd] = useState<string>('');
 
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && lat === '' && lng === '') {
-      navigator.geolocation?.getCurrentPosition((pos) => {
-        setLat(parseFloat(pos.coords.latitude.toFixed(5)));
-        setLng(parseFloat(pos.coords.longitude.toFixed(5)));
-        console.log('setting');
-      });
-    }
-  }, [lat, lng]);
+
+  // Optional: auto-fill lat/lng from browser geolocation
+  // useEffect(() => {
+  //   if (typeof navigator !== 'undefined' && lat === '' && lng === '') {
+  //     navigator.geolocation?.getCurrentPosition((pos) => {
+  //       setLat(parseFloat(pos.coords.latitude.toFixed(5)));
+  //       setLng(parseFloat(pos.coords.longitude.toFixed(5)));
+  //       console.log('setting');
+  //     });
+  //   }
+  // }, [lat, lng]);
 
   async function fetchEvents() {
-    if (lat === '' || lng === '') { setError('Please input lat/lng'); return; }
+    // if (lat === '' || lng === '') { setError('Please input lat/lng'); return; }
     setLoading(true);
     setError(null);
     try {
+      function toUtcIsoDate(dateStr: string) {
+        if (!dateStr) return undefined;
+        const d = new Date(dateStr + 'T00:00:00Z');
+        return d.toISOString();
+      }
+
+      const startIso = toUtcIsoDate(start);
+      const endIso = toUtcIsoDate(end);
+      const list = await apis.events.getEventsPoint({ 
+        lat: Number(lat),
+        lng: Number(lng),
+        radius: Number(radius) || 5,
+        sport: sport || undefined,
+        start: startIso ? new Date(startIso) : undefined,
+        end: endIso ? new Date(endIso) : undefined,
+      });
       console.log('Fetching events with:', { lat, lng, radius, sport });
-      const list = await apis.events.listEvents({ lat: Number(lat), lng: Number(lng), radius: Number(radius) || 5, sport: sport || undefined });
+
+      setEvents(list);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load events');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchAllEvents() {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('Fetching all events');
+      const list = await apis.events.getAllEvents();
       setEvents(list);
     } catch (err: any) {
       setError(err?.message || 'Failed to load events');
@@ -74,10 +107,23 @@ export default function EventsPage() {
             </select>
           </label>
         </div>
+        <div>
+          <label>Start (optional)
+            <input type="date" value={start} onChange={e => setStart(e.target.value)} />
+          </label>
+        </div>
+        <div>
+          <label>End (optional)
+            <input type="date" value={end} onChange={e => setEnd(e.target.value)} />
+          </label>
+        </div>
       </div>
       <div className="toolbar">
         <button className="btn" onClick={fetchEvents} disabled={loading}>
           {loading ? 'Loading...' : 'Search'}
+        </button>
+        <button className="btn" onClick={fetchAllEvents} disabled={loading}>
+          {loading ? 'Loading...' : 'Load All'}
         </button>
       </div>
       {error && <p style={{ color: 'crimson' }}>{error}</p>}

@@ -154,15 +154,13 @@ paths:
     get:
       tags: [Events]
       summary: List events near a point
-      operationId: listEvents
+      operationId: getEventsPoint
       parameters:
         - in: query
           name: lat
-          required: true
           schema: { type: number }
         - in: query
           name: lng
-          required: true
           schema: { type: number }
         - in: query
           name: radius
@@ -261,6 +259,21 @@ paths:
                 $ref: '#/components/schemas/EventOut'
         '404':
           description: Event not found
+
+  /events/all:
+    get:
+      tags: [Events]
+      summary: Get all events (no filter)
+      operationId: getAllEvents
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventOut'
 
 components:
   schemas:

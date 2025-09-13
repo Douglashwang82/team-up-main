@@ -15,7 +15,19 @@ export default function NewEvent(){
   async function create(e:React.FormEvent){
     e.preventDefault(); setStatus(null);
     try{
-      const res = await apis.events.createEvent({eventCreateIn: {title,sport: sport as any, starts_at:new Date(startsAt), ends_at:new Date(endsAt), capacity, lat, lng}});
+  // Convert to UTC ISO8601 string including time
+  console.log(startsAt, endsAt);
+  const startsAtIso = startsAt ? new Date(startsAt).toISOString() : undefined;
+  console.log(startsAt, startsAtIso);
+  const endsAtIso = endsAt ? new Date(endsAt).toISOString() : undefined;
+  console.log(endsAt, endsAtIso);
+  const startsAtDate = startsAt ? new Date(startsAt) : undefined;
+  const endsAtDate = endsAt ? new Date(endsAt) : undefined;
+  if (!startsAtDate || !endsAtDate) {
+    setStatus('Please provide valid start and end times.');
+    return;
+  }
+  const res = await apis.events.createEvent({eventCreateIn: {title,sport: sport as any, starts_at: startsAtDate, ends_at: endsAtDate, capacity, lat, lng}});
       setStatus('Created: '+res.id);
     }catch(e:any){ setStatus(e?.message||'Failed'); }
   }
