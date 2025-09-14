@@ -11,7 +11,12 @@ from app.utils import is_nonzero_number
 bp = Blueprint("events", __name__)
 
 def _parse_dt(s: str):
-    return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    # Always parse as UTC if no timezone info
+    dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        from datetime import timezone
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
 
 @bp.get("")
 def get_events():
@@ -34,10 +39,8 @@ def get_events():
         if sport:
             q = q.where(Event.sport == sport)
         if start:
-            print("Filtering by start", start)
             q = q.where(Event.starts_at >= _parse_dt(start))
         if end:
-            print("Filtering by end", end)
             q = q.where(Event.ends_at <= _parse_dt(end))
         rows = s.execute(q.order_by(Event.starts_at.asc()).offset(offset).limit(limit)).scalars().all()
 

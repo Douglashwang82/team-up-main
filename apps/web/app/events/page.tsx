@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apis } from '@/lib/api';
 import type { EventOut as ApiEventOut, Sport } from '@team-up-main/api-client';
+import { toUtcIso } from '@/lib/utils';
 
 type EventOut = ApiEventOut;
 const SPORTS: readonly Sport[] = ['basketball','badminton','running','gym','tennis'] as const;
@@ -32,25 +33,18 @@ export default function EventsPage() {
   // }, [lat, lng]);
 
   async function fetchEvents() {
-    // if (lat === '' || lng === '') { setError('Please input lat/lng'); return; }
     setLoading(true);
     setError(null);
     try {
-      function toUtcIsoDate(dateStr: string) {
-        if (!dateStr) return undefined;
-        const d = new Date(dateStr + 'T00:00:00Z');
-        return d.toISOString();
-      }
-
-      const startIso = toUtcIsoDate(start);
-      const endIso = toUtcIsoDate(end);
+      const startIso = toUtcIso(start, "00:00:00");
+      const endIso = toUtcIso(end, "23:59:59");
       const list = await apis.events.getEventsPoint({ 
         lat: Number(lat),
         lng: Number(lng),
         radius: Number(radius) || 5,
         sport: sport || undefined,
-        start: startIso ? new Date(startIso) : undefined,
-        end: endIso ? new Date(endIso) : undefined,
+        start: startIso,
+        end: endIso,
       });
       console.log('Fetching events with:', { lat, lng, radius, sport });
 
