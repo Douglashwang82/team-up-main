@@ -157,9 +157,9 @@
 - [x] 統一 **環境變數**：`NEXT_PUBLIC_API_URL`、`NEXT_PUBLIC_API_BASE_URL`
 
 ### 4. 開發工具 & CI
-- [ ] CI 增加 **codegen 驗證**：確保 `openapi.yaml` 與 client 一致
-- [ ] CI 增加 **前端 lint/build** 檢查
-- [ ] （可選）初版 E2E 測試（Playwright/Cypress）
+- [-] CI 增加 **codegen 驗證**：確保 `openapi.yaml` 與 client 一致
+- [-] CI 增加 **前端 lint/build** 檢查
+- [-] （可選）初版 E2E 測試（Playwright/Cypress）
 
 ---
 

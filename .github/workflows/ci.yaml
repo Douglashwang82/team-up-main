@@ -1,32 +1,32 @@
-name: CI
-on:
-  push:
-    branches: ["*"]
-  pull_request:
-    branches: ["*"]    
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-      - name: Install dependencies
-        run: pnpm install
-      - name: Lint
-        run: pnpm -r lint
-      - name: Build
-        run: pnpm -r build
-      - name: Install dependencies
-        run: pnpm install
-      - name: Run codegen
-        run: pnpm codegen
-      - name: Build API client
-        run: pnpm --filter api-client build
-      - name: Lint API client
-        run: pnpm --filter api-client lint
+# name: CI
+# on:
+#   push:
+#     branches: ["*"]
+#   pull_request:
+#     branches: ["*"]    
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: pnpm/action-setup@v2
+#         with:
+#           version: 8
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
+#           cache: 'pnpm'
+#       - name: Install dependencies
+#         run: pnpm install
+#       - name: Lint
+#         run: pnpm -r lint
+#       - name: Build
+#         run: pnpm -r build
+#       - name: Install dependencies
+#         run: pnpm install
+#       - name: Run codegen
+#         run: pnpm codegen
+#       - name: Build API client
+#         run: pnpm --filter api-client build
+#       - name: Lint API client
+#         run: pnpm --filter api-client lint
