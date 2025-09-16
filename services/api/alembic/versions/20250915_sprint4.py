@@ -87,6 +87,18 @@ def upgrade():
         ["venue_id", "starts_at", "ends_at"],
     )
 
+
+    # --- users ---
+    op.create_table(
+        "users",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column("email", sa.Text, unique=True, index=True, nullable=False),
+        sa.Column("password_hash", sa.Text, nullable=False),
+        sa.Column("display_name", sa.Text, nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+    )
+
+
     # --- bookings ---
     op.create_table(
         "bookings",
@@ -102,6 +114,21 @@ def upgrade():
     op.create_unique_constraint("uq_bookings_timeslot", "bookings", ["timeslot_id"])
     op.create_check_constraint("ck_bookings_status", "bookings", "status IN ('pending','confirmed','cancelled')")
     op.create_check_constraint("ck_bookings_payment_status", "bookings", "payment_status IN ('none','pending','succeeded','failed')")
+
+    # --- events ---
+    op.create_table(
+        "events",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column("title", sa.Text, nullable=False),
+        sa.Column("description", sa.Text, nullable=True),
+        sa.Column("sport_type", sa.Text, nullable=True),
+        sa.Column("starts_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("ends_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("city", sa.Text, nullable=True),
+        sa.Column("capacity", sa.Integer, nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),            
+    )
 
     # --- events 擴充（保留你原本 UUID PK 結構） ---
     # 若這些欄位已存在，請依實際情況移除對應 add_column
@@ -144,6 +171,13 @@ def upgrade():
     op.create_index("ix_event_join_requests_event_status", "event_join_requests", ["event_id", "status"], unique=False)
 
     # --- event_participants 擴充（支援非會員資訊與 join_request 對應） ---
+    op.create_table(
+        "event_participants",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column("event_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("events.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
+        sa.Column("role", sa.Text, server_default=sa.text("'member'"), nullable=False)
+    )
     op.add_column("event_participants", sa.Column("display_name", sa.Text, nullable=True))
     op.add_column("event_participants", sa.Column("email", sa.Text, nullable=True))
     op.add_column("event_participants", sa.Column("phone", sa.Text, nullable=True))
