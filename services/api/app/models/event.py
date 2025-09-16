@@ -1,31 +1,28 @@
+import uuid, sqlalchemy as sa
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import String, DateTime, Integer, ForeignKey, Enum, Text, Table, Column
-from sqlalchemy.orm import Mapped, mapped_column
-from datetime import datetime, timezone
-import uuid
-from geoalchemy2 import Geography
+from app.core.types import Visibility, EventStatus
 from app.core.db import Base
-
-SPORTS = ("basketball","badminton","running","gym","tennis")
 
 class Event(Base):
     __tablename__ = "events"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    host_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
-    title: Mapped[str] = mapped_column(String, nullable=False)
-    sport: Mapped[str] = mapped_column(Enum(*SPORTS, name="sport"), nullable=False)
-    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    ends_at:   Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    capacity:  Mapped[int] = mapped_column(Integer, nullable=False)
-    location:  Mapped[object] = mapped_column(Geography(geometry_type="POINT", srid=4326), nullable=False)
-    address:   Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    status: Mapped[str] = mapped_column(Enum("upcoming", "ongoing", "past", "cancelled", name="event_status"), default="upcoming", nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    title: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    description: Mapped[str | None]
+    sport_type: Mapped[str | None]
+    starts_at: Mapped[sa.DateTime | None] = mapped_column(sa.DateTime(timezone=True))
+    ends_at: Mapped[sa.DateTime | None] = mapped_column(sa.DateTime(timezone=True))
+    city: Mapped[str | None]
+    capacity: Mapped[int | None]
 
-EventParticipants = Table(
-    "event_participants",
-    Base.metadata,
-    Column("event_id", UUID(as_uuid=True), ForeignKey("events.id", ondelete="CASCADE"), primary_key=True),
-    Column("user_id",  UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
-    Column("joined_at", DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-)
+    booking_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("bookings.id"))
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("users.id"))
+    visibility: Mapped[str] = mapped_column(sa.Text, default=Visibility.public.value, nullable=False)
+    invite_token: Mapped[str | None]
+    join_review_required: Mapped[bool] = mapped_column(sa.Boolean, default=True, nullable=False)
+
+    status: Mapped[str] = mapped_column(sa.Text, default=EventStatus.open.value, nullable=False)
+    created_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True), server_default=sa.text("now()"))
+    updated_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True), server_default=sa.text("now()"))
+
+    participants: Mapped[list["EventParticipant"]] = relationship(back_populates="event", cascade="all, delete-orphan")
