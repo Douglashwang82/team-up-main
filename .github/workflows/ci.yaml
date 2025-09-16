@@ -3,7 +3,6 @@ on:
   push:
     branches: ["*"]
   pull_request:
-<<<<<<< HEAD
     branches: ["*"]    
 jobs:
   build:
