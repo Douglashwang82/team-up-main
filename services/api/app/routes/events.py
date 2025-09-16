@@ -6,20 +6,23 @@ from app.core.db import SessionLocal
 from app.models.event import Event, EventParticipants
 from app.models.user import User
 from app.core.auth import require_auth
+from app.utils import is_nonzero_number
 
 bp = Blueprint("events", __name__)
 
 def _parse_dt(s: str):
-    return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    # Always parse as UTC if no timezone info
+    dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        from datetime import timezone
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
 
 @bp.get("")
-def list_events():
-    try:
-        lat = float(request.args["lat"])
-        lng = float(request.args["lng"])
-    except Exception:
-        return jsonify({"error": "lat_lng_required"}), 400
-    radius_km = float(request.args.get("radius", 5))
+def get_events():
+    lat = request.args.get("lat")
+    lng = request.args.get("lng")
+    radius_km = request.args.get("radius")
     sport = request.args.get("sport")
     start = request.args.get("start")
     end   = request.args.get("end")
@@ -27,11 +30,18 @@ def list_events():
     offset = max(int(request.args.get("offset", 0)), 0)
 
     with SessionLocal() as s:
-        point = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
-        q = select(Event).where(func.ST_DWithin(Event.location, point, radius_km * 1000))
-        if sport: q = q.where(Event.sport == sport)
-        if start: q = q.where(Event.starts_at >= _parse_dt(start))
-        if end:   q = q.where(Event.ends_at   <= _parse_dt(end))
+        q = select(Event)
+        # If lat/lng/radius provided, filter by location
+        if is_nonzero_number(lat) and is_nonzero_number(lng) and is_nonzero_number(radius_km):
+            print("Filtering by location", lat, lng, radius_km)
+            point = func.ST_SetSRID(func.ST_MakePoint(float(lng), float(lat)), 4326)
+            q = q.where(func.ST_DWithin(Event.location, point, float(radius_km) * 1000))
+        if sport:
+            q = q.where(Event.sport == sport)
+        if start:
+            q = q.where(Event.starts_at >= _parse_dt(start))
+        if end:
+            q = q.where(Event.ends_at <= _parse_dt(end))
         rows = s.execute(q.order_by(Event.starts_at.asc()).offset(offset).limit(limit)).scalars().all()
 
         ids = [e.id for e in rows]
@@ -52,6 +62,7 @@ def list_events():
                 "capacity": e.capacity,
                 "attending": counts.get(e.id, 0),
                 "address": e.address,
+                "status": e.status,
             }
         return jsonify([_to_dict(e) for e in rows])
 
@@ -73,6 +84,7 @@ def get_event(event_id):
             "attending": attending,
             "host_id": str(e.host_id) if e.host_id else None,
             "address": e.address,
+            "status": e.status,
         })
 
 @bp.post("")
@@ -106,6 +118,8 @@ def join_event(event_id):
                          .where(EventParticipants.c.event_id == event_id)) or 0
         if count >= e.capacity:
             return jsonify({"error": "full"}), 409
+        if e.status != "upcoming":
+            return jsonify({"error": "not_upcoming"}), 409
         try:
             s.execute(EventParticipants.insert().values(event_id=event_id, user_id=g.user_id))
             s.commit()
@@ -138,7 +152,7 @@ def event_participants(event_id):
 
 @bp.get("/all")
 @require_auth
-def list_all_events():
+def get_all_events():
     """
     Fetch all events (no location filter).
     Query params:
@@ -190,6 +204,7 @@ def list_all_events():
                 "capacity": e.capacity,
                 "attending": counts.get(e.id, 0),
                 "address": e.address,
+                "status": e.status,
             }
 
         return jsonify([_to_dict(e) for e in rows])
