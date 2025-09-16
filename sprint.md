@@ -178,3 +178,87 @@
 - **Day 9–10**: 整合 E2E MVP 測試  
 - **Day 11–12**: CI codegen & 前端 build 驗證  
 - **Day 13–14**: Bugfix、Code Review、Merge  
+
+# 🏀 Team_Up - Sprint 4
+
+## 🎯 Sprint Goal
+重新定義應用流程：  
+使用者可搜尋並租借場地，完成預約後建立活動（public / invite_only / private）。  
+活動參加者（含非會員）可提交申請，由 event owner 審核，形成完整的 **場地預約 → 活動建立 → 參與審核** 流程。
+
+---
+
+## 📌 Backlog
+
+### 1. 場地搜尋與預約
+- [ ] 新增 `venues` 與 `venue_timeslots` schema
+- [ ] 新增 `bookings` schema，確保同時段唯一預約
+- [ ] API: `GET /venues/search` 查詢可租場地/時段
+- [ ] API: `POST /bookings` 建立預約，狀態含 pending/confirmed/cancelled
+- [ ] 基礎付款狀態欄位（先 mock，不串金流）
+
+### 2. Event 建立與可見性
+- [ ] 在 `events` schema 增加欄位：
+  - `booking_id`、`visibility`（public / invite_only / private）
+  - `owner_user_id`
+  - `invite_token`（invite_only 產生限定 URL）
+- [ ] API: `POST /events` 由 booking 建立 event
+- [ ] API: `GET /events/public` 可搜尋公開活動
+- [ ] API: `GET /events/{invite_token}` 取得 invite_only 活動資訊
+
+### 3. 申請與審核流程
+- [ ] 新增 `event_join_requests` schema（支援非會員提交）
+- [ ] 在 `event_participants` 增加 `display_name` / `email` / `phone`
+- [ ] API: `POST /events/{id}/join-requests` 提交申請
+- [ ] API: `GET /owner/events/{id}/join-requests` 列出申請（僅 owner）
+- [ ] API: `POST /owner/join-requests/{id}` approve/reject
+
+### 4. 前端 UI/UX
+- [ ] **場地探索頁**：搜尋城市/日期/運動種類，顯示場地卡片與可租時段
+- [ ] **預約流程頁**：選擇時段 → 預約成功 → 引導建立活動
+- [ ] **建立活動 Wizard**：選擇可見性（public / invite_only / private）
+- [ ] **活動頁面**：
+  - public：顯示活動資訊與申請表
+  - invite_only：限定 URL 顯示，含申請表
+  - private：無公開頁
+- [ ] **Owner 主控台**：
+  - 查看活動列表（標示 visibility）
+  - 管理申請（approve/reject）
+  - 查看/移除參與者名單
+
+### 5. 後端強化
+- [ ] 產生安全的 `invite_token`（base62 亂數字串）
+- [ ] 防止 join request 濫用（同 email/phone 冷卻時間）
+- [ ] 建立索引：`venues(city)`、`venue_timeslots(starts_at)`、`events(invite_token)`
+- [ ] 加入日誌記錄：建立 event、提交申請、審核操作
+
+### 6. 測試與 CI
+- [ ] 新增 Alembic migration 腳本
+- [ ] 新增 API 單元測試：booking、event、join requests
+- [ ] E2E 測試案例：
+  - public event → 非會員提交申請 → owner 批准
+  - invite_only event → 限定 URL 進入申請 → owner 批准
+  - private event → 不可被搜尋
+- [ ] CI 驗證 `openapi.yaml` 與 client 一致
+- [ ] CI 檢查前端 build / lint
+
+---
+
+## ✅ Definition of Done
+1. 使用者可搜尋並預約場地時段，生成 booking  
+2. 預約完成後可建立三種 visibility 的活動，並自動成為 owner  
+3. public 可搜尋，invite_only 需 URL，private 完全不可見  
+4. 參加者（含非會員）可提交申請，owner 能審核並將其加入 event_participants  
+5. Owner 主控台可管理活動、申請與參與者  
+6. 關鍵流程具備 E2E 測試覆蓋  
+
+---
+
+## 🕒 Timeline (2 週 Sprint)
+- **Day 1–3**: DB schema 與 Alembic migration（venues, bookings, events 擴充, join_requests）  
+- **Day 4–5**: 後端 API for booking + event 建立 + visibility 流程  
+- **Day 6–7**: 前端場地探索頁、預約流程頁  
+- **Day 8–9**: 前端活動頁（public/invite_only/private 顯示）  
+- **Day 10–11**: Owner 主控台（申請審核/參與者管理）  
+- **Day 12**: E2E 測試實作與驗證  
+- **Day 13–14**: CI 驗證、Bugfix、Code Review、Merge  
