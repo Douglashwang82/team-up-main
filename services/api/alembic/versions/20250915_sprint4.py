@@ -98,7 +98,6 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
     )
 
-
     # --- bookings ---
     op.create_table(
         "bookings",
@@ -126,18 +125,19 @@ def upgrade():
         sa.Column("ends_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("city", sa.Text, nullable=True),
         sa.Column("capacity", sa.Integer, nullable=True),
+        sa.Column("booking_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("bookings.id"), nullable=True),
+        sa.Column("owner_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
+        sa.Column("visibility", sa.Text, server_default=sa.text("'public'"), nullable=False),
+        sa.Column("invite_token", sa.Text, nullable=True),
+        sa.Column("join_review_required", sa.Boolean, server_default=sa.text("TRUE"), nullable=False),
+        sa.Column("status", sa.Text, server_default=sa.text("'open'"), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),            
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("participants", postgresql.ARRAY(postgresql.UUID(as_uuid=True)), nullable=True),
     )
 
     # --- events 擴充（保留你原本 UUID PK 結構） ---
     # 若這些欄位已存在，請依實際情況移除對應 add_column
-    op.add_column("events", sa.Column("booking_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("bookings.id"), nullable=True))
-    op.add_column("events", sa.Column("owner_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True))
-    op.add_column("events", sa.Column("visibility", sa.Text, server_default=sa.text("'public'"), nullable=False))
-    op.add_column("events", sa.Column("invite_token", sa.Text, nullable=True))
-    op.add_column("events", sa.Column("join_review_required", sa.Boolean, server_default=sa.text("TRUE"), nullable=False))
-
     op.create_check_constraint("ck_events_visibility", "events", "visibility IN ('public','invite_only','private')")
     op.create_index(
         "ix_events_invite_token_unique",
@@ -176,14 +176,12 @@ def upgrade():
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
         sa.Column("event_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("events.id", ondelete="CASCADE"), nullable=False),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
-        sa.Column("role", sa.Text, server_default=sa.text("'member'"), nullable=False)
-    )
-    op.add_column("event_participants", sa.Column("display_name", sa.Text, nullable=True))
-    op.add_column("event_participants", sa.Column("email", sa.Text, nullable=True))
-    op.add_column("event_participants", sa.Column("phone", sa.Text, nullable=True))
-    op.add_column(
-        "event_participants",
+        sa.Column("role", sa.Text, server_default=sa.text("'member'"), nullable=False),
+        sa.Column("display_name", sa.Text, nullable=True),
+        sa.Column("email", sa.Text, nullable=True),
+        sa.Column("phone", sa.Text, nullable=True),
         sa.Column("join_request_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
     )
     op.create_foreign_key(
         "event_participants_join_request_id_fkey",
