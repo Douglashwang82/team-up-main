@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { apis } from '@/lib/api';
-import type { EventOut as ApiEventOut, Sport } from '@team-up-main/api-client';
+import type { EventOut as ApiEventOut } from '@team-up-main/api-client';
 import { toUtcIso } from '@/lib/utils';
 
 type EventOut = ApiEventOut;
-const SPORTS: readonly Sport[] = ['basketball','badminton','running','gym','tennis'] as const;
+const SPORTS = ['basketball','badminton','running','gym','tennis'] as const;
 
 
 export default function EventsPage() {
   const [lat, setLat] = useState<number | ''>('');
   const [lng, setLng] = useState<number | ''>('');
   const [radius, setRadius] = useState<number>(5);
-  const [sport, setSport] = useState<'' | Sport>('');
+  const [sport, setSport] = useState<'' | string>('');
   const [events, setEvents] = useState<EventOut[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +40,11 @@ export default function EventsPage() {
       const endIso = toUtcIso(end, "23:59:59");
       const list = await apis.events.getEventsPoint({ 
         lat: Number(lat),
-        lng: Number(lng),
+        lng: Number(lng), 
         radius: Number(radius) || 5,
-        sport: sport || undefined,
-        start: startIso,
-        end: endIso,
+        sportType: sport || undefined,
+        startAt: startIso,
+        endAt: endIso,
       });
       console.log('Fetching events with:', { lat, lng, radius, sport });
 
@@ -95,7 +95,7 @@ export default function EventsPage() {
           <label>Sport (optional)
             <select
               value={sport}
-              onChange={(e) => setSport((e.target.value || '') as '' | Sport)}>
+              onChange={(e) => setSport((e.target.value || '') as '' | string)}>
               <option value="">--Any--</option>
               {SPORTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -128,7 +128,7 @@ export default function EventsPage() {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
               <div>
                 <div style={{fontWeight:700}}>{ev.title}</div>
-                <div className="small">{ev.sport} • {ev?.starts_at.toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
+                <div className="small">{ev.sport_type} • {ev?.starts_at.toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
                 {typeof ev.capacity === 'number' && <div className="small">Attending {ev.capacity}/{ev.capacity}</div>}
                 {ev.address && <div className="small">{ev.address}</div>}
               </div>

@@ -169,14 +169,13 @@ paths:
             default: 5
             description: radius in km
         - in: query
-          name: sport
-          schema:
-            $ref: '#/components/schemas/Sport'
+          name: sport_type
+          schema: { type: string }
         - in: query
-          name: start
+          name: start_at
           schema: { type: string, format: date-time }
         - in: query
-          name: end
+          name: end_at
           schema: { type: string, format: date-time }
       responses:
         '200':
@@ -299,16 +298,12 @@ components:
         email: { type: string, format: email }
         password: { type: string }
 
-    Sport:
-      type: string
-      enum: [basketball, badminton, running, gym, tennis]
-
     EventCreateIn:
       type: object
-      required: [title, sport, starts_at, ends_at, capacity, lat, lng]
+      required: [title, sport_type, starts_at, ends_at, capacity, lat, lng]
       properties:
         title: { type: string }
-        sport: { $ref: '#/components/schemas/Sport' }
+        sport_type: { type: string }
         starts_at: { type: string, format: date-time }
         ends_at: { type: string, format: date-time }
         capacity: { type: integer, minimum: 1 }
@@ -318,11 +313,11 @@ components:
 
     EventOut:
       type: object
-      required: [id, title, sport, starts_at, ends_at, capacity]
+      required: [id, title, sport_type, starts_at, ends_at, capacity]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
-        sport: { $ref: '#/components/schemas/Sport' }
+        sport_type: { type: string }
         starts_at: { type: string, format: date-time }
         ends_at: { type: string, format: date-time }
         capacity: { type: integer }

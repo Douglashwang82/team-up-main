@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, g
+from app.models.venue import Venue
 from sqlalchemy import select, func, and_, desc, delete
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
@@ -32,9 +33,9 @@ def get_events():
     lat = request.args.get("lat")
     lng = request.args.get("lng")
     radius_km = request.args.get("radius")
-    sport = request.args.get("sport")
-    start = request.args.get("start")
-    end   = request.args.get("end")
+    sport_type = request.args.get("sport_type")
+    start_at = request.args.get("start_at")
+    end_at = request.args.get("end_at")
     limit = min(int(request.args.get("limit", 50)), 200)
     offset = max(int(request.args.get("offset", 0)), 0)
 
@@ -48,39 +49,49 @@ def get_events():
         if is_nonzero_number(lat) and is_nonzero_number(lng) and is_nonzero_number(radius_km):
             point = func.ST_SetSRID(func.ST_MakePoint(float(lng), float(lat)), 4326)
             q = q.where(func.ST_DWithin(Event.location, point, float(radius_km) * 1000))
-        if sport:
-            q = q.where(Event.sport == sport)
-        if start:
-            q = q.where(Event.starts_at >= _parse_dt(start))
-        if end:
-            q = q.where(Event.ends_at <= _parse_dt(end))
-
+        if  sport_type:
+            q = q.where(Event.sport_type == sport_type)
+        if start_at:
+            q = q.where(Event.starts_at >= start_at)
+        if end_at:
+            q = q.where(Event.ends_at <= end_at)
+        
         rows = s.execute(q.order_by(Event.starts_at.asc()).offset(offset).limit(limit)).scalars().all()
-
+        print(start_at, end_at)
+        print('p:', _parse_dt(start_at), _parse_dt(end_at))
+        print(rows)
         ids = [e.id for e in rows]
         counts = {}
         if ids:
             cnt_rows = s.execute(
-                select(EventParticipant.c.event_id, func.count())
-                .where(EventParticipant.c.event_id.in_(ids))
-                .group_by(EventParticipant.c.event_id)
+                select(EventParticipant.event_id, func.count())
+                .where(EventParticipant.event_id.in_(ids))
+                .group_by(EventParticipant.event_id)
             ).all()
             counts = {r[0]: r[1] for r in cnt_rows}
 
-        def _to_dict(e: Event):
+        def event_to_dict_with_location (e: Event):
+            venue_location = None
+            if e.booking_id:
+                booking = s.get(Booking, e.booking_id)
+                if booking:
+                    venue = s.get(Venue, booking.venue_id)
+                    if venue and venue.geo_point:
+                        venue_location = venue.geo_point  # 假設 geo_point 是 "POINT(lng lat)" 格式的字串
             return {
                 "id": str(e.id),
                 "title": e.title,
-                "sport": e.sport,
+                "sport": e.sport_type,
                 "starts_at": e.starts_at.isoformat(),
                 "ends_at": e.ends_at.isoformat(),
                 "capacity": e.capacity,
                 "attending": counts.get(e.id, 0),
-                "address": e.address,
+                "booking_id": e.booking_id,
+                "venue_location": venue_location,
                 "status": e.status,
                 "visibility": getattr(e, "visibility", "public"),
             }
-        return jsonify([_to_dict(e) for e in rows])
+        return jsonify([event_to_dict_with_location(e) for e in rows])
 
 # ===[ 既有：單一活動（保留） ]===
 @bp.get("/<uuid:event_id>")
@@ -244,7 +255,7 @@ def get_invite_only(invite_token: str):
             return jsonify({"error": "not_found"}), 404
         attending = s.scalar(
             select(func.count()).select_from(EventParticipant)
-            .where(EventParticipant.c.event_id == e.id)
+            .where(EventParticipant.event_id == e.id)
         ) or 0
         return jsonify({
             "id": str(e.id),
@@ -375,27 +386,35 @@ def get_all_events():
         counts = {}
         if ids:
             cnt_rows = s.execute(
-                select(EventParticipant.c.event_id, func.count())
-                .where(EventParticipant.c.event_id.in_(ids))
-                .group_by(EventParticipant.c.event_id)
+                select(EventParticipant.event_id, func.count())
+                .where(EventParticipant.event_id.in_(ids))
+                .group_by(EventParticipant.event_id)
             ).all()
             counts = {r[0]: r[1] for r in cnt_rows}
 
-        def _to_dict(e: Event):
+        def event_to_dict_with_location(e: Event):
+            venue_location = None
+            if e.booking_id:
+                booking = s.get(Booking, e.booking_id)
+                if booking:
+                    venue = s.get(Venue, booking.venue_id)
+                    if venue and venue.geo_point:
+                        venue_location = venue.geo_point  # 假設 geo_point 是 "POINT(lng lat)" 格式的字串
             return {
                 "id": str(e.id),
                 "title": e.title,
-                "sport": e.sport,
+                "sport": e.sport_type,
                 "starts_at": e.starts_at.isoformat(),
                 "ends_at": e.ends_at.isoformat(),
                 "capacity": e.capacity,
                 "attending": counts.get(e.id, 0),
-                "address": e.address,
+                "booking_id": e.booking_id,
+                "venue_location": venue_location,   
                 "status": e.status,
                 "visibility": getattr(e, "visibility", "public"),
             }
 
-        return jsonify([_to_dict(e) for e in rows])
+        return jsonify([event_to_dict_with_location(e) for e in rows])
 
 # ===[ 新增：Owner 審核列表 ]===
 @bp.get("/owner/<uuid:event_id>/join-requests")

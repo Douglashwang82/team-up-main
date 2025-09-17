@@ -27,7 +27,7 @@ export default function NewEvent(){
     setStatus('Please provide valid start and end times.');
     return;
   }
-  const res = await apis.events.createEvent({eventCreateIn: {title,sport: sport as any, starts_at: startsAtDate, ends_at: endsAtDate, capacity, lat, lng}});
+  const res = await apis.events.createEvent({eventCreateIn: {title,sport_type: sport as any, starts_at: startsAtDate, ends_at: endsAtDate, capacity, lat, lng}});
       setStatus('Created: '+res.id);
     }catch(e:any){ setStatus(e?.message||'Failed'); }
   }
