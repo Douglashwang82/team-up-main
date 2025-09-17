@@ -4,7 +4,7 @@ import { apis } from '@/lib/api';
 
 export default function NewEvent(){
   const [title,setTitle]=useState('Basketball 5v5');
-  const [sport,setSport]=useState('basketball');
+  const [sportType,setSportType]=useState('basketball');
   const [startsAt,setStartsAt]=useState('2025-09-01T19:00');
   const [endsAt,setEndsAt]=useState('2025-09-01T21:00');
   const [capacity,setCapacity]=useState(10);
@@ -27,7 +27,7 @@ export default function NewEvent(){
     setStatus('Please provide valid start and end times.');
     return;
   }
-  const res = await apis.events.createEvent({eventCreateIn: {title,sport_type: sport as any, starts_at: startsAtDate, ends_at: endsAtDate, capacity, lat, lng}});
+  const res = await apis.events.createEvent({eventCreateIn: {title,sport_type: sportType as any, starts_at: startsAtDate, ends_at: endsAtDate, capacity, lat, lng}});
       setStatus('Created: '+res.id);
     }catch(e:any){ setStatus(e?.message||'Failed'); }
   }

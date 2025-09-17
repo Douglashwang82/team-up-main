@@ -92,6 +92,22 @@ def seed():
         )
         s.add(event)
 
+        # 建立一個 event (invite_only)
+        event = Event(
+            id=uuid.uuid4(),
+            title="Public Game Test",
+            sport_type="basketball",
+            booking_id=booking.id,
+            owner_user_id=user.id,
+            visibility="public",
+            invite_token=gen_invite_token(),
+            capacity=10,
+            status="open",
+            starts_at=ts1.starts_at,
+            ends_at=ts1.ends_at,
+        )
+        s.add(event)
+
         # owner 加入 participants
         s.add(EventParticipant(
             event_id=event.id,

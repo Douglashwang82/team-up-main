@@ -52,14 +52,11 @@ def get_events():
         if  sport_type:
             q = q.where(Event.sport_type == sport_type)
         if start_at:
-            q = q.where(Event.starts_at >= start_at)
+            q = q.where(Event.starts_at >= _parse_dt(start_at))
         if end_at:
-            q = q.where(Event.ends_at <= end_at)
-        
+            q = q.where(Event.ends_at <= _parse_dt(end_at))
+
         rows = s.execute(q.order_by(Event.starts_at.asc()).offset(offset).limit(limit)).scalars().all()
-        print(start_at, end_at)
-        print('p:', _parse_dt(start_at), _parse_dt(end_at))
-        print(rows)
         ids = [e.id for e in rows]
         counts = {}
         if ids:
@@ -81,7 +78,7 @@ def get_events():
             return {
                 "id": str(e.id),
                 "title": e.title,
-                "sport": e.sport_type,
+                "sport_type": e.sport_type,
                 "starts_at": e.starts_at.isoformat(),
                 "ends_at": e.ends_at.isoformat(),
                 "capacity": e.capacity,
@@ -113,18 +110,24 @@ def get_event(event_id):
             select(func.count()).select_from(EventParticipant)
             .where(EventParticipant.event_id == event_id)
         ) or 0
-
+        venue_location = None
+        if e.booking_id:
+            booking = s.get(Booking, e.booking_id)
+            if booking:
+                venue = s.get(Venue, booking.venue_id)
+                if venue and venue.geo_point:
+                    venue_location = venue.geo_point  # 假設 geo_point 是 "POINT(lng lat)" 格式的字串
 
         return jsonify({
             "id": str(e.id),
             "title": e.title,
-            "sport": e.sport,
+            "sport_type": e.sport_type,
             "starts_at": e.starts_at.isoformat(),
             "ends_at": e.ends_at.isoformat(),
             "capacity": e.capacity,
             "attending": attending,
             "host_id": str(getattr(e, "owner_user_id", None) or getattr(e, "host_id", "") or "") or None,
-            "address": e.address,
+            "venue_location": venue_location,
             "status": e.status,
             "visibility": getattr(e, "visibility", "public"),
             "invite_token": getattr(e, "invite_token", None),
@@ -140,7 +143,7 @@ def create_event():
 
     # Sprint 4：支援兩種建立方式
     # A) 由 booking 建立（推薦）：required = booking_id, title, visibility
-    # B) 舊有地圖直接建立（相容舊前端）：required = title,sport,starts_at,ends_at,capacity,lat,lng
+    # B) 舊有地圖直接建立（相容舊前端）：required = title,sport_type,starts_at,ends_at,capacity,lat,lng
     is_booking_flow = "booking_id" in data
 
     if is_booking_flow:
@@ -168,7 +171,7 @@ def create_event():
             e = Event(
                 title=data["title"],
                 description=data.get("description"),
-                sport=data.get("sport"),
+                sport_type=data.get("sport_type"),
                 booking_id=bk.id,
                 owner_user_id=g.user_id,  # Sprint 4 owner 欄位
                 visibility=visibility,
@@ -184,16 +187,16 @@ def create_event():
             return jsonify({"id": str(e.id), "invite_token": invite_token}), 201
 
     # ---- 舊有流程：直接用座標建立（相容） ----
-    required = ["title","sport","starts_at","ends_at","capacity","lat","lng"]
+    required = ["title","sport_type","starts_at","ends_at","capacity","lat","lng"]
     missing = [k for k in required if k not in data]
     if missing:
         return jsonify({"error": "missing_fields", "fields": missing}), 400
 
     with SessionLocal() as s:
         e = Event(
-            title=data["title"], sport=data["sport"],
+            title=data["title"], sport_type=data["sport_type"],
             starts_at=_parse_dt(data["starts_at"]), ends_at=_parse_dt(data["ends_at"]),
-            capacity=int(data["capacity"]), address=data.get("address"),
+            capacity=int(data["capacity"]),
             # Sprint 4：owner 欄位名稱可能是 owner_user_id；相容舊的 host_id
             owner_user_id=getattr(g, "user_id", None),
             host_id=getattr(g, "user_id", None),  # 若你的模型仍有 host_id，也一併回填
@@ -234,7 +237,7 @@ def list_public_events():
         return jsonify([{
             "id": str(e.id),
             "title": e.title,
-            "sport": e.sport,
+            "sport_type": e.sport_type,
             "starts_at": e.starts_at.isoformat() if e.starts_at else None,
             "ends_at": e.ends_at.isoformat() if e.ends_at else None,
             "capacity": e.capacity,
@@ -260,7 +263,7 @@ def get_invite_only(invite_token: str):
         return jsonify({
             "id": str(e.id),
             "title": e.title,
-            "sport": e.sport,
+            "sport_type": e.sport_type,
             "starts_at": e.starts_at.isoformat() if e.starts_at else None,
             "ends_at": e.ends_at.isoformat() if e.ends_at else None,
             "capacity": e.capacity,
@@ -354,13 +357,13 @@ def get_all_events():
     """
     Fetch all events (no location filter).
     Query params:
-      - sport: optional, e.g. basketball
+      - sport_type: optional, e.g. basketball
       - start, end: ISO8601 strings (inclusive start, inclusive end)
       - limit: default 50, max 500
       - offset: default 0
       - order: 'asc' (default) or 'desc' by starts_at
     """
-    sport = request.args.get("sport")
+    sport_type = request.args.get("sport_type")
     start = request.args.get("start")
     end   = request.args.get("end")
     limit = min(int(request.args.get("limit", 50)), 500)
@@ -370,8 +373,8 @@ def get_all_events():
 
     with SessionLocal() as s:
         q = select(Event)
-        if sport:
-            q = q.where(Event.sport == sport)
+        if sport_type:
+            q = q.where(Event.sport_type == sport_type)
         if start:
             q = q.where(Event.starts_at >= _parse_dt(start))
         if end:
@@ -403,7 +406,7 @@ def get_all_events():
             return {
                 "id": str(e.id),
                 "title": e.title,
-                "sport": e.sport_type,
+                "sport_type": e.sport_type,
                 "starts_at": e.starts_at.isoformat(),
                 "ends_at": e.ends_at.isoformat(),
                 "capacity": e.capacity,

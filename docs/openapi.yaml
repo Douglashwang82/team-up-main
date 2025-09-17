@@ -309,7 +309,6 @@ components:
         capacity: { type: integer, minimum: 1 }
         lat: { type: number }
         lng: { type: number }
-        address: { type: string, nullable: true }
 
     EventOut:
       type: object
@@ -321,5 +320,5 @@ components:
         starts_at: { type: string, format: date-time }
         ends_at: { type: string, format: date-time }
         capacity: { type: integer }
-        address: { type: string, nullable: true }
+        venue_location: { type: string, nullable: true }
         status: { type: string, enum: [upcoming, ongoing, past, cancelled] }
