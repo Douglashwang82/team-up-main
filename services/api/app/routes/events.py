@@ -49,7 +49,7 @@ def get_events():
         if is_nonzero_number(lat) and is_nonzero_number(lng) and is_nonzero_number(radius_km):
             point = func.ST_SetSRID(func.ST_MakePoint(float(lng), float(lat)), 4326)
             q = q.where(func.ST_DWithin(Event.location, point, float(radius_km) * 1000))
-        if  sport_type:
+        if sport_type:
             q = q.where(Event.sport_type == sport_type)
         if start_at:
             q = q.where(Event.starts_at >= _parse_dt(start_at))

@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, date as date_cls
 from uuid import UUID
 
 from flask import Blueprint, request, jsonify
-from sqlalchemy import and_
-from app.extensions import db
+from sqlalchemy import and_, select
+from app.core.db import SessionLocal
 from app.models.venue import Venue, VenueTimeslot
 from app.models.booking import Booking
 from app.core.types import BookingStatus, PaymentStatus
@@ -43,23 +43,20 @@ def search():
     date_str = request.args.get("date")
     sport_type = request.args.get("sport_type")
 
-    q = db.session.query(Venue).join(Venue.timeslots)
-
-    if city:
-        q = q.filter(Venue.city == city)
-
-    if sport_type:
-        q = q.filter(VenueTimeslot.sport_type == sport_type)
-
-    # 日期篩選（當日 00:00 ~ 次日 00:00）
-    if date_str:
-        try:
-            d = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
-        start = datetime.combine(d, datetime.min.time())
-        end = start + timedelta(days=1)
-        q = q.filter(and_(VenueTimeslot.starts_at >= start, VenueTimeslot.starts_at < end))
+    with SessionLocal() as s:
+        q = s.query(Venue).join(Venue.timeslots)
+        if city:
+            q = q.where(Venue.city == city)
+        if sport_type:
+            q = q.where(VenueTimeslot.sport_type == sport_type)
+        if date_str:
+            try:
+                d = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
+            start = datetime.combine(d, datetime.min.time())
+            end = start + timedelta(days=1)
+            q = q.where(and_(VenueTimeslot.starts_at >= start, VenueTimeslot.starts_at < end))
 
     venues = q.all()
 
@@ -72,48 +69,48 @@ def search():
     return jsonify(results), 200
 
 
-@bp.post("/bookings")
-def create_booking():
-    """
-    Body:
-      { "timeslot_id": "<uuid-string>" }
-    """
-    data = request.get_json(silent=True) or {}
-    timeslot_id = data.get("timeslot_id")
-    if not timeslot_id:
-        return jsonify({"error": "timeslot_id is required"}), 400
+# @bp.post("/bookings")
+# def create_booking():
+#     """
+#     Body:
+#       { "timeslot_id": "<uuid-string>" }
+#     """
+#     data = request.get_json(silent=True) or {}
+#     timeslot_id = data.get("timeslot_id")
+#     if not timeslot_id:
+#         return jsonify({"error": "timeslot_id is required"}), 400
 
-    # 這裡先不強制使用者登入，保留 user_id=None；若你要，從 session/jwt 取出 user_id
-    user_id = None
+#     # 這裡先不強制使用者登入，保留 user_id=None；若你要，從 session/jwt 取出 user_id
+#     user_id = None
 
-    # 取時段
-    try:
-        ts_uuid = UUID(timeslot_id)
-    except ValueError:
-        return jsonify({"error": "Invalid timeslot_id"}), 400
+#     # 取時段
+#     try:
+#         ts_uuid = UUID(timeslot_id)
+#     except ValueError:
+#         return jsonify({"error": "Invalid timeslot_id"}), 400
 
-    ts = db.session.get(VenueTimeslot, ts_uuid)
-    if not ts or not ts.is_bookable:
-        return jsonify({"error": "Timeslot not bookable"}), 400
+#     ts = db.session.get(VenueTimeslot, ts_uuid)
+#     if not ts or not ts.is_bookable:
+#         return jsonify({"error": "Timeslot not bookable"}), 400
 
-    # 防雙重預約（DB 層有 UNIQUE(timeslot_id)，此處先行檢查）
-    exists = db.session.query(Booking).filter(Booking.timeslot_id == ts.id).first()
-    if exists:
-        return jsonify({"error": "Timeslot already booked"}), 409
+#     # 防雙重預約（DB 層有 UNIQUE(timeslot_id)，此處先行檢查）
+#     exists = db.session.query(Booking).filter(Booking.timeslot_id == ts.id).first()
+#     if exists:
+#         return jsonify({"error": "Timeslot already booked"}), 409
 
-    booking = Booking(
-        user_id=user_id,
-        venue_id=ts.venue_id,
-        timeslot_id=ts.id,
-        status=BookingStatus.confirmed.value,      # 金流上線前先直接 confirmed
-        payment_status=PaymentStatus.none.value,   # 之後串接金流可 pending→succeeded
-    )
+#     booking = Booking(
+#         user_id=user_id,
+#         venue_id=ts.venue_id,
+#         timeslot_id=ts.id,
+#         status=BookingStatus.confirmed.value,      # 金流上線前先直接 confirmed
+#         payment_status=PaymentStatus.none.value,   # 之後串接金流可 pending→succeeded
+#     )
 
-    db.session.add(booking)
-    db.session.commit()
+#     db.session.add(booking)
+#     db.session.commit()
 
-    return jsonify({
-        "id": str(booking.id),
-        "status": booking.status,
-        "payment_status": booking.payment_status
-    }), 201
+#     return jsonify({
+#         "id": str(booking.id),
+#         "status": booking.status,
+#         "payment_status": booking.payment_status
+#     }), 201
