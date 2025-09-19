@@ -42,13 +42,13 @@ def search():
     city = request.args.get("city")
     date_str = request.args.get("date")
     sport_type = request.args.get("sport_type")
-
+    print('city:', city, 'date:', date_str, 'sport_type:', sport_type)
     with SessionLocal() as s:
         q = s.query(Venue).join(Venue.timeslots)
         if city:
-            q = q.where(Venue.city == city)
+            q = q.where(Venue.city.ilike(f"%{city}%"))
         if sport_type:
-            q = q.where(VenueTimeslot.sport_type == sport_type)
+            q = q.where(VenueTimeslot.sport_type.ilike(f"%{sport_type}%"))
         if date_str:
             try:
                 d = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -59,7 +59,7 @@ def search():
             q = q.where(and_(VenueTimeslot.starts_at >= start, VenueTimeslot.starts_at < end))
 
     venues = q.all()
-
+    print(len(venues), 'venues found')
     # 組裝：每個場地回傳可預約時段（is_bookable=True）
     results = []
     for v in venues:

@@ -130,7 +130,6 @@ export default function EventsPage() {
                 <div style={{fontWeight:700}}>{ev.title}</div>
                 <div className="small">{ev.sport_type} • {ev?.starts_at.toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
                 {typeof ev.capacity === 'number' && <div className="small">Attending {ev.capacity}/{ev.capacity}</div>}
-                {ev.address && <div className="small">{ev.address}</div>}
               </div>
               <JoinButtons id={ev.id} />
             </div>

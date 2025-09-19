@@ -285,9 +285,9 @@ paths:
           required: true
           schema: { type: string }
         - in: query
-          name: date
+          name: start_at
           required: true
-          schema: { type: string, format: date }
+          schema: { type: string, format: date-time }
         - in: query
           name: sport_type
           schema: { type: string }  
