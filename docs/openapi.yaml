@@ -309,6 +309,44 @@ paths:
         '400':
           description: Query parameter is required
 
+  /venues/booking:
+    post:
+      tags: [Venues]
+      summary: Book a venue timeslot
+      operationId: bookVenueTimeslot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [timeslot_id]
+              properties:
+                timeslot_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Booking successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, status, payment_status ]
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [confirmed, cancelled]
+                  payment_status:
+                    type: string
+                    enum: [none, pending, succeeded]
+        '400':
+          description: Invalid timeslot_id / Timeslot not bookable
+        '401':
+          description: Unauthorized
 components:
   schemas:
     Tokens:

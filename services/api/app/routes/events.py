@@ -167,7 +167,11 @@ def create_event():
                 return jsonify({"error": "invalid_visibility"}), 400
 
             invite_token = gen_invite_token() if visibility == "invite_only" else None
-
+            
+            q = select(Booking).where(Booking.id == bk.id)
+            if q.select(Event).where(Event.booking_id == bk.id).first():
+                return jsonify({"error": "event_already_exists_for_booking"}), 400
+            
             e = Event(
                 title=data["title"],
                 description=data.get("description"),
@@ -335,13 +339,12 @@ def leave_event(event_id):
 # ===[ 既有：參與者列表（保留） ]===
 @bp.get("/<uuid:event_id>/participants")
 def event_participants(event_id):
-    rows = s.execute(
-        select(
-            EventParticipant.user_id,
-            EventParticipant.display_name,
-            EventParticipant.email
-        ).where(EventParticipant.event_id == event_id)
-    ).all()
+    with SessionLocal() as s:
+        rows = s.execute(
+            select(EventParticipant.user_id, EventParticipant.display_name, EventParticipant.email)
+            .where(EventParticipant.event_id == event_id)
+            .order_by(EventParticipant.created_at.asc())
+        ).all()
     return jsonify([
         {
             "user_id": str(r[0]) if r[0] else None,

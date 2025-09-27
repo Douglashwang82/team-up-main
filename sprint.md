@@ -193,12 +193,12 @@
 ### 1. 場地搜尋與預約
 - [x] 新增 `venues` 與 `venue_timeslots` schema
 - [x] 新增 `bookings` schema，確保同時段唯一預約
-- [ ] API: `GET /venues/search` 查詢可租場地/時段
-- [ ] API: `POST /bookings` 建立預約，狀態含 pending/confirmed/cancelled
-- [ ] 基礎付款狀態欄位（先 mock，不串金流）
+- [x] API: `GET /venues/search` 查詢可租場地/時段
+- [x] API: `POST /bookings` 建立預約，狀態含 pending/confirmed/cancelled
+- [x] 基礎付款狀態欄位（先 mock，不串金流）
 
 ### 2. Event 建立與可見性
-- [ ] 在 `events` schema 增加欄位：
+- [x] 在 `events` schema 增加欄位：
   - `booking_id`、`visibility`（public / invite_only / private）
   - `owner_user_id`
   - `invite_token`（invite_only 產生限定 URL）

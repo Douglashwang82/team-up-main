@@ -6,7 +6,7 @@ from app.core.db import Base
 
 class Event(Base):
     __tablename__ = "events"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(sa.Text, nullable=False)
     description: Mapped[str | None]
     sport_type: Mapped[str | None]
