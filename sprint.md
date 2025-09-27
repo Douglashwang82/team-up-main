@@ -202,16 +202,16 @@
   - `booking_id`、`visibility`（public / invite_only / private）
   - `owner_user_id`
   - `invite_token`（invite_only 產生限定 URL）
-- [ ] API: `POST /events` 由 booking 建立 event
-- [ ] API: `GET /events/public` 可搜尋公開活動
-- [ ] API: `GET /events/{invite_token}` 取得 invite_only 活動資訊
+- [x] API: `POST /events` 由 booking 建立 event
+- [x] API: `GET /events/public` 可搜尋公開活動
+- [x] API: `GET /events/{invite_token}` 取得 invite_only 活動資訊
 
 ### 3. 申請與審核流程
-- [ ] 新增 `event_join_requests` schema（支援非會員提交）
-- [ ] 在 `event_participants` 增加 `display_name` / `email` / `phone`
-- [ ] API: `POST /events/{id}/join-requests` 提交申請
-- [ ] API: `GET /owner/events/{id}/join-requests` 列出申請（僅 owner）
-- [ ] API: `POST /owner/join-requests/{id}` approve/reject
+- [x] 新增 `event_join_requests` schema（支援非會員提交）
+- [x] 在 `event_participants` 增加 `display_name` / `email` / `phone`
+- [x] API: `POST /events/{id}/join-requests` 提交申請
+- [x] API: `GET /events/owner/{id}/join-requests` 列出申請（僅 owner）
+- [x] API: `POST /events/owner/join-requests/{id}` approve/reject
 
 ### 4. 前端 UI/UX
 - [ ] **場地探索頁**：搜尋城市/日期/運動種類，顯示場地卡片與可租時段

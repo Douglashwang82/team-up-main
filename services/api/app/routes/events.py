@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, g
-from app.models.venue import Venue
+from app.models.venue import Venue, VenueTimeslot
 from sqlalchemy import select, func, and_, desc, delete
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
@@ -158,20 +158,24 @@ def create_event():
                 bk_id = UUID(str(data["booking_id"]))
             except ValueError:
                 return jsonify({"error": "invalid_booking_id"}), 400
-            bk = s.get(Booking, bk_id)
-            if not bk:
+            bk_with_ts = s.execute(
+                select(Booking, VenueTimeslot)
+                .join(VenueTimeslot, Booking.timeslot_id == VenueTimeslot.id)
+                .where(Booking.id == bk_id)).first()
+            if not bk_with_ts:
                 return jsonify({"error": "booking_not_found"}), 404
-
+            bk, ts = bk_with_ts
             visibility = data["visibility"]
             if visibility not in ("public", "invite_only", "private"):
                 return jsonify({"error": "invalid_visibility"}), 400
 
             invite_token = gen_invite_token() if visibility == "invite_only" else None
             
-            q = select(Booking).where(Booking.id == bk.id)
-            if q.select(Event).where(Event.booking_id == bk.id).first():
+            q = select(Event).where(Event.booking_id == bk.id)
+            existing = s.execute(q).scalar_one_or_none()
+            if existing:
                 return jsonify({"error": "event_already_exists_for_booking"}), 400
-            
+
             e = Event(
                 title=data["title"],
                 description=data.get("description"),
@@ -183,8 +187,8 @@ def create_event():
                 join_review_required=True,  # 依需求：皆需審核
                 status="open",
                 # 可選：若要把 timeslot 時間複製到 event
-                starts_at=getattr(bk, "starts_at", None) or data.get("starts_at") and _parse_dt(data["starts_at"]),
-                ends_at=getattr(bk, "ends_at", None) or data.get("ends_at") and _parse_dt(data["ends_at"]),
+                starts_at=getattr(ts, "starts_at", None),
+                ends_at=getattr(ts, "ends_at", None) or data.get("ends_at") and _parse_dt(data["ends_at"]),
             )
             s.add(e)
             s.commit(); s.refresh(e)
@@ -216,7 +220,7 @@ def create_event():
 
 # ===[ 新增：公開活動清單（僅 public） ]===
 @bp.get("/public")
-def list_public_events():
+def get_public_events():
     limit = min(int(request.args.get("limit", 50)), 200)
     offset = max(int(request.args.get("offset", 0)), 0)
     with SessionLocal() as s:
