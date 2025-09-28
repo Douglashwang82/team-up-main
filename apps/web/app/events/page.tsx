@@ -131,47 +131,10 @@ export default function EventsPage() {
                 <div className="small">{ev.sport_type} • {ev?.starts_at.toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
                 {typeof ev.capacity === 'number' && <div className="small">Attending {ev.capacity}/{ev.capacity}</div>}
               </div>
-              <JoinButtons id={ev.id} />
             </div>
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function JoinButtons({ id }: { id: string }) {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function join() {
-    setLoading(true); setMessage(null);
-    try {
-      await apis.events.joinEvent({id});
-      setMessage('Joined');
-    } catch (e: any) {
-      setMessage(e?.message ?? 'Failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-  async function leave() {
-    setLoading(true); setMessage(null);
-    try {
-      await apis.events.leaveEvent({id});
-      setMessage('Left');
-    } catch (e: any) {
-      setMessage(e?.message ?? 'Failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div style={{display:'flex', gap:8}}>
-      <button onClick={join} className="btn" disabled={loading}>Join</button>
-      <button onClick={leave} className="btn" disabled={loading} style={{background:'#6b7280'}}>Leave</button>
-      {message && <span className="small">{message}</span>}
     </div>
   );
 }

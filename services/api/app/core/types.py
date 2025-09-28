@@ -20,3 +20,8 @@ class PaymentStatus(str, Enum):
     pending = "pending"
     succeeded = "succeeded"
     failed = "failed"
+
+class joinRequestStatus(str, Enum):
+    submitted = "submitted"
+    approved = "approved"
+    rejected = "rejected"

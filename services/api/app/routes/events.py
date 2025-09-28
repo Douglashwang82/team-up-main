@@ -7,7 +7,7 @@ from app.core.db import SessionLocal
 from app.models.event import Event
 from app.models.participant import EventParticipant
 from app.models.user import User
-from app.core.auth import require_auth
+from app.core.auth import optional_auth, require_auth
 from app.utils import is_nonzero_number
 
 # ==== Sprint 4 新增的 imports ====
@@ -254,22 +254,14 @@ def get_invite_only(invite_token: str):
 
 # ===[ 變更：加入活動（改為送出申請，支援非會員） ]===
 @bp.post("/<uuid:event_id>/join")
+@optional_auth
 def join_event(event_id):
     """
     Sprint 4 規則：參與者（含非會員）先送出申請，owner 審核通過才成為參與者。
     若前端仍呼叫此舊路徑，我們轉為建立 join_request。
     """
+    user_id = getattr(g, "user_id", None)
     data = request.get_json(silent=True) or {}
-    applicant_name = data.get("applicant_name")
-    applicant_email = data.get("applicant_email")
-    applicant_phone = data.get("applicant_phone")
-    message = data.get("message")
-
-    if not applicant_name:
-        # 若有登入，可用使用者名稱；否則要求填
-        applicant_name = getattr(g, "user_display_name", None)
-    if not applicant_name:
-        return jsonify({"error": "applicant_name_required"}), 400
 
     with SessionLocal() as s:
         e = s.get(Event, event_id)
@@ -278,17 +270,41 @@ def join_event(event_id):
 
         if e.visibility == "private":
             return jsonify({"error": "private_event"}), 403
+        if user_id:
+            # 會員可不填 email/phone（用會員資料）
+            u = s.get(User, user_id)
 
-        # 建立 join request（允許匿名 → applicant_user_id 可為 None）
-        jr = EventJoinRequest(
-            event_id=e.id,
-            applicant_user_id=getattr(g, "user_id", None),
-            applicant_name=applicant_name,
-            applicant_email=applicant_email,
-            applicant_phone=applicant_phone,
-            message=message,
-            status="submitted",
-        )
+            if not u:
+                return jsonify({"error": "user_not_found"}), 404
+            jr = EventJoinRequest(
+                event_id=event_id,
+                applicant_user_id=user_id,
+                applicant_name=u.display_name,
+                applicant_email=u.email,
+                applicant_phone=u.phone,
+                message=None,
+                status="submitted",
+            )
+        else:
+            # 非會員需填 email（方便 owner 聯絡）
+            applicant_name = data.get("applicant_name")
+            applicant_email = data.get("applicant_email")
+            applicant_phone = data.get("applicant_phone")
+            message = data.get("message")
+            if not applicant_name:
+                return jsonify({"error": "applicant_name_required"}), 400
+            if not applicant_email:
+                return jsonify({"error": "applicant_email_required_for_anonymous"}), 400
+            jr = EventJoinRequest(
+                event_id=event_id,
+                applicant_user_id=None,
+                applicant_name=applicant_name,
+                applicant_email=applicant_email,
+                applicant_phone=applicant_phone,
+                message=message,
+                status='submitted',
+            )
+
         s.add(jr)
         s.commit(); s.refresh(jr)
 
@@ -297,26 +313,48 @@ def join_event(event_id):
             "status": jr.status
         }), 201
 
-# ===[ 既有：退出活動（保留） ]===
+# ===[ 既有：退出活動，支援非會員 ]===
 @bp.delete("/<uuid:event_id>/leave")
-@require_auth
+@optional_auth
 def leave_event(event_id):
+    """
+    允許會員退出活動（刪除參與者紀錄）。
+    非會員仍可退出活動（刪除參與者紀錄）。
+    """
+    data = request.get_json(silent=True) or {}
+    user_id = getattr(g, "user_id", None)
+    participant_id = data.get("participant_id")
+    if not participant_id and not user_id:
+        return jsonify({"error": "participant_id_required_for_anonymous"}), 400
     with SessionLocal() as s:
-        s.execute(
-            delete(EventParticipant).where(
-                (EventParticipant.event_id == event_id) &
-                (EventParticipant.user_id == g.user_id)
-            )
-        )
-        s.commit()
-    return jsonify({"status": "left"})
+        e = s.get(Event, event_id)
+        if not e:
+            return jsonify({"error": "not_found"}), 404
 
-# ===[ 既有：參與者列表（保留） ]===
+        q = select(EventParticipant).where(EventParticipant.event_id == event_id)
+        if user_id:
+            q = q.where(EventParticipant.user_id == user_id)
+        else:
+            try:
+                pid_uuid = UUID(participant_id)
+            except (ValueError, TypeError):
+                return jsonify({"error": "invalid_participant_id"}), 400
+            q = q.where(and_(EventParticipant.id == pid_uuid, EventParticipant.user_id.is_(None)))
+
+        ep = s.execute(q).scalar_one_or_none()
+        if not ep:
+            return jsonify({"error": "not_participant"}), 400
+
+        s.delete(ep)
+        s.commit()
+        return jsonify({"result": "left"}), 200
+
+# ===[ 既有：參與者列表 ]===
 @bp.get("/<uuid:event_id>/participants")
 def event_participants(event_id):
     with SessionLocal() as s:
         rows = s.execute(
-            select(EventParticipant.user_id, EventParticipant.display_name, EventParticipant.email)
+            select(EventParticipant.user_id, EventParticipant.display_name, EventParticipant.email, EventParticipant.id)
             .where(EventParticipant.event_id == event_id)
             .order_by(EventParticipant.created_at.asc())
         ).all()
@@ -325,12 +363,12 @@ def event_participants(event_id):
             "user_id": str(r[0]) if r[0] else None,
             "display_name": r[1],
             "email": r[2],
+            "participant_id": str(r[3]) if r[3] else None,
         } for r in rows
     ])
 
-# ===[ 既有：全列表（保留，並帶上 visibility） ]===
+# ===[ 既有：全列表 ]===
 @bp.get("/all")
-@require_auth
 def get_all_events():
     """
     Fetch all events (no location filter).
@@ -446,6 +484,9 @@ def owner_review_request(req_id):
         owner_id = getattr(e, "owner_user_id", None) or getattr(e, "host_id", None)
         if not owner_id or str(owner_id) != str(g.user_id):
             return jsonify({"error": "not_owner"}), 403
+
+        if jr.status != "submitted":
+            return jsonify({"error": "already_reviewed"}), 400
 
         if action == "approve":
             # 核准 → 寫入 participants（非會員帶入申請資料）

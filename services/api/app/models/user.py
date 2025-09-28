@@ -12,3 +12,4 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String)
     display_name: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    phone: Mapped[str | None] = mapped_column(String, nullable=True)

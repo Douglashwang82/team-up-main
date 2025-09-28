@@ -3,6 +3,7 @@ import uuid, sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.db import Base
+from app.core.types import joinRequestStatus
 
 class EventJoinRequest(Base):
     __tablename__ = "event_join_requests"
@@ -13,6 +14,6 @@ class EventJoinRequest(Base):
     applicant_email: Mapped[str | None]
     applicant_phone: Mapped[str | None]
     message: Mapped[str | None]
-    status: Mapped[str] = mapped_column(sa.Text, default="submitted", nullable=False)
+    status: Mapped[str] = mapped_column(sa.Text, default=joinRequestStatus.submitted, nullable=False)
     created_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True), server_default=sa.text("now()"))
     reviewed_at: Mapped[sa.DateTime | None] = mapped_column(sa.DateTime(timezone=True))
