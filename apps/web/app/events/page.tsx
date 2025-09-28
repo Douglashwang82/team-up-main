@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 import { apis } from '@/lib/api';
 import type { EventOut as ApiEventOut } from '@team-up-main/api-client';
 import { toUtcIso } from '@/lib/utils';
@@ -10,6 +12,7 @@ const SPORTS = ['basketball','badminton','running','gym','tennis'] as const;
 
 
 export default function EventsPage() {
+  const router = useRouter();
   const [lat, setLat] = useState<number | ''>('');
   const [lng, setLng] = useState<number | ''>('');
   const [radius, setRadius] = useState<number>(5);
@@ -128,8 +131,15 @@ export default function EventsPage() {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
               <div>
                 <div style={{fontWeight:700}}>{ev.title}</div>
-                <div className="small">{ev.sport_type} • {ev?.starts_at.toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
+                <div className="small">{ev.sport_type} • {new Date(ev.starts_at).toLocaleString()} - {new Date(ev.ends_at).toLocaleString()}</div>
                 {typeof ev.capacity === 'number' && <div className="small">Attending {ev.capacity}/{ev.capacity}</div>}
+              <button
+                className="btn"
+                onClick={() => router.push(`/events/${ev.id}`)}
+                style={{marginLeft: '1rem'}}
+              >
+                View
+              </button>
               </div>
             </div>
           </div>
