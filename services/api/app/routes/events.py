@@ -141,82 +141,53 @@ def get_event(event_id):
 def create_event():
     data = request.get_json() or {}
 
-    # Sprint 4：支援兩種建立方式
+    # Sprint 4：更新建立方式，只支援booking_id
     # A) 由 booking 建立（推薦）：required = booking_id, title, visibility
-    # B) 舊有地圖直接建立（相容舊前端）：required = title,sport_type,starts_at,ends_at,capacity,lat,lng
-    is_booking_flow = "booking_id" in data
 
-    if is_booking_flow:
-        required = ["booking_id", "title", "visibility"]
-        missing = [k for k in required if k not in data]
-        if missing:
-            return jsonify({"error": "missing_fields", "fields": missing}), 400
-
-        with SessionLocal() as s:
-            # 1) 取 booking
-            try:
-                bk_id = UUID(str(data["booking_id"]))
-            except ValueError:
-                return jsonify({"error": "invalid_booking_id"}), 400
-            bk_with_ts = s.execute(
-                select(Booking, VenueTimeslot)
-                .join(VenueTimeslot, Booking.timeslot_id == VenueTimeslot.id)
-                .where(Booking.id == bk_id)).first()
-            if not bk_with_ts:
-                return jsonify({"error": "booking_not_found"}), 404
-            bk, ts = bk_with_ts
-            visibility = data["visibility"]
-            if visibility not in ("public", "invite_only", "private"):
-                return jsonify({"error": "invalid_visibility"}), 400
-
-            invite_token = gen_invite_token() if visibility == "invite_only" else None
-            
-            q = select(Event).where(Event.booking_id == bk.id)
-            existing = s.execute(q).scalar_one_or_none()
-            if existing:
-                return jsonify({"error": "event_already_exists_for_booking"}), 400
-
-            e = Event(
-                title=data["title"],
-                description=data.get("description"),
-                sport_type=data.get("sport_type"),
-                booking_id=bk.id,
-                owner_user_id=g.user_id,  # Sprint 4 owner 欄位
-                visibility=visibility,
-                invite_token=invite_token,
-                join_review_required=True,  # 依需求：皆需審核
-                status="open",
-                # 可選：若要把 timeslot 時間複製到 event
-                starts_at=getattr(ts, "starts_at", None),
-                ends_at=getattr(ts, "ends_at", None) or data.get("ends_at") and _parse_dt(data["ends_at"]),
-            )
-            s.add(e)
-            s.commit(); s.refresh(e)
-            return jsonify({"id": str(e.id), "invite_token": invite_token}), 201
-
-    # ---- 舊有流程：直接用座標建立（相容） ----
-    required = ["title","sport_type","starts_at","ends_at","capacity","lat","lng"]
+    required = ["booking_id", "title", "visibility"]
     missing = [k for k in required if k not in data]
     if missing:
         return jsonify({"error": "missing_fields", "fields": missing}), 400
 
     with SessionLocal() as s:
+        # 1) 取 booking
+        try:
+            bk_id = UUID(str(data["booking_id"]))
+        except ValueError:
+            return jsonify({"error": "invalid_booking_id"}), 400
+        bk_with_ts = s.execute(
+            select(Booking, VenueTimeslot)
+            .join(VenueTimeslot, Booking.timeslot_id == VenueTimeslot.id)
+            .where(Booking.id == bk_id)).first()
+        if not bk_with_ts:
+            return jsonify({"error": "booking_not_found"}), 404
+        bk, ts = bk_with_ts
+        visibility = data["visibility"]
+        if visibility not in ("public", "invite_only", "private"):
+            return jsonify({"error": "invalid_visibility"}), 400
+        invite_token = gen_invite_token() if visibility == "invite_only" else None
+        
+        q = select(Event).where(Event.booking_id == bk.id)
+        existing = s.execute(q).scalar_one_or_none()
+        if existing:
+            return jsonify({"error": "event_already_exists_for_booking"}), 400
         e = Event(
-            title=data["title"], sport_type=data["sport_type"],
-            starts_at=_parse_dt(data["starts_at"]), ends_at=_parse_dt(data["ends_at"]),
-            capacity=int(data["capacity"]),
-            # Sprint 4：owner 欄位名稱可能是 owner_user_id；相容舊的 host_id
-            owner_user_id=getattr(g, "user_id", None),
-            host_id=getattr(g, "user_id", None),  # 若你的模型仍有 host_id，也一併回填
-            visibility=data.get("visibility", "public"),
-            invite_token=gen_invite_token() if data.get("visibility") == "invite_only" else None,
-            join_review_required=True,
-            location=func.ST_SetSRID(func.ST_MakePoint(float(data["lng"]), float(data["lat"])), 4326),
+            title=data["title"],
+            description=data.get("description"),
+            sport_type=data.get("sport_type"),
+            booking_id=bk.id,
+            owner_user_id=g.user_id,  # Sprint 4 owner 欄位
+            visibility=visibility,
+            invite_token=invite_token,
+            join_review_required=True,  # 依需求：皆需審核
             status="open",
+            # 可選：若要把 timeslot 時間複製到 event
+            starts_at=getattr(ts, "starts_at", None),
+            ends_at=getattr(ts, "ends_at", None) or data.get("ends_at") and _parse_dt(data["ends_at"]),
         )
         s.add(e)
         s.commit(); s.refresh(e)
-        return jsonify({"id": str(e.id), "invite_token": e.invite_token}), 201
+        return jsonify({"id": str(e.id), "invite_token": invite_token}), 201
 
 # ===[ 新增：公開活動清單（僅 public） ]===
 @bp.get("/public")
