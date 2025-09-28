@@ -214,7 +214,7 @@
 - [x] API: `POST /events/owner/join-requests/{id}` approve/reject
 
 ### 4. 前端 UI/UX
-- [ ] **場地探索頁**：搜尋城市/日期/運動種類，顯示場地卡片與可租時段
+- [x] **場地探索頁**：搜尋城市/日期/運動種類，顯示場地卡片與可租時段
 - [ ] **預約流程頁**：選擇時段 → 預約成功 → 引導建立活動
 - [ ] **建立活動 Wizard**：選擇可見性（public / invite_only / private）
 - [ ] **活動頁面**：

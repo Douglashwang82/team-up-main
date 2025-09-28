@@ -62,7 +62,8 @@ def search():
     results = []
     for v in venues:
         timeslots = [_serialize_timeslot(ts) for ts in v.timeslots if ts.is_bookable]
-        results.append({"venue": _serialize_venue(v), "timeslots": timeslots})
+        if timeslots:
+            results.append({"venue": _serialize_venue(v), "timeslots": timeslots})
 
     return jsonify(results), 200
 

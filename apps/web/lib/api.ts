@@ -13,7 +13,8 @@ import {
   // 下面的類名依你的 OpenAPI tag 生成，常見如：
   // EventsApi, AuthApi, HealthApi ...
   // 如果你的類名不同，改成實際輸出的名稱即可。
-  AuthApi, EventsApi, HealthApi
+  AuthApi, EventsApi, HealthApi,
+  VenuesApi
 } from '@team-up-main/api-client';
 
 const basePath =
@@ -113,6 +114,7 @@ export const apis = {
   auth: new AuthApi(config),
   events: new EventsApi(config),
   health: new HealthApi(config),
+  venues: new VenuesApi(config),
 };
 
 // 若你偏好與先前相似的用法，也可包一層別名（依實際方法名調整或直接用 apis.* 即可）

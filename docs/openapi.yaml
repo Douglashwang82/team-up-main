@@ -274,23 +274,61 @@ paths:
                 items:
                   $ref: '#/components/schemas/EventOut'
 
-  /venues/search:
+  /events/public:
     get:
-      tags: [Venues]
-      summary: Search venues by query
-      operationId: searchVenues
+      tags: [Events]
+      summary: Get public events (可搜尋公開活動)
+      operationId: getPublicEvents
       parameters:
         - in: query
-          name: city
-          required: true
+          name: sport_type
           schema: { type: string }
         - in: query
           name: start_at
-          required: true
           schema: { type: string, format: date-time }
         - in: query
-          name: sport_type
-          schema: { type: string }  
+          name: end_at
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventOut'
+  
+  /events/token/{invite_token}:
+    get:
+      tags: [Events]
+      summary: Get invite-only event by token (憑 token 讀取 invite-only 活動資訊)
+      operationId: getInviteOnlyEvent
+      parameters:
+        - in: path
+          name: invite_token
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventOut'
+        '404':
+          description: Event not found
+
+  /events/{id}/participants:
+    get:
+      tags: [Events]
+      summary: List event participants
+      operationId: listEventParticipants
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
       responses:
         '200':
           description: OK
@@ -300,16 +338,156 @@ paths:
                 type: array
                 items:
                   type: object
-                  required: [name, address, lat, lng]
+                  required: [id, email, display_name]
                   properties:
-                    name: { type: string }
-                    address: { type: string }
-                    lat: { type: number }
-                    lng: { type: number }
-        '400':
-          description: Query parameter is required
+                    id:
+                      type: string
+                      format: uuid
+                    email:
+                      type: string
+                      format: email
+                    display_name:
+                      type: string
+                      nullable: true
+        '404':
+          description: Event not found
 
-  /venues/booking:
+  /events/owner/{id}/join-requests:
+    get:
+      tags: [Events]
+      summary: List join requests for owned event
+      operationId: listJoinRequests
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, user_id, event_id, status, created_at]
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    user_id:
+                      type: string
+                      format: uuid
+                    event_id:
+                      type: string
+                      format: uuid
+                    status:
+                      type: string
+                      enum: [pending, approved, rejected]
+                    created_at:
+                      type: string
+                      format: date-time
+        '404':
+          description: Event not found
+        '403':
+          description: Forbidden
+
+  /events/owner/<uuid:req_id>/join-requests:
+    post:
+      tags: [Events]
+      summary: Approve or reject a join request (Owner 審核 approve/reject)
+      operationId: reviewJoinRequest
+      parameters:
+        - in: path
+          name: req_id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid action
+        '404':
+          description: Request not found
+        '403':
+          description: Forbidden
+
+  /venues/search:
+    get:
+      tags: [Venues]
+      summary: Search available venues and timeslots (可搜尋公開活動)
+      operationId: searchVenues
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+        - in: query
+          name: sport_type
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [venue, timeslots]
+                  properties:
+                    venue:
+                      type: object
+                      required: [id, name, address, lat, lng]
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        lat:
+                          type: number
+                        lng:
+                          type: number
+                    timeslots:
+                      type: array
+                      items:
+                        type: object
+                        required: [id, start_time, end_time, price, is_bookable]
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          start_time:
+                            type: string
+                            format: date-time
+                          end_time:
+                            type: string
+                            format: date-time
+                          price:
+                            type: number
+                          is_bookable:
+                            type: boolean
+        '400':
+          description: city_date_required
+
+  /venues/bookings:
     post:
       tags: [Venues]
       summary: Book a venue timeslot
