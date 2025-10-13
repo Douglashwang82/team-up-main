@@ -3,6 +3,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.db import Base
+from app.core.types import Visibility
 
 class TeamUp(Base):
     __tablename__ = "teamups"
@@ -23,7 +24,11 @@ class TeamUp(Base):
     max_participants: Mapped[int] = mapped_column(sa.Integer, default=10, nullable=False)
     deadline: Mapped[sa.DateTime | None] = mapped_column(sa.DateTime(timezone=True))
     sport_type: Mapped[str | None] = mapped_column(sa.Text)
-    
+
+    # 可見性設定
+    visibility: Mapped[str] = mapped_column(sa.Text, default=Visibility.public.value, nullable=False)
+    invite_token: Mapped[str | None] = mapped_column(sa.Text, unique=True, nullable=True)
+
     # 狀態管理
     status: Mapped[str] = mapped_column(sa.Text, default="open", nullable=False)  # open, closed, confirmed, cancelled
     
@@ -70,7 +75,10 @@ class TeamUp(Base):
         sa.CheckConstraint("min_participants > 0", name="ck_teamup_min_participants_positive"),
         sa.CheckConstraint("max_participants >= min_participants", name="ck_teamup_max_gte_min"),
         sa.CheckConstraint("status IN ('open', 'closed', 'confirmed', 'cancelled')", name="ck_teamup_status"),
+        sa.CheckConstraint("visibility IN ('public', 'invite_only', 'private')", name="ck_teamup_visibility"),
         sa.Index("ix_teamups_court_timeslot_status", "court_timeslot_id", "status"),
         sa.Index("ix_teamups_owner_status", "owner_user_id", "status"),
+        sa.Index("ix_teamups_visibility", "visibility"),
+        sa.Index("ix_teamups_invite_token", "invite_token"),
     )
 

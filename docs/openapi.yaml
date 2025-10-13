@@ -792,7 +792,7 @@ paths:
   /teamups:
     get:
       tags: [TeamUps]
-      summary: List teamups with filters
+      summary: List teamups with filters (all visibility)
       operationId: listTeamups
       parameters:
         - in: query
@@ -803,20 +803,61 @@ paths:
           schema: { type: string }
         - in: query
           name: status
-          schema: 
+          schema:
             type: string
             enum: [open, closed, confirmed, cancelled]
             default: open
         - in: query
           name: limit
-          schema: 
+          schema:
             type: integer
             minimum: 1
             maximum: 100
             default: 20
         - in: query
           name: offset
-          schema: 
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamUpListItem'
+
+  /teamups/public:
+    get:
+      tags: [TeamUps]
+      summary: Get public teamups (可搜尋公開組團)
+      operationId: getPublicTeamups
+      parameters:
+        - in: query
+          name: sport_type
+          schema: { type: string }
+        - in: query
+          name: city
+          schema: { type: string }
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [open, closed, confirmed, cancelled]
+            default: open
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: offset
+          schema:
             type: integer
             minimum: 0
             default: 0
@@ -865,6 +906,26 @@ paths:
           name: id
           required: true
           schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamUpDetail'
+        '404':
+          description: TeamUp not found
+
+  /teamups/token/{invite_token}:
+    get:
+      tags: [TeamUps]
+      summary: Get invite-only teamup by token (憑 token 讀取 invite-only 組團資訊)
+      operationId: getInviteOnlyTeamup
+      parameters:
+        - in: path
+          name: invite_token
+          required: true
+          schema: { type: string }
       responses:
         '200':
           description: OK
@@ -1086,6 +1147,10 @@ components:
         sport_type:
           type: string
           nullable: true
+        visibility:
+          type: string
+          enum: [public, invite_only, private]
+          default: public
 
     TeamUpCreateResponse:
       type: object
@@ -1124,6 +1189,12 @@ components:
         status:
           type: string
           enum: [open, closed, confirmed, cancelled]
+        visibility:
+          type: string
+          enum: [public, invite_only, private]
+        invite_token:
+          type: string
+          nullable: true
         min_participants:
           type: integer
         max_participants:
@@ -1166,6 +1237,12 @@ components:
         status:
           type: string
           enum: [open, closed, confirmed, cancelled]
+        visibility:
+          type: string
+          enum: [public, invite_only, private]
+        invite_token:
+          type: string
+          nullable: true
         min_participants:
           type: integer
         max_participants:
