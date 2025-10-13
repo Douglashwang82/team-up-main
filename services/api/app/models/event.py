@@ -23,3 +23,13 @@ class Event(Base):
     created_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True), server_default=sa.text("now()"))
     updated_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True), server_default=sa.text("now()"))
     participants: Mapped[list["EventParticipant"]] = relationship(back_populates="event", cascade="all, delete-orphan")
+    
+    # New booking assignment relationship
+    booking_assignments: Mapped[list["BookingAssignment"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
+    )
+    
+    # New many-to-many TeamUp relationship
+    teamups: Mapped[list["EventTeamUp"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
+    )

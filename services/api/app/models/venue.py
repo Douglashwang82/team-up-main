@@ -63,6 +63,11 @@ class Venue(Base):
     courts: Mapped[list[Court]] = relationship(
         back_populates="venue", cascade="all, delete-orphan"
     )
+    
+    # Bookings for this venue
+    bookings: Mapped[list["Booking"]] = relationship(
+        back_populates="venue", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         sa.Index("ix_venues_city", "city"),
@@ -201,6 +206,16 @@ class VenueTimeslot(Base):
     )
 
     venue: Mapped[Venue] = relationship(back_populates="venue_timeslots")
+    
+    # TeamUp many-to-many relationship
+    teamup_timeslots: Mapped[list["TeamUpTimeslot"]] = relationship(
+        back_populates="venue_timeslot", cascade="all, delete-orphan"
+    )
+    
+    # Bookings for this timeslot
+    bookings: Mapped[list["Booking"]] = relationship(
+        back_populates="timeslot", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         sa.CheckConstraint("ends_at > starts_at", name="ck_venue_timeslot_valid_range"),
@@ -273,6 +288,16 @@ class CourtTimeslot(Base):
     )
 
     court: Mapped[Court] = relationship(back_populates="timeslots")
+    
+    # TeamUp 關聯 (legacy single relationship)
+    teamups: Mapped[list["TeamUp"]] = relationship(
+        back_populates="court_timeslot", cascade="all, delete-orphan"
+    )
+    
+    # New many-to-many TeamUp relationship
+    teamup_timeslots: Mapped[list["TeamUpTimeslot"]] = relationship(
+        back_populates="court_timeslot", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         sa.CheckConstraint("ends_at > starts_at", name="ck_court_timeslot_valid_range"),
