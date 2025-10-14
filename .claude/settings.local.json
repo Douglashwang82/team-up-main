@@ -3,7 +3,8 @@
     "allow": [
       "mcp__ide__getDiagnostics",
       "Bash(npx tsc:*)",
-      "Bash(python -m alembic revision:*)"
+      "Bash(python -m alembic revision:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

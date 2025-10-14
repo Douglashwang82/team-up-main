@@ -14,7 +14,8 @@ import {
   // EventsApi, AuthApi, HealthApi ...
   // 如果你的類名不同，改成實際輸出的名稱即可。
   AuthApi, EventsApi, HealthApi,
-  VenuesApi
+  VenuesApi,
+  // TeamUpsApi, // TODO: Uncomment when TeamUps API is generated
 } from '@team-up-main/api-client';
 
 const basePath =
@@ -115,6 +116,45 @@ export const apis = {
   events: new EventsApi(config),
   health: new HealthApi(config),
   venues: new VenuesApi(config),
+  // TODO: Add TeamUps API once it's generated from OpenAPI spec
+  // teamups: new TeamUpsApi(config),
+
+  // Temporary mock for TeamUps API until backend is ready
+  // Remove this once the real API is generated
+  teamups: {
+    getTeamUps: async (params?: any) => {
+      console.warn('TeamUps API not yet implemented');
+      return [];
+    },
+    getTeamUpById: async ({ id }: { id: string }) => {
+      console.warn('TeamUps API not yet implemented');
+      throw new Error('TeamUps API not yet implemented');
+    },
+    createTeamUp: async ({ createTeamUpRequest }: any) => {
+      console.warn('TeamUps API not yet implemented');
+      throw new Error('TeamUps API not yet implemented');
+    },
+    joinTeamUp: async ({ id, joinTeamUpRequest }: any) => {
+      console.warn('TeamUps API not yet implemented');
+      throw new Error('TeamUps API not yet implemented');
+    },
+    getMyCreatedTeamUps: async () => {
+      console.warn('TeamUps API not yet implemented');
+      return [];
+    },
+    getMyJoinedTeamUps: async () => {
+      console.warn('TeamUps API not yet implemented');
+      return [];
+    },
+    getTeamUpJoinRequests: async ({ id }: { id: string }) => {
+      console.warn('TeamUps API not yet implemented');
+      return [];
+    },
+    reviewJoinRequest: async ({ id, requestId, reviewJoinRequestRequest }: any) => {
+      console.warn('TeamUps API not yet implemented');
+      throw new Error('TeamUps API not yet implemented');
+    },
+  } as any,
 };
 
 // 若你偏好與先前相似的用法，也可包一層別名（依實際方法名調整或直接用 apis.* 即可）
