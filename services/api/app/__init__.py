@@ -9,6 +9,7 @@ from .routes.auth import bp as auth_bp
 from .routes.events import bp as events_bp
 from .routes.venues import bp as venues_bp
 from .routes.teamups import bp as teamups_bp
+from .routes.bookings import bp as bookings_bp
 
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -27,6 +28,7 @@ def create_app() -> Flask:
     app.register_blueprint(events_bp, url_prefix="/events")
     app.register_blueprint(venues_bp, url_prefix="/venues")
     app.register_blueprint(teamups_bp, url_prefix="/teamups")
+    app.register_blueprint(bookings_bp, url_prefix="/bookings")
 
     @app.errorhandler(Exception)
     def handle_err(e):

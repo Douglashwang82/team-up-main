@@ -1510,6 +1510,15 @@ components:
         assignment_reason:
           type: string
           nullable: true
+        contribution_amount_cents:
+          type: integer
+          minimum: 0
+          nullable: true
+        contribution_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+          nullable: true
 
     BookingAssignmentOut:
       type: object
@@ -1541,6 +1550,12 @@ components:
           format: uuid
         assignment_reason:
           type: string
+          nullable: true
+        contribution_amount_cents:
+          type: integer
+          nullable: true
+        contribution_percentage:
+          type: number
           nullable: true
         status:
           type: string

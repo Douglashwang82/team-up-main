@@ -48,7 +48,15 @@ class BookingAssignment(Base):
     assignment_reason: Mapped[str | None] = mapped_column(
         sa.Text, nullable=True
     )
-    
+
+    # Contribution/cost-sharing details
+    contribution_amount_cents: Mapped[int | None] = mapped_column(
+        sa.Integer, nullable=True
+    )
+    contribution_percentage: Mapped[float | None] = mapped_column(
+        sa.Numeric(5, 2), nullable=True  # e.g., 25.50 for 25.5%
+    )
+
     # Status tracking
     status: Mapped[str] = mapped_column(
         sa.Text, default="active", nullable=False
@@ -94,7 +102,17 @@ class BookingAssignment(Base):
             "status IN ('active', 'cancelled', 'completed', 'transferred')",
             name="ck_booking_assignment_status"
         ),
-        
+
+        # Contribution validation
+        sa.CheckConstraint(
+            "(contribution_amount_cents IS NULL) OR (contribution_amount_cents >= 0)",
+            name="ck_booking_assignment_contribution_non_negative"
+        ),
+        sa.CheckConstraint(
+            "(contribution_percentage IS NULL) OR (contribution_percentage >= 0 AND contribution_percentage <= 100)",
+            name="ck_booking_assignment_percentage_valid"
+        ),
+
         # Indexes for performance
         sa.Index("ix_booking_assignments_booking", "booking_id"),
         sa.Index("ix_booking_assignments_teamup", "teamup_id"),

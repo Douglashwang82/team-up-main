@@ -66,11 +66,6 @@ class TeamUp(Base):
         back_populates="teamup", cascade="all, delete-orphan"
     )
     
-    # Legacy TeamUp many-to-many booking relationship (deprecated, use assignments instead)
-    bookings: Mapped[list["TeamUpBooking"]] = relationship(
-        back_populates="teamup", cascade="all, delete-orphan"
-    )
-    
     __table_args__ = (
         sa.CheckConstraint("min_participants > 0", name="ck_teamup_min_participants_positive"),
         sa.CheckConstraint("max_participants >= min_participants", name="ck_teamup_max_gte_min"),

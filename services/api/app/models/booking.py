@@ -29,8 +29,3 @@ class Booking(Base):
     assignments: Mapped[list["BookingAssignment"]] = relationship(
         back_populates="booking", cascade="all, delete-orphan"
     )
-    
-    # Legacy TeamUp many-to-many relationship (deprecated, use assignments instead)
-    teamups: Mapped[list["TeamUpBooking"]] = relationship(
-        back_populates="booking", cascade="all, delete-orphan"
-    )
