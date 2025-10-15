@@ -9,10 +9,15 @@ from app.core.db import Base
 class Booking(Base):
     __tablename__ = "bookings"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()"))
+
     # Booking owner (required)
     owner_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False)
-    venue_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("venues.id"), nullable=False)
-    timeslot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("venue_timeslots.id"), nullable=False)
+
+    # Timeslot reference (required)
+    timeslot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("timeslots.id"), nullable=False)
+
+    # Optional TeamUp reference (nullable - bookings can be individual or for a team)
+    teamup_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("teamups.id"), nullable=True)
 
     status: Mapped[str] = mapped_column(sa.Text, default=BookingStatus.pending.value, nullable=False)
     payment_status: Mapped[str] = mapped_column(sa.Text, default=PaymentStatus.none.value, nullable=False)
@@ -22,10 +27,5 @@ class Booking(Base):
 
     # Relationships
     owner: Mapped["User"] = relationship(foreign_keys=[owner_user_id])
-    venue: Mapped["Venue"] = relationship(back_populates="bookings")
-    timeslot: Mapped["VenueTimeslot"] = relationship(back_populates="bookings")
-    
-    # Assignment relationships
-    assignments: Mapped[list["BookingAssignment"]] = relationship(
-        back_populates="booking", cascade="all, delete-orphan"
-    )
+    timeslot: Mapped["Timeslot"] = relationship(back_populates="bookings")
+    teamup: Mapped["TeamUp"] = relationship(back_populates="bookings")

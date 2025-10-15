@@ -11,13 +11,9 @@ class TeamUp(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
     )
-    # Legacy single timeslot reference (deprecated, use timeslots relationship instead)
-    court_timeslot_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("court_timeslots.id", ondelete="CASCADE"), nullable=True
-    )
     title: Mapped[str] = mapped_column(sa.Text, nullable=False)
     description: Mapped[str | None]
-    owner_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False)
     
     # 組團相關設定
     min_participants: Mapped[int] = mapped_column(sa.Integer, default=2, nullable=False)
@@ -41,28 +37,15 @@ class TeamUp(Base):
     )
 
     # 關聯
-    # Legacy single timeslot relationship (deprecated)
-    court_timeslot = relationship("CourtTimeslot", back_populates="teamups")
-    
-    # New many-to-many timeslot relationship
-    timeslots: Mapped[list["TeamUpTimeslot"]] = relationship(
-        back_populates="teamup", cascade="all, delete-orphan"
-    )
-    
     join_requests: Mapped[list["TeamUpJoinRequest"]] = relationship(
         back_populates="teamup", cascade="all, delete-orphan"
     )
     participants: Mapped[list["TeamUpParticipant"]] = relationship(
         back_populates="teamup", cascade="all, delete-orphan"
     )
-    
-    # New booking assignment relationship
-    booking_assignments: Mapped[list["BookingAssignment"]] = relationship(
-        back_populates="teamup", cascade="all, delete-orphan"
-    )
-    
-    # New many-to-many Event relationship
-    events: Mapped[list["EventTeamUp"]] = relationship(
+
+    # Bookings relationship (one-to-many)
+    bookings: Mapped[list["Booking"]] = relationship(
         back_populates="teamup", cascade="all, delete-orphan"
     )
     
@@ -71,7 +54,6 @@ class TeamUp(Base):
         sa.CheckConstraint("max_participants >= min_participants", name="ck_teamup_max_gte_min"),
         sa.CheckConstraint("status IN ('open', 'closed', 'confirmed', 'cancelled')", name="ck_teamup_status"),
         sa.CheckConstraint("visibility IN ('public', 'invite_only', 'private')", name="ck_teamup_visibility"),
-        sa.Index("ix_teamups_court_timeslot_status", "court_timeslot_id", "status"),
         sa.Index("ix_teamups_owner_status", "owner_user_id", "status"),
         sa.Index("ix_teamups_visibility", "visibility"),
         sa.Index("ix_teamups_invite_token", "invite_token"),

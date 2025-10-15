@@ -10,11 +10,9 @@ from app.core.auth import optional_auth, require_auth
 from app.models.teamup import TeamUp
 from app.models.teamup_join_request import TeamUpJoinRequest
 from app.models.teamup_participant import TeamUpParticipant
-from app.models.venue import CourtTimeslot, Court
+from app.models.venue import Timeslot, Court, Venue
 from app.models.user import User
 from app.models.booking import Booking
-from app.models.event import Event
-from app.models.participant import EventParticipant
 from app.core.types import BookingStatus, PaymentStatus
 
 bp = Blueprint("teamups", __name__)
@@ -31,41 +29,17 @@ def _parse_dt(s: str):
 @bp.post("")
 @require_auth
 def create_teamup():
-    """建立新的 TeamUp"""
+    """建立新的 TeamUp (no timeslot required)"""
     data = request.get_json() or {}
-    
-    required = ["court_timeslot_id", "title", "min_participants", "max_participants"]
+
+    required = ["title", "min_participants", "max_participants"]
     missing = [k for k in required if k not in data]
     if missing:
         return jsonify({"error": "missing_fields", "fields": missing}), 400
-    
+
     with SessionLocal() as s:
-        # 驗證 court_timeslot 存在
-        try:
-            court_timeslot_id = UUID(str(data["court_timeslot_id"]))
-        except ValueError:
-            return jsonify({"error": "invalid_court_timeslot_id"}), 400
-            
-        court_timeslot = s.get(CourtTimeslot, court_timeslot_id)
-        if not court_timeslot:
-            return jsonify({"error": "court_timeslot_not_found"}), 404
-        
-        # 檢查是否已有 TeamUp 在進行中
-        existing_teamup = s.execute(
-            select(TeamUp).where(
-                and_(
-                    TeamUp.court_timeslot_id == court_timeslot_id,
-                    TeamUp.status.in_(["open", "confirmed"])
-                )
-            )
-        ).scalar_one_or_none()
-        
-        if existing_teamup:
-            return jsonify({"error": "teamup_already_exists_for_timeslot"}), 400
-        
-        # 建立 TeamUp
+        # 建立 TeamUp (without required timeslot)
         teamup = TeamUp(
-            court_timeslot_id=court_timeslot_id,
             title=data["title"],
             description=data.get("description"),
             owner_user_id=g.user_id,
@@ -73,11 +47,12 @@ def create_teamup():
             max_participants=data["max_participants"],
             deadline=_parse_dt(data["deadline"]) if data.get("deadline") else None,
             sport_type=data.get("sport_type"),
+            visibility=data.get("visibility", "public"),
         )
-        
+
         s.add(teamup)
         s.flush()  # 取得 ID
-        
+
         # 自動加入 owner 為參與者
         owner_participant = TeamUpParticipant(
             teamup_id=teamup.id,
@@ -86,9 +61,9 @@ def create_teamup():
             display_name=g.user.get("display_name") if hasattr(g, 'user') else None,
         )
         s.add(owner_participant)
-        
+
         s.commit()
-        
+
         return jsonify({
             "id": str(teamup.id),
             "title": teamup.title,
@@ -96,7 +71,127 @@ def create_teamup():
             "min_participants": teamup.min_participants,
             "max_participants": teamup.max_participants,
             "current_participants": 1,
+            "visibility": teamup.visibility,
         }), 201
+
+# ===[ Book timeslot for TeamUp ]===
+@bp.post("/<uuid:teamup_id>/book")
+@require_auth
+def book_timeslot_for_teamup(teamup_id):
+    """Book a timeslot for a TeamUp (can book multiple)"""
+    data = request.get_json() or {}
+
+    if "timeslot_id" not in data:
+        return jsonify({"error": "timeslot_id_required"}), 400
+
+    with SessionLocal() as s:
+        # Verify TeamUp exists and user is owner
+        teamup = s.get(TeamUp, teamup_id)
+        if not teamup:
+            return jsonify({"error": "teamup_not_found"}), 404
+
+        if str(teamup.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+
+        # Verify timeslot exists
+        try:
+            timeslot_id = UUID(str(data["timeslot_id"]))
+        except ValueError:
+            return jsonify({"error": "invalid_timeslot_id"}), 400
+
+        timeslot = s.get(Timeslot, timeslot_id)
+        if not timeslot:
+            return jsonify({"error": "timeslot_not_found"}), 404
+
+        if not timeslot.is_bookable:
+            return jsonify({"error": "timeslot_not_bookable"}), 400
+
+        # Check if timeslot is already booked
+        existing_booking = s.execute(
+            select(Booking).where(
+                and_(
+                    Booking.timeslot_id == timeslot_id,
+                    Booking.status.in_(["pending", "confirmed"])
+                )
+            )
+        ).scalar_one_or_none()
+
+        if existing_booking:
+            return jsonify({"error": "timeslot_already_booked"}), 400
+
+        # Create booking for TeamUp
+        booking = Booking(
+            owner_user_id=g.user_id,
+            timeslot_id=timeslot_id,
+            teamup_id=teamup_id,
+            status=BookingStatus.pending.value,
+            payment_status=PaymentStatus.none.value,
+        )
+
+        s.add(booking)
+        s.commit()
+        s.refresh(booking)
+
+        return jsonify({
+            "id": str(booking.id),
+            "teamup_id": str(booking.teamup_id),
+            "timeslot_id": str(booking.timeslot_id),
+            "status": booking.status,
+            "payment_status": booking.payment_status,
+            "created_at": booking.created_at.isoformat(),
+        }), 201
+
+# ===[ List TeamUp bookings ]===
+@bp.get("/<uuid:teamup_id>/bookings")
+@optional_auth
+def list_teamup_bookings(teamup_id):
+    """List all bookings for a TeamUp"""
+    with SessionLocal() as s:
+        teamup = s.get(TeamUp, teamup_id)
+        if not teamup:
+            return jsonify({"error": "teamup_not_found"}), 404
+
+        # Get all bookings for this TeamUp
+        bookings = s.execute(
+            select(Booking, Timeslot, Court, Venue).join(
+                Timeslot, Booking.timeslot_id == Timeslot.id
+            ).join(
+                Court, Timeslot.court_id == Court.id
+            ).join(
+                Venue, Court.venue_id == Venue.id
+            ).where(
+                Booking.teamup_id == teamup_id
+            ).order_by(Timeslot.starts_at)
+        ).all()
+
+        booking_list = []
+        for booking, timeslot, court, venue in bookings:
+            booking_list.append({
+                "id": str(booking.id),
+                "status": booking.status,
+                "payment_status": booking.payment_status,
+                "timeslot": {
+                    "id": str(timeslot.id),
+                    "starts_at": timeslot.starts_at.isoformat(),
+                    "ends_at": timeslot.ends_at.isoformat(),
+                    "price_cents": timeslot.price_cents,
+                    "currency": timeslot.currency,
+                },
+                "court": {
+                    "id": str(court.id),
+                    "name": court.name,
+                    "sport_type": court.sport_type,
+                },
+                "venue": {
+                    "id": str(venue.id),
+                    "name": venue.name,
+                    "address": venue.address,
+                    "city": venue.city,
+                },
+                "created_at": booking.created_at.isoformat(),
+            })
+
+        return jsonify(booking_list)
 
 # ===[ 列出 TeamUp ]===
 @bp.get("")
