@@ -5,17 +5,17 @@
  * 這版專為 @openapitools/OpenAPI Generator (typescript-fetch) 設計：
  * - 使用 Configuration.basePath + accessToken
  * - 自訂 fetch：401 時用 refresh_token 換新 access_token，然後重試原請求一次
- * - 與產生的 API 類別（如 EventsApi、AuthApi、HealthApi）搭配
+ * - 與產生的 API 類別（如 TeamUpsApi、AuthApi、HealthApi）搭配
  */
 
 import {
   Configuration,
   // 下面的類名依你的 OpenAPI tag 生成，常見如：
-  // EventsApi, AuthApi, HealthApi ...
+  // TeamUpsApi, AuthApi, HealthApi ...
   // 如果你的類名不同，改成實際輸出的名稱即可。
-  AuthApi, EventsApi, HealthApi,
+  AuthApi, HealthApi,
   VenuesApi,
-  // TeamUpsApi, // TODO: Uncomment when TeamUps API is generated
+  TeamUpsApi,
 } from '@team-up-main/api-client';
 
 const basePath =
@@ -113,49 +113,10 @@ const config = new Configuration({
 // 直接導出已配置好的 API 實例（依你的產生器輸出的類別調整）
 export const apis = {
   auth: new AuthApi(config),
-  events: new EventsApi(config),
   health: new HealthApi(config),
   venues: new VenuesApi(config),
-  // TODO: Add TeamUps API once it's generated from OpenAPI spec
-  // teamups: new TeamUpsApi(config),
-
-  // Temporary mock for TeamUps API until backend is ready
-  // Remove this once the real API is generated
-  teamups: {
-    getTeamUps: async (params?: any) => {
-      console.warn('TeamUps API not yet implemented');
-      return [];
-    },
-    getTeamUpById: async ({ id }: { id: string }) => {
-      console.warn('TeamUps API not yet implemented');
-      throw new Error('TeamUps API not yet implemented');
-    },
-    createTeamUp: async ({ createTeamUpRequest }: any) => {
-      console.warn('TeamUps API not yet implemented');
-      throw new Error('TeamUps API not yet implemented');
-    },
-    joinTeamUp: async ({ id, joinTeamUpRequest }: any) => {
-      console.warn('TeamUps API not yet implemented');
-      throw new Error('TeamUps API not yet implemented');
-    },
-    getMyCreatedTeamUps: async () => {
-      console.warn('TeamUps API not yet implemented');
-      return [];
-    },
-    getMyJoinedTeamUps: async () => {
-      console.warn('TeamUps API not yet implemented');
-      return [];
-    },
-    getTeamUpJoinRequests: async ({ id }: { id: string }) => {
-      console.warn('TeamUps API not yet implemented');
-      return [];
-    },
-    reviewJoinRequest: async ({ id, requestId, reviewJoinRequestRequest }: any) => {
-      console.warn('TeamUps API not yet implemented');
-      throw new Error('TeamUps API not yet implemented');
-    },
-  } as any,
+  teamups: new TeamUpsApi(config),
 };
 
 // 若你偏好與先前相似的用法，也可包一層別名（依實際方法名調整或直接用 apis.* 即可）
-// 例如：const list = await apis.events.listAllEvents({ limit: 20 });
+// 例如：const list = await apis.teamups.listTeamUps({ limit: 20 });

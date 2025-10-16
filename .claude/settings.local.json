@@ -4,7 +4,10 @@
       "mcp__ide__getDiagnostics",
       "Bash(npx tsc:*)",
       "Bash(python -m alembic revision:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(pnpm web:dev:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "ask": []
