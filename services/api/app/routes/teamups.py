@@ -29,7 +29,7 @@ def _parse_dt(s: str):
 @bp.post("")
 @require_auth
 def create_teamup():
-    """建立新的 TeamUp (no timeslot required)"""
+    """建立新的 TeamUp"""
     data = request.get_json() or {}
 
     required = ["title", "max_participants"]
@@ -42,11 +42,10 @@ def create_teamup():
             title=data["title"],
             description=data.get("description"),
             owner_user_id=g.user_id,
-            min_participants=data["min_participants"],
             max_participants=data["max_participants"],
-            deadline=_parse_dt(data["deadline"]) if data.get("deadline") else None,
-            sport_type=data.get("sport_type"),
             visibility=data.get("visibility", "public"),
+            durantion_type=data.get("durantion_type", "temporary"),
+            status=data.get("status", "open"),
         )
 
         s.add(teamup)
@@ -67,10 +66,10 @@ def create_teamup():
             "id": str(teamup.id),
             "title": teamup.title,
             "status": teamup.status,
-            "min_participants": teamup.min_participants,
             "max_participants": teamup.max_participants,
             "current_participants": 1,
             "visibility": teamup.visibility,
+            "durantion_type": teamup.durantion_type,
         }), 201
 
 # ===[ Book timeslot for TeamUp ]===
@@ -197,53 +196,43 @@ def list_teamup_bookings(teamup_id):
 @optional_auth
 def list_teamups():
     """列出 TeamUp，支援篩選"""
-    sport_type = request.args.get("sport_type")
-    city = request.args.get("city")
     status = request.args.get("status", "open")
+    visibility = request.args.get("visibility")
     limit = min(int(request.args.get("limit", 20)), 100)
     offset = max(int(request.args.get("offset", 0)), 0)
-    
+
     with SessionLocal() as s:
-        query = select(TeamUp, CourtTimeslot, Court).join(
-            CourtTimeslot, TeamUp.court_timeslot_id == CourtTimeslot.id
-        ).join(Court, CourtTimeslot.court_id == Court.id)
-        
-        if sport_type:
-            query = query.where(TeamUp.sport_type == sport_type)
+        query = select(TeamUp)
+
         if status:
             query = query.where(TeamUp.status == status)
-        if city:
-            query = query.where(Court.venue.has(city=city))
-        
+        if visibility:
+            query = query.where(TeamUp.visibility == visibility)
+
         results = s.execute(
-            query.order_by(TeamUp.created_at.desc()).offset(offset).limit(limit)
-        ).all()
-        
+            query.order_by(desc(TeamUp.created_at)).offset(offset).limit(limit)
+        ).scalars().all()
+
         teamup_list = []
-        for teamup, court_timeslot, court in results:
+        for teamup in results:
             # 計算參與者數量
             participant_count = s.scalar(
                 select(func.count()).select_from(TeamUpParticipant)
                 .where(TeamUpParticipant.teamup_id == teamup.id)
             ) or 0
-            
+
             teamup_list.append({
                 "id": str(teamup.id),
                 "title": teamup.title,
                 "description": teamup.description,
-                "sport_type": teamup.sport_type,
                 "status": teamup.status,
-                "min_participants": teamup.min_participants,
                 "max_participants": teamup.max_participants,
                 "current_participants": participant_count,
-                "deadline": teamup.deadline.isoformat() if teamup.deadline else None,
-                "court_name": court.name,
-                "venue_name": court.venue.name,
-                "starts_at": court_timeslot.starts_at.isoformat(),
-                "ends_at": court_timeslot.ends_at.isoformat(),
+                "visibility": teamup.visibility,
+                "durantion_type": teamup.durantion_type,
                 "created_at": teamup.created_at.isoformat(),
             })
-        
+
         return jsonify(teamup_list)
 
 # ===[ 取得單一 TeamUp ]===
@@ -255,24 +244,20 @@ def get_teamup(teamup_id):
         teamup = s.get(TeamUp, teamup_id)
         if not teamup:
             return jsonify({"error": "not_found"}), 404
-        
-        # 取得相關資訊
-        court_timeslot = s.get(CourtTimeslot, teamup.court_timeslot_id)
-        court = s.get(Court, court_timeslot.court_id) if court_timeslot else None
-        
+
         # 計算參與者數量
         participant_count = s.scalar(
             select(func.count()).select_from(TeamUpParticipant)
             .where(TeamUpParticipant.teamup_id == teamup.id)
         ) or 0
-        
+
         # 取得參與者列表
         participants = s.execute(
             select(TeamUpParticipant, User).outerjoin(
                 User, TeamUpParticipant.user_id == User.id
             ).where(TeamUpParticipant.teamup_id == teamup.id)
         ).all()
-        
+
         participant_list = []
         for participant, user in participants:
             participant_list.append({
@@ -283,28 +268,58 @@ def get_teamup(teamup_id):
                 "role": participant.role,
                 "joined_at": participant.created_at.isoformat(),
             })
-        
+
+        # 取得關聯的 bookings
+        bookings = s.execute(
+            select(Booking, Timeslot, Court, Venue).join(
+                Timeslot, Booking.timeslot_id == Timeslot.id
+            ).join(
+                Court, Timeslot.court_id == Court.id
+            ).join(
+                Venue, Court.venue_id == Venue.id
+            ).where(
+                Booking.teamup_id == teamup_id
+            ).order_by(Timeslot.starts_at)
+        ).all()
+
+        booking_list = []
+        for booking, timeslot, court, venue in bookings:
+            booking_list.append({
+                "id": str(booking.id),
+                "status": booking.status,
+                "payment_status": booking.payment_status,
+                "timeslot": {
+                    "id": str(timeslot.id),
+                    "starts_at": timeslot.starts_at.isoformat(),
+                    "ends_at": timeslot.ends_at.isoformat(),
+                    "price_cents": timeslot.price_cents,
+                    "currency": timeslot.currency,
+                },
+                "court": {
+                    "id": str(court.id),
+                    "name": court.name,
+                    "sport_type": court.sport_type,
+                },
+                "venue": {
+                    "id": str(venue.id),
+                    "name": venue.name,
+                    "address": venue.address,
+                    "city": venue.city,
+                },
+            })
+
         return jsonify({
             "id": str(teamup.id),
             "title": teamup.title,
             "description": teamup.description,
-            "sport_type": teamup.sport_type,
             "status": teamup.status,
-            "min_participants": teamup.min_participants,
             "max_participants": teamup.max_participants,
             "current_participants": participant_count,
-            "deadline": teamup.deadline.isoformat() if teamup.deadline else None,
             "owner_user_id": str(teamup.owner_user_id),
-            "court_timeslot": {
-                "id": str(court_timeslot.id),
-                "court_name": court.name,
-                "venue_name": court.venue.name,
-                "starts_at": court_timeslot.starts_at.isoformat(),
-                "ends_at": court_timeslot.ends_at.isoformat(),
-                "price_cents": court_timeslot.price_cents,
-                "currency": court_timeslot.currency,
-            } if court_timeslot and court else None,
+            "visibility": teamup.visibility,
+            "durantion_type": teamup.durantion_type,
             "participants": participant_list,
+            "bookings": booking_list,
             "created_at": teamup.created_at.isoformat(),
             "updated_at": teamup.updated_at.isoformat(),
         })
@@ -461,10 +476,10 @@ def review_join_request(teamup_id, request_id):
                 select(func.count()).select_from(TeamUpParticipant)
                 .where(TeamUpParticipant.teamup_id == teamup_id)
             ) or 0
-            
+
             if current_count >= teamup.max_participants:
                 return jsonify({"error": "teamup_full"}), 400
-            
+
             # 加入參與者
             try:
                 participant = TeamUpParticipant(
@@ -480,14 +495,8 @@ def review_join_request(teamup_id, request_id):
             except IntegrityError:
                 s.rollback()
                 return jsonify({"error": "already_joined"}), 409
-            
+
             join_request.status = "approved"
-            
-            # 檢查是否達到最低人數要求
-            new_count = current_count + 1
-            if new_count >= teamup.min_participants:
-                # 觸發成團邏輯
-                _convert_teamup_to_event(s, teamup)
         else:
             join_request.status = "rejected"
         
@@ -499,82 +508,3 @@ def review_join_request(teamup_id, request_id):
             "status": join_request.status,
             "message": f"Request {action}d successfully"
         })
-
-def _convert_teamup_to_event(session, teamup: TeamUp):
-    """將 TeamUp 轉換為 Event 的內部函數"""
-    try:
-        # 1. 建立 Booking
-        court_timeslot = session.get(CourtTimeslot, teamup.court_timeslot_id)
-        booking = Booking(
-            user_id=teamup.owner_user_id,
-            venue_id=session.get(Court, court_timeslot.court_id).venue_id,
-            timeslot_id=teamup.court_timeslot_id,
-            status=BookingStatus.confirmed.value,
-            payment_status=PaymentStatus.none.value,
-        )
-        session.add(booking)
-        session.flush()
-        
-        # 2. 建立 Event
-        event = Event(
-            title=teamup.title,
-            description=teamup.description,
-            sport_type=teamup.sport_type,
-            starts_at=court_timeslot.starts_at,
-            ends_at=court_timeslot.ends_at,
-            capacity=teamup.max_participants,
-            booking_id=booking.id,
-            owner_user_id=teamup.owner_user_id,
-            visibility="public",
-            join_review_required=False,  # 已經審核過了
-            status="open",
-        )
-        session.add(event)
-        session.flush()
-        
-        # 3. 轉移參與者
-        participants = session.execute(
-            select(TeamUpParticipant).where(TeamUpParticipant.teamup_id == teamup.id)
-        ).scalars().all()
-        
-        for participant in participants:
-            event_participant = EventParticipant(
-                event_id=event.id,
-                user_id=participant.user_id,
-                role="member" if participant.role == "member" else "owner",
-                display_name=participant.display_name,
-                email=participant.email,
-                phone=participant.phone,
-            )
-            session.add(event_participant)
-        
-        # 4. 更新 TeamUp 狀態
-        teamup.status = "confirmed"
-        
-        # 5. 關閉其他競爭的 TeamUp
-        session.execute(
-            select(TeamUp).where(
-                and_(
-                    TeamUp.court_timeslot_id == teamup.court_timeslot_id,
-                    TeamUp.id != teamup.id,
-                    TeamUp.status == "open"
-                )
-            )
-        ).scalars().all()
-        
-        for other_teamup in session.execute(
-            select(TeamUp).where(
-                and_(
-                    TeamUp.court_timeslot_id == teamup.court_timeslot_id,
-                    TeamUp.id != teamup.id,
-                    TeamUp.status == "open"
-                )
-            )
-        ).scalars().all():
-            other_teamup.status = "closed"
-        
-        return event
-        
-    except Exception as e:
-        session.rollback()
-        raise e

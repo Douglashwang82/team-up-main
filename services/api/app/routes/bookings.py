@@ -64,7 +64,59 @@ def _serialize_booking_detail(booking: Booking, timeslot: Timeslot, court: Court
     }
 
 
-# ===[ List user's bookings ]===
+@bp.post("")
+@require_auth
+def create_booking():
+    """Create a new booking for a timeslot"""
+    data = request.get_json() or {}
+
+    if "timeslot_id" not in data:
+        return jsonify({"error": "timeslot_id_required"}), 400
+
+    with SessionLocal() as s:
+        # Verify timeslot exists
+        try:
+            timeslot_id = UUID(str(data["timeslot_id"]))
+        except ValueError:
+            return jsonify({"error": "invalid_timeslot_id"}), 400
+
+        timeslot = s.get(Timeslot, timeslot_id)
+        if not timeslot:
+            return jsonify({"error": "timeslot_not_found"}), 404
+
+        if not timeslot.is_bookable:
+            return jsonify({"error": "timeslot_not_bookable"}), 400
+
+        # Check if timeslot is already booked
+        existing_booking = s.execute(
+            select(Booking).where(
+                and_(
+                    Booking.timeslot_id == timeslot_id,
+                    Booking.status.in_(["pending", "confirmed"])
+                )
+            )
+        ).scalar_one_or_none()
+
+        if existing_booking:
+            return jsonify({"error": "timeslot_already_booked"}), 400
+
+        # Create booking
+        booking = Booking(
+            owner_user_id=g.user_id,
+            timeslot_id=timeslot_id,
+            teamup_id=data.get("teamup_id"),  # Optional teamup association
+            status="pending",
+            payment_status="none",
+        )
+
+        s.add(booking)
+        s.commit()
+        s.refresh(booking)
+
+        return jsonify(_serialize_booking(booking)), 201
+
+
+
 @bp.get("")
 @require_auth
 def list_bookings():
@@ -85,10 +137,9 @@ def list_bookings():
         return jsonify([_serialize_booking(b) for b in bookings])
 
 
-# ===[ Get booking details ]===
 @bp.get("/<uuid:booking_id>")
 @require_auth
-def get_booking(booking_id):
+def get_booking_by_id(booking_id):
     """Get booking details by ID"""
     with SessionLocal() as s:
         booking = s.get(Booking, booking_id)
@@ -118,3 +169,51 @@ def get_booking(booking_id):
             teamup = s.get(TeamUp, booking.teamup_id)
 
         return jsonify(_serialize_booking_detail(booking, timeslot, court, venue, teamup))
+
+
+
+@bp.patch("/<uuid:booking_id>")
+@require_auth
+def update_booking(booking_id):
+    """Update booking status"""
+    data = request.get_json() or {}
+
+    with SessionLocal() as s:
+        booking = s.get(Booking, booking_id)
+        if not booking:
+            return jsonify({"error": "booking_not_found"}), 404
+
+        # Check ownership
+        if str(booking.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+
+        # Update fields
+        if "status" in data:
+            booking.status = data["status"]
+        if "payment_status" in data:
+            booking.payment_status = data["payment_status"]
+
+        s.commit()
+        s.refresh(booking)
+
+        return jsonify(_serialize_booking(booking))
+
+
+@bp.delete("/<uuid:booking_id>")
+@require_auth
+def cancel_booking(booking_id):
+    """Cancel a booking"""
+    with SessionLocal() as s:
+        booking = s.get(Booking, booking_id)
+        if not booking:
+            return jsonify({"error": "booking_not_found"}), 404
+
+        # Check ownership
+        if str(booking.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+
+        # Update status to cancelled
+        booking.status = "cancelled"
+        s.commit()
+
+        return jsonify({"ok": True, "message": "Booking cancelled successfully"})
