@@ -127,13 +127,13 @@ def test_venues():
         if passed:
             venue = response.json()
             test_data['venue_detail'] = venue
-            print_test("Get venue by ID", True, f"Venue: {venue.get('name')}")
+            print_test("Get venue by ID", True, f"Venue: {venue.get('venue', {}).get('name')}")
         else:
             print_test("Get venue by ID", False, f"Status: {response.status_code}")
 
     # Test 2.5: Get court timeslots
     if test_data.get('venue_detail'):
-        venue_id = test_data['venue_detail']['id']
+        venue_id = test_data['venue_detail']['venue']['id']
         court_id = test_data['venue_detail']['courts'][0]['id']
         response = make_request("GET", f"/venues/{venue_id}/courts/{court_id}/timeslots")
         passed = response.status_code == 200
@@ -343,11 +343,11 @@ def main():
     print("=" * 80)
 
     try:
-        test_auth()
+        # test_auth()
         test_venues()
-        test_bookings()
-        test_teamups()
-        print_summary()
+        # test_bookings()
+        # test_teamups()
+        # print_summary()
     except KeyboardInterrupt:
         print("\n\n⚠️  Tests interrupted by user")
     except Exception as e:

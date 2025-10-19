@@ -33,8 +33,8 @@ def clear_all_data(session: Session):
     print("🗑️  Clearing existing data...")
 
     # Delete in reverse order of dependencies
-    session.query(TeamUpJoinRequest).delete()
     session.query(TeamUpParticipant).delete()
+    session.query(TeamUpJoinRequest).delete()
     session.query(Booking).delete()
     session.query(TeamUp).delete()
     session.query(Timeslot).delete()
