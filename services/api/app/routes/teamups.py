@@ -32,13 +32,12 @@ def create_teamup():
     """建立新的 TeamUp (no timeslot required)"""
     data = request.get_json() or {}
 
-    required = ["title", "min_participants", "max_participants"]
+    required = ["title", "max_participants"]
     missing = [k for k in required if k not in data]
     if missing:
         return jsonify({"error": "missing_fields", "fields": missing}), 400
 
     with SessionLocal() as s:
-        # 建立 TeamUp (without required timeslot)
         teamup = TeamUp(
             title=data["title"],
             description=data.get("description"),

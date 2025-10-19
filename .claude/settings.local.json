@@ -7,7 +7,10 @@
       "Bash(dir:*)",
       "Bash(pnpm web:dev:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(python3 -m alembic revision:*)",
+      "Bash(python3 -m alembic current:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

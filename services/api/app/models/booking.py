@@ -16,7 +16,7 @@ class Booking(Base):
     # Timeslot reference (required)
     timeslot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("timeslots.id"), nullable=False)
 
-    # Optional TeamUp reference (nullable - bookings can be individual or for a team)
+    # Optional TeamUp assignment (nullable - bookings can be individual or assigned to a TeamUp)
     teamup_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("teamups.id"), nullable=True)
 
     status: Mapped[str] = mapped_column(sa.Text, default=BookingStatus.pending.value, nullable=False)

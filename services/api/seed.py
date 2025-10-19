@@ -272,68 +272,56 @@ def create_teamups(session: Session, users: list[User], timeslots: list[Timeslot
             "title": "Weekend Basketball Game",
             "description": "Looking for players for a friendly basketball game this weekend. All skill levels welcome!",
             "owner": users[0],  # Alice
-            "min_participants": 4,
             "max_participants": 10,
-            "sport_type": "basketball",
             "visibility": Visibility.public.value,
             "status": "open",
-            "deadline": datetime.now(timezone.utc) + timedelta(days=5),
+            "durantion_type": "temporary",
         },
         {
             "title": "Badminton Doubles Practice",
             "description": "Regular badminton practice for intermediate players. Let's improve together!",
             "owner": users[1],  # Bob
-            "min_participants": 4,
             "max_participants": 8,
-            "sport_type": "badminton",
             "visibility": Visibility.public.value,
             "status": "open",
-            "deadline": datetime.now(timezone.utc) + timedelta(days=3),
+            "durantion_type": "permanent",
         },
         {
             "title": "Friday Night Hoops",
             "description": "Weekly Friday night basketball. Competitive but fun!",
             "owner": users[2],  # Charlie
-            "min_participants": 6,
             "max_participants": 12,
-            "sport_type": "basketball",
             "visibility": Visibility.public.value,
-            "status": "confirmed",
-            "deadline": datetime.now(timezone.utc) + timedelta(days=2),
+            "status": "open",
+            "durantion_type": "permanent",
         },
         {
             "title": "Tennis Club - Beginner Friendly",
             "description": "New tennis group for beginners. Coach available for guidance.",
             "owner": users[3],  # Diana
-            "min_participants": 2,
             "max_participants": 6,
-            "sport_type": "tennis",
-            "visibility": Visibility.invite_only.value,
+            "visibility": Visibility.private.value,
             "status": "open",
-            "deadline": datetime.now(timezone.utc) + timedelta(days=7),
+            "durantion_type": "permanent",
             "invite_token": "TENNIS2024ABC",
         },
         {
             "title": "Volleyball Tournament Prep",
             "description": "Preparing for upcoming tournament. Experienced players only.",
             "owner": users[4],  # Evan
-            "min_participants": 6,
             "max_participants": 8,
-            "sport_type": "volleyball",
             "visibility": Visibility.private.value,
-            "status": "confirmed",
-            "deadline": datetime.now(timezone.utc) + timedelta(days=1),
+            "status": "closed",
+            "durantion_type": "temporary",
         },
         {
             "title": "Sunday Morning Badminton",
             "description": "Relaxed badminton session for Sunday morning. Coffee afterwards!",
             "owner": users[5],  # Fiona
-            "min_participants": 4,
             "max_participants": 8,
-            "sport_type": "badminton",
             "visibility": Visibility.public.value,
             "status": "open",
-            "deadline": datetime.now(timezone.utc) + timedelta(days=4),
+            "durantion_type": "temporary",
         },
     ]
 
@@ -343,12 +331,10 @@ def create_teamups(session: Session, users: list[User], timeslots: list[Timeslot
             title=data["title"],
             description=data["description"],
             owner_user_id=data["owner"].id,
-            min_participants=data["min_participants"],
             max_participants=data["max_participants"],
-            sport_type=data["sport_type"],
             visibility=data["visibility"],
             status=data["status"],
-            deadline=data["deadline"],
+            durantion_type=data["durantion_type"],
             invite_token=data.get("invite_token"),
         )
         session.add(teamup)
@@ -588,18 +574,21 @@ def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], 
         },
     ]
 
+    teamup_booking_count = 0
     for data in bookings_data:
         booking = Booking(
             owner_user_id=data["owner"].id,
             timeslot_id=data["timeslot"].id,
-            teamup_id=data["teamup"].id if data["teamup"] else None,
+            teamup_id=data["teamup"].id if data.get("teamup") else None,
             status=data["status"],
             payment_status=data["payment_status"],
         )
         session.add(booking)
+        if data.get("teamup"):
+            teamup_booking_count += 1
 
     session.commit()
-    print(f"✅ Created {len(bookings_data)} bookings")
+    print(f"✅ Created {len(bookings_data)} bookings ({teamup_booking_count} assigned to TeamUps)")
 
 
 def print_summary(session: Session):
