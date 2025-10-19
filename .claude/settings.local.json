@@ -10,7 +10,10 @@
       "Bash(xargs kill:*)",
       "Bash(python3 -m alembic revision:*)",
       "Bash(python3 -m alembic current:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(chmod +x /Users/hwangdouglas/Projects/team-up-main/services/api/reset_alembic.sh)",
+      "Bash(chmod +x /Users/hwangdouglas/Projects/team-up-main/services/api/test_routes.py)",
+      "Bash(python3 test_routes.py)"
     ],
     "deny": [],
     "ask": []

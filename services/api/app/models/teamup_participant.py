@@ -37,8 +37,8 @@ class TeamUpParticipant(Base):
     
     __table_args__ = (
         sa.CheckConstraint("role IN ('owner', 'member')", name="ck_teamup_participants_role"),
-        # 確保每個 TeamUp 只有一個 owner
-        sa.UniqueConstraint("teamup_id", "role", name="uq_teamup_participants_owner"),
+        # 確保每個 TeamUp 只有一個 owner (partial unique index)
+        sa.Index("uq_teamup_participants_owner", "teamup_id", unique=True, postgresql_where=sa.text("role = 'owner'")),
         sa.Index("ix_teamup_participants_teamup", "teamup_id"),
         sa.Index("ix_teamup_participants_user", "user_id"),
     )

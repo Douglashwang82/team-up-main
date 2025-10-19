@@ -1,740 +1,658 @@
-#!/usr/bin/env python3
 """
-Comprehensive seed script for TeamUp Sports Meetup API
-Creates sample data for all tables in the database
-"""
+Seed script for TeamUp database
+Creates sample data for all models including users, venues, courts, timeslots, teamups, bookings, and participants
 
-from passlib.hash import bcrypt
-import uuid
+Usage:
+    python seed.py
+"""
+import os
+import sys
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from pathlib import Path
+import bcrypt
 
-from app.core.db import SessionLocal
+# Add the project root to the path
+sys.path.insert(0, str(Path(__file__).parent))
+
+from sqlalchemy.orm import Session
+from werkzeug.security import generate_password_hash
+from geoalchemy2 import WKTElement
+
+from app.core.db import engine, Base
 from app.models.user import User
-from app.models.venue import Venue, Court, CourtSportType, VenueTimeslot, CourtTimeslot
-from app.models.booking import Booking
-from app.models.event import Event
-from app.models.participant import EventParticipant
-from app.models.join_request import EventJoinRequest
+from app.models.venue import Venue, Court, Timeslot
 from app.models.teamup import TeamUp
 from app.models.teamup_participant import TeamUpParticipant
 from app.models.teamup_join_request import TeamUpJoinRequest
-from app.models.teamup_timeslot import TeamUpTimeslot
-from app.models.teamup_booking import TeamUpBooking
-from app.models.booking_assignment import BookingAssignment
-from app.models.event_teamup import EventTeamUp
-from app.core.security import gen_invite_token
-from app.core.types import BookingStatus, PaymentStatus, Visibility, EventStatus, joinRequestStatus
+from app.models.booking import Booking
+from app.core.types import Visibility, BookingStatus, PaymentStatus, joinRequestStatus
 
 
-def create_users(session: Session):
+def clear_all_data(session: Session):
+    """Clear all existing data from tables"""
+    print("🗑️  Clearing existing data...")
+
+    # Delete in reverse order of dependencies
+    session.query(TeamUpJoinRequest).delete()
+    session.query(TeamUpParticipant).delete()
+    session.query(Booking).delete()
+    session.query(TeamUp).delete()
+    session.query(Timeslot).delete()
+    session.query(Court).delete()
+    session.query(Venue).delete()
+    session.query(User).delete()
+
+    session.commit()
+    print("✅ All data cleared")
+
+
+def create_users(session: Session) -> list[User]:
     """Create sample users"""
+    print("\n👤 Creating users...")
+
     users_data = [
         {
-            "email": "owner@example.com",
+            "email": "alice@example.com",
             "password": "password123",
-            "display_name": "John Owner",
-            "phone": "+1-555-0101"
+            "display_name": "Alice Chen",
+            "phone": "+886-912-345-678"
         },
         {
-            "email": "player1@example.com", 
+            "email": "bob@example.com",
             "password": "password123",
-            "display_name": "Alice Player",
-            "phone": "+1-555-0102"
+            "display_name": "Bob Wang",
+            "phone": "+886-923-456-789"
         },
         {
-            "email": "player2@example.com",
-            "password": "password123", 
-            "display_name": "Bob Player",
-            "phone": "+1-555-0103"
+            "email": "charlie@example.com",
+            "password": "password123",
+            "display_name": "Charlie Lin",
+            "phone": "+886-934-567-890"
         },
         {
-            "email": "player3@example.com",
+            "email": "diana@example.com",
             "password": "password123",
-            "display_name": "Carol Player", 
-            "phone": "+1-555-0104"
+            "display_name": "Diana Wu",
+            "phone": "+886-945-678-901"
         },
         {
-            "email": "guest@example.com",
+            "email": "evan@example.com",
             "password": "password123",
-            "display_name": "Guest User",
-            "phone": "+1-555-0105"
-        }
+            "display_name": "Evan Lee",
+            "phone": "+886-956-789-012"
+        },
+        {
+            "email": "fiona@example.com",
+            "password": "password123",
+            "display_name": "Fiona Zhang",
+            "phone": "+886-967-890-123"
+        },
     ]
-    
+
     users = []
-    for user_data in users_data:
-        existing_user = session.query(User).filter_by(email=user_data["email"]).first()
-        if not existing_user:
-            user = User(
-                id=uuid.uuid4(),
-                email=user_data["email"],
-                password_hash=bcrypt.hash(user_data["password"]),
-                display_name=user_data["display_name"],
-                phone=user_data["phone"]
-            )
-            session.add(user)
-            users.append(user)
-        else:
-            users.append(existing_user)
-    
+    for data in users_data:
+        user = User(
+            email=data["email"],
+            password_hash=bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
+            display_name=data["display_name"],
+            phone=data.get("phone")
+        )
+        session.add(user)
+        users.append(user)
+
     session.commit()
-    for user in users:
-        session.refresh(user)
-    
     print(f"✅ Created {len(users)} users")
     return users
 
 
-def create_venues_and_courts(session: Session):
-    """Create sample venues with courts and timeslots"""
+def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]]:
+    """Create sample venues with courts"""
+    print("\n🏟️  Creating venues and courts...")
+
     venues_data = [
         {
-            "name": "Downtown Sports Center",
-            "address": "123 Main St, Downtown",
-            "city": "Dallas",
-            "lat": 32.7767,
-            "lng": -96.7970,
+            "name": "Taipei Sports Center",
+            "address": "No. 10, Nanjing East Road, Section 4, Songshan District",
+            "city": "Taipei",
+            "lat": 25.0520,
+            "lng": 121.5491,
+            "contact_phone": "+886-2-2570-2330",
+            "partner_code": "TSC001",
             "courts": [
-                {
-                    "name": "Court A - Basketball",
-                    "sport_types": ["basketball"],
-                    "timeslots": [
-                        {"start_hour": 9, "duration": 2, "price": 1500},
-                        {"start_hour": 11, "duration": 2, "price": 1500},
-                        {"start_hour": 14, "duration": 2, "price": 1800},
-                        {"start_hour": 16, "duration": 2, "price": 1800},
-                        {"start_hour": 19, "duration": 2, "price": 2000},
-                    ]
-                },
-                {
-                    "name": "Court B - Basketball", 
-                    "sport_types": ["basketball"],
-                    "timeslots": [
-                        {"start_hour": 10, "duration": 2, "price": 1500},
-                        {"start_hour": 13, "duration": 2, "price": 1500},
-                        {"start_hour": 15, "duration": 2, "price": 1800},
-                        {"start_hour": 18, "duration": 2, "price": 2000},
-                    ]
-                },
-                {
-                    "name": "Court C - Multi-sport",
-                    "sport_types": ["basketball", "volleyball", "badminton"],
-                    "timeslots": [
-                        {"start_hour": 8, "duration": 2, "price": 1200},
-                        {"start_hour": 12, "duration": 2, "price": 1200},
-                        {"start_hour": 17, "duration": 2, "price": 1500},
-                    ]
-                }
+                {"name": "Court A", "sport_type": "basketball"},
+                {"name": "Court B", "sport_type": "basketball"},
+                {"name": "Court C", "sport_type": "badminton"},
+                {"name": "Court D", "sport_type": "badminton"},
             ]
         },
         {
-            "name": "Northside Athletic Club",
-            "address": "456 Oak Ave, Northside", 
-            "city": "Dallas",
-            "lat": 32.8500,
-            "lng": -96.8000,
+            "name": "Xinyi Sports Complex",
+            "address": "No. 99, Songshou Road, Xinyi District",
+            "city": "Taipei",
+            "lat": 25.0363,
+            "lng": 121.5645,
+            "contact_phone": "+886-2-2723-5200",
+            "partner_code": "XSC001",
             "courts": [
-                {
-                    "name": "Tennis Court 1",
-                    "sport_types": ["tennis"],
-                    "timeslots": [
-                        {"start_hour": 7, "duration": 1, "price": 2500},
-                        {"start_hour": 9, "duration": 1, "price": 2500},
-                        {"start_hour": 11, "duration": 1, "price": 2500},
-                        {"start_hour": 16, "duration": 1, "price": 3000},
-                        {"start_hour": 18, "duration": 1, "price": 3000},
-                    ]
-                },
-                {
-                    "name": "Tennis Court 2",
-                    "sport_types": ["tennis"],
-                    "timeslots": [
-                        {"start_hour": 8, "duration": 1, "price": 2500},
-                        {"start_hour": 10, "duration": 1, "price": 2500},
-                        {"start_hour": 15, "duration": 1, "price": 3000},
-                        {"start_hour": 17, "duration": 1, "price": 3000},
-                    ]
-                }
+                {"name": "Main Court", "sport_type": "basketball"},
+                {"name": "Practice Court 1", "sport_type": "basketball"},
+                {"name": "Practice Court 2", "sport_type": "volleyball"},
             ]
         },
         {
-            "name": "Southside Recreation Center",
-            "address": "789 Pine St, Southside",
-            "city": "Dallas", 
-            "lat": 32.7000,
-            "lng": -96.8000,
+            "name": "Da'an Fitness Center",
+            "address": "No. 55, Section 2, Xinsheng South Road, Da'an District",
+            "city": "Taipei",
+            "lat": 25.0261,
+            "lng": 121.5332,
+            "contact_phone": "+886-2-2362-5566",
+            "partner_code": "DFC001",
             "courts": [
-                {
-                    "name": "Soccer Field A",
-                    "sport_types": ["soccer", "football"],
-                    "timeslots": [
-                        {"start_hour": 9, "duration": 2, "price": 3000},
-                        {"start_hour": 14, "duration": 2, "price": 3000},
-                        {"start_hour": 19, "duration": 2, "price": 3500},
-                    ]
-                },
-                {
-                    "name": "Volleyball Court",
-                    "sport_types": ["volleyball"],
-                    "timeslots": [
-                        {"start_hour": 10, "duration": 2, "price": 1000},
-                        {"start_hour": 13, "duration": 2, "price": 1000},
-                        {"start_hour": 16, "duration": 2, "price": 1200},
-                        {"start_hour": 20, "duration": 2, "price": 1200},
-                    ]
-                }
+                {"name": "Indoor Court 1", "sport_type": "badminton"},
+                {"name": "Indoor Court 2", "sport_type": "badminton"},
+                {"name": "Tennis Court A", "sport_type": "tennis"},
+                {"name": "Tennis Court B", "sport_type": "tennis"},
             ]
-        }
+        },
+        {
+            "name": "Banqiao Stadium",
+            "address": "No. 8, Wenhua Road, Banqiao District",
+            "city": "New Taipei City",
+            "lat": 25.0141,
+            "lng": 121.4627,
+            "contact_phone": "+886-2-2272-8666",
+            "partner_code": "BQS001",
+            "courts": [
+                {"name": "Basketball Court 1", "sport_type": "basketball"},
+                {"name": "Basketball Court 2", "sport_type": "basketball"},
+                {"name": "Volleyball Court", "sport_type": "volleyball"},
+            ]
+        },
+        {
+            "name": "Tamsui Riverside Park",
+            "address": "Riverside Road, Tamsui District",
+            "city": "New Taipei City",
+            "lat": 25.1740,
+            "lng": 121.4458,
+            "contact_phone": "+886-2-2621-2345",
+            "partner_code": "TRP001",
+            "courts": [
+                {"name": "Outdoor Court 1", "sport_type": "basketball"},
+                {"name": "Outdoor Court 2", "sport_type": "basketball"},
+            ]
+        },
     ]
-    
+
     venues = []
-    courts = []
-    timeslots = []
-    
-    now = datetime.now(timezone.utc)
-    
+    all_courts = []
+
     for venue_data in venues_data:
-        # Create venue
+        # Create point using WKT (Well-Known Text) format for PostGIS
+        point = WKTElement(f'POINT({venue_data["lng"]} {venue_data["lat"]})', srid=4326)
+
         venue = Venue(
-            id=uuid.uuid4(),
             name=venue_data["name"],
             address=venue_data["address"],
             city=venue_data["city"],
-            geo_point=func.ST_GeomFromText(f'POINT({venue_data["lng"]} {venue_data["lat"]})', 4326),
-            contact_phone="+1-555-0000",
-            partner_code=f"VENUE_{len(venues)+1:03d}"
+            geo_point=point,
+            contact_phone=venue_data["contact_phone"],
+            partner_code=venue_data.get("partner_code")
         )
         session.add(venue)
-        venues.append(venue)
-        
+        session.flush()  # Get the venue ID
+
         # Create courts for this venue
         for court_data in venue_data["courts"]:
             court = Court(
-            id=uuid.uuid4(),
-            venue_id=venue.id,
-                name=court_data["name"]
+                venue_id=venue.id,
+                name=court_data["name"],
+                sport_type=court_data["sport_type"]
             )
             session.add(court)
-            courts.append(court)
-            
-            # Create sport types for this court
-            for sport_type in court_data["sport_types"]:
-                court_sport = CourtSportType(
-                    id=uuid.uuid4(),
+            all_courts.append(court)
+
+        venues.append(venue)
+
+    session.commit()
+    print(f"✅ Created {len(venues)} venues with {len(all_courts)} courts")
+    return venues, all_courts
+
+
+def create_timeslots(session: Session, courts: list[Court]) -> list[Timeslot]:
+    """Create sample timeslots for the next 14 days"""
+    print("\n⏰ Creating timeslots...")
+
+    timeslots = []
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Create timeslots for next 14 days
+    for day_offset in range(14):
+        date = today + timedelta(days=day_offset)
+
+        # Create time slots: 9-11, 11-13, 14-16, 16-18, 18-20, 20-22
+        time_slots = [
+            (9, 11, 800),   # Morning - 800 TWD
+            (11, 13, 800),
+            (14, 16, 1000), # Afternoon - 1000 TWD
+            (16, 18, 1000),
+            (18, 20, 1200), # Evening - 1200 TWD (peak)
+            (20, 22, 1200),
+        ]
+
+        # Create slots for each court
+        for court in courts:
+            for start_hour, end_hour, price in time_slots:
+                starts_at = date.replace(hour=start_hour, minute=0, second=0)
+                ends_at = date.replace(hour=end_hour, minute=0, second=0)
+
+                # Make some slots not bookable (already reserved by venue)
+                is_bookable = day_offset > 0  # Today's slots are not bookable
+
+                timeslot = Timeslot(
                     court_id=court.id,
-                    sport_type=sport_type
+                    starts_at=starts_at,
+                    ends_at=ends_at,
+                    price_cents=price * 100,  # Convert to cents
+                    currency="TWD",
+                    is_bookable=is_bookable
                 )
-                session.add(court_sport)
-            
-            # Create timeslots for this court (next 7 days)
-            for day_offset in range(7):
-                for timeslot_data in court_data["timeslots"]:
-                    start_time = now + timedelta(days=day_offset, hours=timeslot_data["start_hour"])
-                    end_time = start_time + timedelta(hours=timeslot_data["duration"])
-                    
-                    court_timeslot = CourtTimeslot(
-            id=uuid.uuid4(),
-                        court_id=court.id,
-                        starts_at=start_time,
-                        ends_at=end_time,
-                        price_cents=timeslot_data["price"],
-            currency="USD",
-                        is_bookable=True
-                    )
-                    session.add(court_timeslot)
-                    timeslots.append(court_timeslot)
-    
+                session.add(timeslot)
+                timeslots.append(timeslot)
+
     session.commit()
-    for venue in venues:
-        session.refresh(venue)
-    for court in courts:
-        session.refresh(court)
-    for timeslot in timeslots:
-        session.refresh(timeslot)
-    
-    print(f"✅ Created {len(venues)} venues, {len(courts)} courts, {len(timeslots)} timeslots")
-    return venues, courts, timeslots
+    print(f"✅ Created {len(timeslots)} timeslots")
+    return timeslots
 
 
-def create_events(session: Session, users: list, timeslots: list):
-    """Create sample events with booking assignments and TeamUp relationships"""
-    events = []
-    participants = []
-    join_requests = []
-    booking_assignments = []
-    event_teamups = []
-    
-    # Create some bookings first
-    bookings = []
-    for i, timeslot in enumerate(timeslots[:5]):  # Use first 5 timeslots
-        booking = Booking(
-            id=uuid.uuid4(),
-            owner_user_id=users[0].id,  # Booking owner
-            venue_id=timeslot.court.venue_id,
-            timeslot_id=timeslot.id,
-            status=BookingStatus.confirmed.value,
-            payment_status=PaymentStatus.succeeded.value
-        )
-        session.add(booking)
-        bookings.append(booking)
-    
-    session.commit()
-    for booking in bookings:
-        session.refresh(booking)
-    
-    # Create events
-    event_data = [
-        {
-            "title": "Morning Basketball Pickup",
-            "description": "Casual morning basketball game for all skill levels",
-            "sport_type": "basketball",
-            "visibility": Visibility.public.value,
-            "capacity": 10,
-            "join_review_required": False
-        },
-        {
-            "title": "Tennis Tournament Practice",
-            "description": "Practice session for upcoming tournament",
-            "sport_type": "tennis", 
-            "visibility": Visibility.invite_only.value,
-            "capacity": 4,
-            "join_review_required": True
-        },
-        {
-            "title": "Soccer League Match",
-            "description": "Weekly league match - bring your A game!",
-            "sport_type": "soccer",
-            "visibility": Visibility.public.value,
-            "capacity": 22,
-            "join_review_required": False
-        },
-        {
-            "title": "Private Volleyball Session",
-            "description": "Private session for experienced players only",
-            "sport_type": "volleyball",
-            "visibility": Visibility.private.value,
-            "capacity": 12,
-            "join_review_required": True
-        },
-        {
-            "title": "Badminton Doubles Tournament",
-            "description": "Competitive doubles tournament",
-            "sport_type": "badminton",
-            "visibility": Visibility.public.value,
-            "capacity": 16,
-            "join_review_required": False
-        }
-    ]
-    
-    for i, (booking, event_info) in enumerate(zip(bookings, event_data)):
-        timeslot = next(ts for ts in timeslots if ts.id == booking.timeslot_id)
-        
-        event = Event(
-            id=uuid.uuid4(),
-            title=event_info["title"],
-            description=event_info["description"],
-            sport_type=event_info["sport_type"],
-            starts_at=timeslot.starts_at,
-            ends_at=timeslot.ends_at,
-            city=timeslot.court.venue.city,
-            capacity=event_info["capacity"],
-            booking_id=booking.id,
-            owner_user_id=users[0].id,
-            visibility=event_info["visibility"],
-            invite_token=gen_invite_token() if event_info["visibility"] == Visibility.invite_only.value else None,
-            join_review_required=event_info["join_review_required"],
-            status=EventStatus.open.value
-        )
-        session.add(event)
-        events.append(event)
-        
-        # Create booking assignment for this event
-        booking_assignment = BookingAssignment(
-            id=uuid.uuid4(),
-            booking_id=booking.id,
-            event_id=event.id,
-            assignment_type="event",
-            is_primary=True,
-            priority=1,
-            assigned_by_user_id=users[0].id,
-            assignment_reason=f"Assigned to event: {event_info['title']}",
-            status="active"
-        )
-        session.add(booking_assignment)
-        booking_assignments.append(booking_assignment)
-        
-        # Add owner as participant
-        owner_participant = EventParticipant(
-            id=uuid.uuid4(),
-            event_id=event.id,
-            user_id=users[0].id,
-            role="owner",
-            display_name=users[0].display_name,
-            email=users[0].email,
-            phone=users[0].phone
-        )
-        session.add(owner_participant)
-        participants.append(owner_participant)
-        
-        # Add some other participants
-        for j in range(1, min(4, len(users))):
-            participant = EventParticipant(
-                id=uuid.uuid4(),
-                event_id=event.id,
-                user_id=users[j].id,
-                role="member",
-                display_name=users[j].display_name,
-                email=users[j].email,
-                phone=users[j].phone
-            )
-            session.add(participant)
-            participants.append(participant)
-        
-        # Create some join requests for events that require review
-        if event_info["join_review_required"]:
-            join_request = EventJoinRequest(
-                id=uuid.uuid4(),
-            event_id=event.id,
-                applicant_user_id=users[-1].id,  # Guest user
-                applicant_name=users[-1].display_name,
-                applicant_email=users[-1].email,
-                applicant_phone=users[-1].phone,
-                message="I'd love to join this event!",
-                status=joinRequestStatus.submitted.value
-            )
-                session.add(join_request)
-                join_requests.append(join_request)
-    
-    session.commit()
-    for event in events:
-        session.refresh(event)
-    
-    print(f"✅ Created {len(events)} events, {len(participants)} participants, {len(join_requests)} join requests, {len(booking_assignments)} booking assignments, {len(event_teamups)} event-teamup relationships")
-    return events, participants, join_requests, booking_assignments, event_teamups
+def create_teamups(session: Session, users: list[User], timeslots: list[Timeslot]) -> list[TeamUp]:
+    """Create sample TeamUps"""
+    print("\n⚽ Creating TeamUps...")
 
-
-def create_teamups(session: Session, users: list, timeslots: list):
-    """Create sample teamups with many-to-many timeslot and booking relationships"""
-    teamups = []
-    teamup_participants = []
-    teamup_join_requests = []
-    teamup_timeslots = []
-    teamup_bookings = []
-    teamup_booking_assignments = []
-    
-    # Use timeslots that don't have events yet
-    available_timeslots = timeslots[5:15]  # Skip first 5 that have events
-    
-    teamup_data = [
+    teamups_data = [
         {
-            "title": "Weekend Basketball League",
-            "description": "Looking for players to form a team for the weekend league",
-            "sport_type": "basketball",
-            "min_participants": 5,
+            "title": "Weekend Basketball Game",
+            "description": "Looking for players for a friendly basketball game this weekend. All skill levels welcome!",
+            "owner": users[0],  # Alice
             "max_participants": 10,
-            "deadline_hours": 48,
-            "preferred_timeslots": 1,  # Number of preferred timeslots
-            "alternative_timeslots": 2  # Number of alternative timeslots
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "durantion_type": "temporary",
         },
         {
-            "title": "Tennis Doubles Partners",
-            "description": "Need a doubles partner for upcoming tournament",
-            "sport_type": "tennis",
-            "min_participants": 2,
-            "max_participants": 4,
-            "deadline_hours": 24,
-            "preferred_timeslots": 1,
-            "alternative_timeslots": 1
-        },
-        {
-            "title": "Soccer Team Formation",
-            "description": "Forming a new soccer team for the season",
-            "sport_type": "soccer",
-            "min_participants": 8,
-            "max_participants": 22,
-            "deadline_hours": 72,
-            "preferred_timeslots": 2,
-            "alternative_timeslots": 3
-        },
-        {
-            "title": "Volleyball Beach Tournament",
-            "description": "Beach volleyball tournament team formation",
-            "sport_type": "volleyball",
-            "min_participants": 6,
-            "max_participants": 12,
-            "deadline_hours": 36,
-            "preferred_timeslots": 1,
-            "alternative_timeslots": 2
-        },
-        {
-            "title": "Badminton Mixed Doubles",
-            "description": "Looking for mixed doubles partners",
-            "sport_type": "badminton",
-            "min_participants": 4,
+            "title": "Badminton Doubles Practice",
+            "description": "Regular badminton practice for intermediate players. Let's improve together!",
+            "owner": users[1],  # Bob
             "max_participants": 8,
-            "deadline_hours": 12,
-            "preferred_timeslots": 1,
-            "alternative_timeslots": 1
-        }
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "durantion_type": "permanent",
+        },
+        {
+            "title": "Friday Night Hoops",
+            "description": "Weekly Friday night basketball. Competitive but fun!",
+            "owner": users[2],  # Charlie
+            "max_participants": 12,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "durantion_type": "permanent",
+        },
+        {
+            "title": "Tennis Club - Beginner Friendly",
+            "description": "New tennis group for beginners. Coach available for guidance.",
+            "owner": users[3],  # Diana
+            "max_participants": 6,
+            "visibility": Visibility.private.value,
+            "status": "open",
+            "durantion_type": "permanent",
+            "invite_token": "TENNIS2024ABC",
+        },
+        {
+            "title": "Volleyball Tournament Prep",
+            "description": "Preparing for upcoming tournament. Experienced players only.",
+            "owner": users[4],  # Evan
+            "max_participants": 8,
+            "visibility": Visibility.private.value,
+            "status": "closed",
+            "durantion_type": "temporary",
+        },
+        {
+            "title": "Sunday Morning Badminton",
+            "description": "Relaxed badminton session for Sunday morning. Coffee afterwards!",
+            "owner": users[5],  # Fiona
+            "max_participants": 8,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "durantion_type": "temporary",
+        },
     ]
-    
-    for i, teamup_info in enumerate(teamup_data):
-        deadline = datetime.now(timezone.utc) + timedelta(hours=teamup_info["deadline_hours"])
-        
-        # Create TeamUp without court_timeslot_id (using new many-to-many relationship)
+
+    teamups = []
+    for data in teamups_data:
         teamup = TeamUp(
-            id=uuid.uuid4(),
-            court_timeslot_id=None,  # Legacy field, now nullable
-            title=teamup_info["title"],
-            description=teamup_info["description"],
-            owner_user_id=users[i % len(users)].id,
-            min_participants=teamup_info["min_participants"],
-            max_participants=teamup_info["max_participants"],
-            deadline=deadline,
-            sport_type=teamup_info["sport_type"],
-            status="open"
+            title=data["title"],
+            description=data["description"],
+            owner_user_id=data["owner"].id,
+            max_participants=data["max_participants"],
+            visibility=data["visibility"],
+            status=data["status"],
+            durantion_type=data["durantion_type"],
+            invite_token=data.get("invite_token"),
         )
         session.add(teamup)
         teamups.append(teamup)
-        
-        # Add preferred timeslots
-        preferred_count = teamup_info["preferred_timeslots"]
-        for j in range(preferred_count):
-            if i * 3 + j < len(available_timeslots):
-                timeslot = available_timeslots[i * 3 + j]
-                teamup_timeslot = TeamUpTimeslot(
-                    id=uuid.uuid4(),
-                    teamup_id=teamup.id,
-                    court_timeslot_id=timeslot.id,
-                    venue_timeslot_id=None,
-                    is_preferred=True,
-                    priority=j + 1
-                )
-                session.add(teamup_timeslot)
-                teamup_timeslots.append(teamup_timeslot)
-        
-        # Add alternative timeslots
-        alt_count = teamup_info["alternative_timeslots"]
-        for j in range(alt_count):
-            timeslot_idx = i * 3 + preferred_count + j
-            if timeslot_idx < len(available_timeslots):
-                timeslot = available_timeslots[timeslot_idx]
-                teamup_timeslot = TeamUpTimeslot(
-                    id=uuid.uuid4(),
-                    teamup_id=teamup.id,
-                    court_timeslot_id=timeslot.id,
-                    venue_timeslot_id=None,
-                    is_preferred=False,
-                    priority=preferred_count + j + 1
-                )
-                session.add(teamup_timeslot)
-                teamup_timeslots.append(teamup_timeslot)
-        
-        # Add owner as participant
-        owner_participant = TeamUpParticipant(
-            id=uuid.uuid4(),
-            teamup_id=teamup.id,
-            user_id=users[i % len(users)].id,
-            role="owner",
-            display_name=users[i % len(users)].display_name,
-            email=users[i % len(users)].email,
-            phone=users[i % len(users)].phone
-        )
-        session.add(owner_participant)
-        teamup_participants.append(owner_participant)
-        
-        # Add some existing participants
-        for j in range(1, min(3, len(users))):
-            if j != i % len(users):  # Don't add owner twice
-                participant = TeamUpParticipant(
-                    id=uuid.uuid4(),
-                    teamup_id=teamup.id,
-                    user_id=users[j].id,
-                    role="member",
-                    display_name=users[j].display_name,
-                    email=users[j].email,
-                    phone=users[j].phone
-                )
-                session.add(participant)
-                teamup_participants.append(participant)
-        
-        # Create some join requests
-        for k in range(2):  # 2 join requests per teamup
-            applicant_idx = (i + k + 2) % len(users)
-            if applicant_idx != i % len(users):  # Don't add owner as applicant
-                join_request = TeamUpJoinRequest(
-                    id=uuid.uuid4(),
-                    teamup_id=teamup.id,
-                    applicant_user_id=users[applicant_idx].id,
-                    applicant_name=users[applicant_idx].display_name,
-                    applicant_email=users[applicant_idx].email,
-                    applicant_phone=users[applicant_idx].phone,
-                    message=f"I'm interested in joining {teamup_info['title']}!",
-                    status=joinRequestStatus.submitted.value
-                )
-                session.add(join_request)
-                teamup_join_requests.append(join_request)
-        
-        # Create bookings for this TeamUp (simulate multiple booking scenarios)
-        booking_count = min(2, len(available_timeslots) - i * 3)  # 1-2 bookings per TeamUp
-        for j in range(booking_count):
-            timeslot_idx = i * 3 + j
-            if timeslot_idx < len(available_timeslots):
-                timeslot = available_timeslots[timeslot_idx]
-                
-                # Create a booking
-                booking = Booking(
-                    id=uuid.uuid4(),
-                    owner_user_id=users[i % len(users)].id,  # Booking owner
-                    venue_id=timeslot.court.venue_id,
-                    timeslot_id=timeslot.id,
-                    status=BookingStatus.confirmed.value,
-                    payment_status=PaymentStatus.succeeded.value
-                )
-                session.add(booking)
-                
-                # Create booking assignment for TeamUp
-                booking_assignment = BookingAssignment(
-                    id=uuid.uuid4(),
-                    booking_id=booking.id,
-                    teamup_id=teamup.id,
-                    assignment_type="teamup",
-                    is_primary=(j == 0),  # First booking is primary
-                    priority=j + 1,
-                    assigned_by_user_id=users[i % len(users)].id,
-                    assignment_reason=f"Assigned to TeamUp: {teamup_info['title']}",
-                    status="active"
-                )
-                session.add(booking_assignment)
-                teamup_booking_assignments.append(booking_assignment)
-                
-                # Legacy TeamUpBooking relationship (for backward compatibility)
-                teamup_booking = TeamUpBooking(
-                    id=uuid.uuid4(),
-                    teamup_id=teamup.id,
-                    booking_id=booking.id,
-                    is_primary=(j == 0),  # First booking is primary
-                    priority=j + 1,
-                    contribution_amount_cents=timeslot.price_cents // (booking_count + 1) if timeslot.price_cents else None,
-                    contribution_percentage=100.0 / (booking_count + 1),
-                    status="active"
-                )
-                session.add(teamup_booking)
-                teamup_bookings.append(teamup_booking)
-    
+
     session.commit()
-    for teamup in teamups:
-        session.refresh(teamup)
-    
-    print(f"✅ Created {len(teamups)} teamups, {len(teamup_participants)} participants, {len(teamup_join_requests)} join requests, {len(teamup_timeslots)} timeslot relationships, {len(teamup_bookings)} legacy booking relationships, {len(teamup_booking_assignments)} booking assignments")
-    return teamups, teamup_participants, teamup_join_requests, teamup_timeslots, teamup_bookings, teamup_booking_assignments
+    print(f"✅ Created {len(teamups)} TeamUps")
+    return teamups
 
 
-def create_event_teamup_relationships(session: Session, events: list, teamups: list):
-    """Create Event-TeamUp many-to-many relationships"""
-    event_teamup_relationships = []
-    
-    # Create relationships between events and teamups with matching sport types
-    for i, event in enumerate(events):
-        # Find teamups with matching sport type
-        matching_teamups = [t for t in teamups if t.sport_type == event.sport_type]
-        
-        # Create relationships with up to 2 matching teamups per event
-        for j, teamup in enumerate(matching_teamups[:2]):
-            relationship_type = "organizer" if j == 0 else "participant"
-            
-            event_teamup = EventTeamUp(
-                id=uuid.uuid4(),
-                event_id=event.id,
-                teamup_id=teamup.id,
-                is_primary=(j == 0),  # First relationship is primary
-                priority=j + 1,
-                relationship_type=relationship_type,
-                contribution_percentage=50.0 if j == 0 else 25.0,
-                status="active"
-            )
-            session.add(event_teamup)
-            event_teamup_relationships.append(event_teamup)
-    
-    # Create additional cross-sport relationships for demonstration
-    for i in range(min(3, len(events), len(teamups))):
-        event = events[i % len(events)]
-        teamup = teamups[i % len(teamups)]
-        
-        # Skip if already related
-        if any(et.event_id == event.id and et.teamup_id == teamup.id for et in event_teamup_relationships):
-            continue
-        
-        event_teamup = EventTeamUp(
-            id=uuid.uuid4(),
-            event_id=event.id,
-            teamup_id=teamup.id,
-            is_primary=False,
-            priority=3,
-            relationship_type="partner",
-            contribution_percentage=15.0,
-            status="active"
+def create_participants(session: Session, teamups: list[TeamUp], users: list[User]):
+    """Create TeamUp participants"""
+    print("\n👥 Creating participants...")
+
+    participants_count = 0
+
+    # TeamUp 0: Weekend Basketball (Alice's team)
+    # Owner + 3 members
+    for i, user in enumerate([users[0], users[1], users[2], users[3]]):
+        role = "owner" if i == 0 else "member"
+        participant = TeamUpParticipant(
+            teamup_id=teamups[0].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
         )
-        session.add(event_teamup)
-        event_teamup_relationships.append(event_teamup)
-    
+        session.add(participant)
+        participants_count += 1
+
+    # TeamUp 1: Badminton Doubles (Bob's team)
+    # Owner + 2 members
+    for i, user in enumerate([users[1], users[4], users[5]]):
+        role = "owner" if i == 0 else "member"
+        participant = TeamUpParticipant(
+            teamup_id=teamups[1].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # TeamUp 2: Friday Night Hoops (Charlie's team) - CONFIRMED with full roster
+    # Owner + 5 members
+    for i, user in enumerate([users[2], users[0], users[1], users[3], users[4], users[5]]):
+        role = "owner" if i == 0 else "member"
+        participant = TeamUpParticipant(
+            teamup_id=teamups[2].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # TeamUp 3: Tennis Club (Diana's team)
+    # Owner + 1 member
+    for i, user in enumerate([users[3], users[2]]):
+        role = "owner" if i == 0 else "member"
+        participant = TeamUpParticipant(
+            teamup_id=teamups[3].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # TeamUp 4: Volleyball Tournament (Evan's team) - CONFIRMED
+    # Owner + 5 members
+    for i, user in enumerate([users[4], users[0], users[1], users[2], users[3], users[5]]):
+        role = "owner" if i == 0 else "member"
+        participant = TeamUpParticipant(
+            teamup_id=teamups[4].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # TeamUp 5: Sunday Badminton (Fiona's team)
+    # Owner + 2 members
+    for i, user in enumerate([users[5], users[1], users[3]]):
+        role = "owner" if i == 0 else "member"
+        participant = TeamUpParticipant(
+            teamup_id=teamups[5].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
     session.commit()
-    for relationship in event_teamup_relationships:
-        session.refresh(relationship)
-    
-    print(f"✅ Created {len(event_teamup_relationships)} Event-TeamUp relationships")
-    return event_teamup_relationships
+    print(f"✅ Created {participants_count} participants")
+
+
+def create_join_requests(session: Session, teamups: list[TeamUp], users: list[User]):
+    """Create sample join requests"""
+    print("\n📝 Creating join requests...")
+
+    requests_data = [
+        {
+            "teamup": teamups[0],  # Weekend Basketball
+            "applicant": users[4],  # Evan
+            "message": "I'd love to join! I play center position.",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "teamup": teamups[0],  # Weekend Basketball
+            "applicant": users[5],  # Fiona
+            "message": "Can I join? I'm a beginner but eager to learn!",
+            "status": joinRequestStatus.approved.value,
+        },
+        {
+            "teamup": teamups[1],  # Badminton Doubles
+            "applicant": users[3],  # Diana
+            "message": "Looking for regular practice partners!",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "teamup": teamups[3],  # Tennis Club (invite-only)
+            "applicant": users[0],  # Alice
+            "message": "Got the invite token from a friend. Excited to learn!",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "teamup": teamups[5],  # Sunday Badminton
+            "applicant": users[2],  # Charlie
+            "message": "Perfect timing! Count me in.",
+            "status": joinRequestStatus.rejected.value,
+        },
+    ]
+
+    for data in requests_data:
+        request = TeamUpJoinRequest(
+            teamup_id=data["teamup"].id,
+            applicant_user_id=data["applicant"].id,
+            applicant_name=data["applicant"].display_name,
+            applicant_email=data["applicant"].email,
+            applicant_phone=data["applicant"].phone,
+            message=data["message"],
+            status=data["status"],
+            reviewed_at=datetime.now(timezone.utc) if data["status"] != joinRequestStatus.submitted.value else None,
+        )
+        session.add(request)
+
+    session.commit()
+    print(f"✅ Created {len(requests_data)} join requests")
+
+
+def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], timeslots: list[Timeslot]):
+    """Create sample bookings"""
+    print("\n📅 Creating bookings...")
+
+    # Filter bookable timeslots
+    bookable_timeslots = [ts for ts in timeslots if ts.is_bookable]
+
+    bookings_data = [
+        # TeamUp bookings
+        {
+            "owner": users[0],  # Alice
+            "teamup": teamups[0],  # Weekend Basketball
+            "timeslot": bookable_timeslots[5],  # Saturday morning
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[1],  # Bob
+            "teamup": teamups[1],  # Badminton Doubles
+            "timeslot": bookable_timeslots[15],  # Next week
+            "status": BookingStatus.pending.value,
+            "payment_status": PaymentStatus.pending.value,
+        },
+        {
+            "owner": users[2],  # Charlie
+            "teamup": teamups[2],  # Friday Night Hoops (confirmed teamup)
+            "timeslot": bookable_timeslots[25],  # Friday evening
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[3],  # Diana
+            "teamup": teamups[3],  # Tennis Club
+            "timeslot": bookable_timeslots[35],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[4],  # Evan
+            "teamup": teamups[4],  # Volleyball Tournament
+            "timeslot": bookable_timeslots[45],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[5],  # Fiona
+            "teamup": teamups[5],  # Sunday Badminton
+            "timeslot": bookable_timeslots[55],  # Sunday morning
+            "status": BookingStatus.pending.value,
+            "payment_status": PaymentStatus.pending.value,
+        },
+        # Individual bookings (no teamup)
+        {
+            "owner": users[0],  # Alice - individual booking
+            "teamup": None,
+            "timeslot": bookable_timeslots[10],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[1],  # Bob - individual booking
+            "teamup": None,
+            "timeslot": bookable_timeslots[20],
+            "status": BookingStatus.pending.value,
+            "payment_status": PaymentStatus.none.value,
+        },
+        {
+            "owner": users[3],  # Diana - cancelled booking
+            "teamup": None,
+            "timeslot": bookable_timeslots[30],
+            "status": BookingStatus.cancelled.value,
+            "payment_status": PaymentStatus.failed.value,
+        },
+    ]
+
+    teamup_booking_count = 0
+    for data in bookings_data:
+        booking = Booking(
+            owner_user_id=data["owner"].id,
+            timeslot_id=data["timeslot"].id,
+            teamup_id=data["teamup"].id if data.get("teamup") else None,
+            status=data["status"],
+            payment_status=data["payment_status"],
+        )
+        session.add(booking)
+        if data.get("teamup"):
+            teamup_booking_count += 1
+
+    session.commit()
+    print(f"✅ Created {len(bookings_data)} bookings ({teamup_booking_count} assigned to TeamUps)")
+
+
+def print_summary(session: Session):
+    """Print summary of seeded data"""
+    print("\n" + "="*60)
+    print("📊 SEEDING SUMMARY")
+    print("="*60)
+
+    user_count = session.query(User).count()
+    venue_count = session.query(Venue).count()
+    court_count = session.query(Court).count()
+    timeslot_count = session.query(Timeslot).count()
+    teamup_count = session.query(TeamUp).count()
+    participant_count = session.query(TeamUpParticipant).count()
+    join_request_count = session.query(TeamUpJoinRequest).count()
+    booking_count = session.query(Booking).count()
+
+    print(f"👤 Users:              {user_count}")
+    print(f"🏟️  Venues:             {venue_count}")
+    print(f"🎾 Courts:             {court_count}")
+    print(f"⏰ Timeslots:          {timeslot_count}")
+    print(f"⚽ TeamUps:            {teamup_count}")
+    print(f"👥 Participants:       {participant_count}")
+    print(f"📝 Join Requests:      {join_request_count}")
+    print(f"📅 Bookings:           {booking_count}")
+    print("="*60)
+
+    print("\n📧 Test User Credentials:")
+    print("-" * 60)
+    print("Email: alice@example.com   | Password: password123")
+    print("Email: bob@example.com     | Password: password123")
+    print("Email: charlie@example.com | Password: password123")
+    print("Email: diana@example.com   | Password: password123")
+    print("Email: evan@example.com    | Password: password123")
+    print("Email: fiona@example.com   | Password: password123")
+    print("-" * 60)
 
 
 def main():
-    """Main seed function"""
-    print("🌱 Starting comprehensive database seeding...")
-    
-    with SessionLocal() as session:
-        try:
-            # Create all sample data
-            users = create_users(session)
-            venues, courts, timeslots = create_venues_and_courts(session)
-            events, participants, join_requests, event_booking_assignments, event_teamups = create_events(session, users, timeslots)
-            teamups, teamup_participants, teamup_join_requests, teamup_timeslots, teamup_bookings, teamup_booking_assignments = create_teamups(session, users, timeslots)
-            
-            # Create Event-TeamUp relationships
-            event_teamup_relationships = create_event_teamup_relationships(session, events, teamups)
-            
-            print("\n🎉 Seeding completed successfully!")
-            print(f"📊 Summary:")
-            print(f"   👥 Users: {len(users)}")
-            print(f"   🏢 Venues: {len(venues)}")
-            print(f"   🏟️  Courts: {len(courts)}")
-            print(f"   ⏰ Timeslots: {len(timeslots)}")
-            print(f"   🎯 Events: {len(events)}")
-            print(f"   👤 Event Participants: {len(participants)}")
-            print(f"   📝 Event Join Requests: {len(join_requests)}")
-            print(f"   📅 Event Booking Assignments: {len(event_booking_assignments)}")
-            print(f"   🤝 Event-TeamUp Relationships: {len(event_teamups)}")
-            print(f"   🤝 TeamUps: {len(teamups)}")
-            print(f"   👥 TeamUp Participants: {len(teamup_participants)}")
-            print(f"   📋 TeamUp Join Requests: {len(teamup_join_requests)}")
-            print(f"   ⏰ TeamUp-Timeslot Relationships: {len(teamup_timeslots)}")
-            print(f"   📅 TeamUp Legacy Booking Relationships: {len(teamup_bookings)}")
-            print(f"   📅 TeamUp Booking Assignments: {len(teamup_booking_assignments)}")
-            print(f"   🔗 Event-TeamUp Relationships: {len(event_teamup_relationships)}")
-            
-            print(f"\n🔑 Test Credentials:")
-            for user in users:
-                print(f"   📧 {user.email} / password: password123")
-            
-            if events:
-                invite_event = next((e for e in events if e.invite_token), None)
-                if invite_event:
-                    print(f"\n🎫 Invite Token for '{invite_event.title}': {invite_event.invite_token}")
-            
-        except Exception as e:
-            session.rollback()
-            print(f"❌ Error during seeding: {e}")
-            raise
+    """Main seeding function"""
+    print("="*60)
+    print("🌱 TEAMUP DATABASE SEEDING")
+    print("="*60)
+
+    # Create database session
+    with Session(engine) as session:
+        # Clear existing data
+        clear_all_data(session)
+
+        # Create data
+        users = create_users(session)
+        venues, courts = create_venues_and_courts(session)
+        timeslots = create_timeslots(session, courts)
+        teamups = create_teamups(session, users, timeslots)
+        create_participants(session, teamups, users)
+        create_join_requests(session, teamups, users)
+        create_bookings(session, teamups, users, timeslots)
+
+        # Print summary
+        print_summary(session)
+
+    print("\n✅ Seeding completed successfully!")
+    print("🚀 You can now start your API server and test with the seeded data.\n")
 
 
 if __name__ == "__main__":
