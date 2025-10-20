@@ -13,7 +13,13 @@
       "Bash(cat:*)",
       "Bash(chmod +x /Users/hwangdouglas/Projects/team-up-main/services/api/reset_alembic.sh)",
       "Bash(chmod +x /Users/hwangdouglas/Projects/team-up-main/services/api/test_routes.py)",
-      "Bash(python3 test_routes.py)"
+      "Bash(python3 test_routes.py)",
+      "Bash(awk '{print $NF}')",
+      "Bash(ls -la /Users/hwangdouglas/Projects/team-up-main/apps/web/app/(main)/teamups/)",
+      "Bash(ls -la /Users/hwangdouglas/Projects/team-up-main/apps/web/app/(main)/teamups/[teamupId]/)",
+      "Bash(tree -L 3 -I 'node_modules' /Users/hwangdouglas/Projects/team-up-main/apps/web/app)",
+      "Bash(chmod +x /Users/hwangdouglas/Projects/team-up-main/apps/web/clear-cache.sh)",
+      "Bash(head -10 /Users/hwangdouglas/Projects/team-up-main/apps/web/app/(main)/teamups/page.tsx)"
     ],
     "deny": [],
     "ask": []
