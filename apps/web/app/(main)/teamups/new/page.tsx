@@ -11,7 +11,6 @@ export default function CreateTeamUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form states
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [maxParticipants, setMaxParticipants] = useState<number>(10);
@@ -28,7 +27,6 @@ export default function CreateTeamUpPage() {
     e.preventDefault();
     setError(null);
 
-    // Validation
     if (!title.trim()) {
       setError('Please provide a title');
       return;
@@ -60,140 +58,198 @@ export default function CreateTeamUpPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center py-12 text-gray-600">Checking authentication...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-t-4 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <button
-          onClick={() => router.back()}
-          className="text-sm text-blue-600 hover:text-blue-700 mb-2 inline-block"
-        >
-          � Back
-        </button>
-        <h1 className="text-3xl font-bold text-gray-900">Create New TeamUp</h1>
-        <p className="text-gray-600 mt-2">
-          Organize a sports activity by creating a TeamUp. Set your requirements and invite participants.
-        </p>
-      </div>
-
-      {error && (
-        <div className="rounded-md border border-red-400 bg-red-50 p-4 text-red-800">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Details */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Basic Details</h2>
-
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Title <span className="text-red-600">*</span>
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Weekend Basketball Game"
-              required
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your TeamUp activity..."
-              rows={4}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
-            />
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Settings</h2>
-
-          <div>
-            <label htmlFor="maxParticipants" className="block text-sm font-medium text-gray-700 mb-1">
-              Maximum Participants <span className="text-red-600">*</span>
-            </label>
-            <input
-              id="maxParticipants"
-              type="number"
-              value={maxParticipants}
-              onChange={(e) => setMaxParticipants(Number(e.target.value))}
-              min={2}
-              max={100}
-              required
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Maximum number of participants allowed (including you as owner)
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="visibility" className="block text-sm font-medium text-gray-700 mb-1">
-              Visibility
-            </label>
-            <select
-              id="visibility"
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="public">Public - Anyone can see and request to join</option>
-              <option value="private">Private - Only invited users can see</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="durantionType" className="block text-sm font-medium text-gray-700 mb-1">
-              Type
-            </label>
-            <select
-              id="durantionType"
-              value={durantionType}
-              onChange={(e) => setDurantionType(e.target.value as 'temporary' | 'recurring')}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="temporary">Temporary - One-time event</option>
-              <option value="recurring">Recurring - Regular activity</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Submit Button */}
-        <div className="flex gap-3">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
           <button
-            type="button"
             onClick={() => router.back()}
-            className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+            className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors"
           >
-            Cancel
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back
           </button>
-          <button
-            type="submit"
-            disabled={loading || !title.trim()}
-            className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-          >
-            {loading ? 'Creating...' : 'Create TeamUp'}
-          </button>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">Create New TeamUp</h1>
+          <p className="text-lg text-gray-600">
+            Organize a sports activity and invite others to join your team.
+          </p>
         </div>
-      </form>
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-red-800 flex-1">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Details */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Basic Information</h2>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Title <span className="text-red-600">*</span>
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Weekend Basketball Game"
+                  required
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Tell people what this TeamUp is about, when and where it will happen..."
+                  rows={5}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical transition-all"
+                />
+                <p className="text-sm text-gray-500 mt-2">Optional but recommended for better engagement</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">TeamUp Settings</h2>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="maxParticipants" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Maximum Participants <span className="text-red-600">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="maxParticipants"
+                    type="number"
+                    value={maxParticipants}
+                    onChange={(e) => setMaxParticipants(Number(e.target.value))}
+                    min={2}
+                    max={100}
+                    required
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Maximum number of participants (2-100, including you as owner)
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="visibility" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Visibility
+                </label>
+                <select
+                  id="visibility"
+                  value={visibility}
+                  onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="public">🌍 Public - Anyone can see and request to join</option>
+                  <option value="private">🔒 Private - Only invited users can see</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="durantionType" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Activity Type
+                </label>
+                <select
+                  id="durantionType"
+                  value={durantionType}
+                  onChange={(e) => setDurantionType(e.target.value as 'temporary' | 'recurring')}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="temporary">📅 Temporary - One-time event</option>
+                  <option value="recurring">🔄 Recurring - Regular activity</option>
+                </select>
+                <p className="text-sm text-gray-500 mt-2">
+                  {durantionType === 'recurring'
+                    ? 'Perfect for weekly games or regular meetups'
+                    : 'Great for special events or one-off activities'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex-1 px-6 py-3.5 border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-xl font-semibold transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !title.trim()}
+              className="flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all shadow-lg transform hover:scale-[1.02]"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating TeamUp...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create TeamUp
+                </span>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

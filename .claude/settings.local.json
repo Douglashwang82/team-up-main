@@ -19,7 +19,10 @@
       "Bash(ls -la /Users/hwangdouglas/Projects/team-up-main/apps/web/app/(main)/teamups/[teamupId]/)",
       "Bash(tree -L 3 -I 'node_modules' /Users/hwangdouglas/Projects/team-up-main/apps/web/app)",
       "Bash(chmod +x /Users/hwangdouglas/Projects/team-up-main/apps/web/clear-cache.sh)",
-      "Bash(head -10 /Users/hwangdouglas/Projects/team-up-main/apps/web/app/(main)/teamups/page.tsx)"
+      "Bash(head -10 /Users/hwangdouglas/Projects/team-up-main/apps/web/app/(main)/teamups/page.tsx)",
+      "Bash(pnpm add -D tailwindcss postcss autoprefixer)",
+      "Bash(pnpm remove tailwindcss)",
+      "Bash(pnpm add -D tailwindcss@3 @tailwindcss/postcss autoprefixer postcss)"
     ],
     "deny": [],
     "ask": []
