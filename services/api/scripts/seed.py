@@ -1,6 +1,6 @@
 """
 Seed script for TeamUp database
-Creates sample data for all models including users, venues, courts, timeslots, teamups, bookings, and participants
+Creates sample data for all models including users, venues, courts, time slots, teamups, bookings, and participants
 
 Usage:
     python seed.py
@@ -20,7 +20,7 @@ from geoalchemy2 import WKTElement
 
 from app.core.db import engine, Base
 from app.models.user import User
-from app.models.venue import Venue, Court, Timeslot
+from app.models.venue import Venue, Court, TimeSlot
 from app.models.teamup import TeamUp
 from app.models.teamup_participant import TeamUpParticipant
 from app.models.teamup_join_request import TeamUpJoinRequest
@@ -37,7 +37,7 @@ def clear_all_data(session: Session):
     session.query(TeamUpJoinRequest).delete()
     session.query(Booking).delete()
     session.query(TeamUp).delete()
-    session.query(Timeslot).delete()
+    session.query(TimeSlot).delete()
     session.query(Court).delete()
     session.query(Venue).delete()
     session.query(User).delete()
@@ -218,14 +218,14 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
     return venues, all_courts
 
 
-def create_timeslots(session: Session, courts: list[Court]) -> list[Timeslot]:
-    """Create sample timeslots for the next 14 days"""
-    print("\n⏰ Creating timeslots...")
+def create_time_slots(session: Session, courts: list[Court]) -> list[TimeSlot]:
+    """Create sample time slots for the next 14 days"""
+    print("\n⏰ Creating time slots...")
 
-    timeslots = []
+    time_slots = []
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Create timeslots for next 14 days
+    # Create time slots for next 14 days
     for day_offset in range(14):
         date = today + timedelta(days=day_offset)
 
@@ -248,7 +248,7 @@ def create_timeslots(session: Session, courts: list[Court]) -> list[Timeslot]:
                 # Make some slots not bookable (already reserved by venue)
                 is_bookable = day_offset > 0  # Today's slots are not bookable
 
-                timeslot = Timeslot(
+                time_slot = TimeSlot(
                     court_id=court.id,
                     starts_at=starts_at,
                     ends_at=ends_at,
@@ -256,15 +256,15 @@ def create_timeslots(session: Session, courts: list[Court]) -> list[Timeslot]:
                     currency="TWD",
                     is_bookable=is_bookable
                 )
-                session.add(timeslot)
-                timeslots.append(timeslot)
+                session.add(time_slot)
+                time_slots.append(time_slot)
 
     session.commit()
-    print(f"✅ Created {len(timeslots)} timeslots")
-    return timeslots
+    print(f"✅ Created {len(time_slots)} time slots")
+    return time_slots
 
 
-def create_teamups(session: Session, users: list[User], timeslots: list[Timeslot]) -> list[TeamUp]:
+def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlot]) -> list[TeamUp]:
     """Create sample TeamUps"""
     print("\n⚽ Creating TeamUps...")
 
@@ -500,54 +500,54 @@ def create_join_requests(session: Session, teamups: list[TeamUp], users: list[Us
     print(f"✅ Created {len(requests_data)} join requests")
 
 
-def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], timeslots: list[Timeslot]):
+def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], time_slots: list[TimeSlot]):
     """Create sample bookings"""
     print("\n📅 Creating bookings...")
 
-    # Filter bookable timeslots
-    bookable_timeslots = [ts for ts in timeslots if ts.is_bookable]
+    # Filter bookable time slots
+    bookable_time_slots = [ts for ts in time_slots if ts.is_bookable]
 
     bookings_data = [
         # TeamUp bookings
         {
             "owner": users[0],  # Alice
             "teamup": teamups[0],  # Weekend Basketball
-            "timeslot": bookable_timeslots[5],  # Saturday morning
+            "time_slot": bookable_time_slots[5],  # Saturday morning
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[1],  # Bob
             "teamup": teamups[1],  # Badminton Doubles
-            "timeslot": bookable_timeslots[15],  # Next week
+            "time_slot": bookable_time_slots[15],  # Next week
             "status": BookingStatus.pending.value,
             "payment_status": PaymentStatus.pending.value,
         },
         {
             "owner": users[2],  # Charlie
             "teamup": teamups[2],  # Friday Night Hoops (confirmed teamup)
-            "timeslot": bookable_timeslots[25],  # Friday evening
+            "time_slot": bookable_time_slots[25],  # Friday evening
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[3],  # Diana
             "teamup": teamups[3],  # Tennis Club
-            "timeslot": bookable_timeslots[35],
+            "time_slot": bookable_time_slots[35],
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[4],  # Evan
             "teamup": teamups[4],  # Volleyball Tournament
-            "timeslot": bookable_timeslots[45],
+            "time_slot": bookable_time_slots[45],
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[5],  # Fiona
             "teamup": teamups[5],  # Sunday Badminton
-            "timeslot": bookable_timeslots[55],  # Sunday morning
+            "time_slot": bookable_time_slots[55],  # Sunday morning
             "status": BookingStatus.pending.value,
             "payment_status": PaymentStatus.pending.value,
         },
@@ -555,21 +555,21 @@ def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], 
         {
             "owner": users[0],  # Alice - individual booking
             "teamup": None,
-            "timeslot": bookable_timeslots[10],
+            "time_slot": bookable_time_slots[10],
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[1],  # Bob - individual booking
             "teamup": None,
-            "timeslot": bookable_timeslots[20],
+            "time_slot": bookable_time_slots[20],
             "status": BookingStatus.pending.value,
             "payment_status": PaymentStatus.none.value,
         },
         {
             "owner": users[3],  # Diana - cancelled booking
             "teamup": None,
-            "timeslot": bookable_timeslots[30],
+            "time_slot": bookable_time_slots[30],
             "status": BookingStatus.cancelled.value,
             "payment_status": PaymentStatus.failed.value,
         },
@@ -579,7 +579,7 @@ def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], 
     for data in bookings_data:
         booking = Booking(
             owner_user_id=data["owner"].id,
-            timeslot_id=data["timeslot"].id,
+            time_slot_id=data["time_slot"].id,
             teamup_id=data["teamup"].id if data.get("teamup") else None,
             status=data["status"],
             payment_status=data["payment_status"],
@@ -601,7 +601,7 @@ def print_summary(session: Session):
     user_count = session.query(User).count()
     venue_count = session.query(Venue).count()
     court_count = session.query(Court).count()
-    timeslot_count = session.query(Timeslot).count()
+    time_slot_count = session.query(TimeSlot).count()
     teamup_count = session.query(TeamUp).count()
     participant_count = session.query(TeamUpParticipant).count()
     join_request_count = session.query(TeamUpJoinRequest).count()
@@ -610,7 +610,7 @@ def print_summary(session: Session):
     print(f"👤 Users:              {user_count}")
     print(f"🏟️  Venues:             {venue_count}")
     print(f"🎾 Courts:             {court_count}")
-    print(f"⏰ Timeslots:          {timeslot_count}")
+    print(f"⏰ Time Slots:          {time_slot_count}")
     print(f"⚽ TeamUps:            {teamup_count}")
     print(f"👥 Participants:       {participant_count}")
     print(f"📝 Join Requests:      {join_request_count}")
@@ -642,11 +642,11 @@ def main():
         # Create data
         users = create_users(session)
         venues, courts = create_venues_and_courts(session)
-        timeslots = create_timeslots(session, courts)
-        teamups = create_teamups(session, users, timeslots)
+        time_slots = create_time_slots(session, courts)
+        teamups = create_teamups(session, users, time_slots)
         create_participants(session, teamups, users)
         create_join_requests(session, teamups, users)
-        create_bookings(session, teamups, users, timeslots)
+        create_bookings(session, teamups, users, time_slots)
 
         # Print summary
         print_summary(session)

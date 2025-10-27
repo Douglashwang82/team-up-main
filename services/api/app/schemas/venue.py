@@ -4,6 +4,8 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 
+from services.api.app.schemas.teamup import TimeSlotOut
+
 class VenueOut(BaseModel):
     """Basic venue information"""
     id: UUID
@@ -33,7 +35,7 @@ class TimeslotOut(BaseModel):
 class VenueSearchOut(BaseModel):
     """Response for venue search endpoint"""
     venue: VenueOut
-    timeslots: list[TimeslotOut]
+    time_slots: list[TimeSlotOut]
 
 class VenueDetailOut(BaseModel):
     """Detailed venue information with courts"""
@@ -56,5 +58,5 @@ class VenueSearchQueryIn(BaseModel):
     sport_type: Optional[str] = None
 
 class CourtTimeslotsQueryIn(BaseModel):
-    """Query parameters for getting court timeslots"""
+    """Query parameters for getting court time slots"""
     date: Optional[str] = None  # YYYY-MM-DD format

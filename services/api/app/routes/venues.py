@@ -5,13 +5,13 @@ from uuid import UUID
 from flask import Blueprint, request, jsonify
 from sqlalchemy import and_, select, func
 from app.core.db import SessionLocal
-from app.models.venue import Venue, Court, Timeslot
+from app.models.venue import Venue, Court, TimeSlot
 from geoalchemy2.functions import ST_DWithin, ST_Distance
 from geoalchemy2.elements import WKTElement
 
 bp = Blueprint("venues", __name__)
 
-def _serialize_timeslot(ts: Timeslot) -> dict:
+def _serialize_time_slot(ts: TimeSlot) -> dict:
     return {
         "id": str(ts.id),
         "court_id": str(ts.court_id),
@@ -48,7 +48,7 @@ def get_venues():
 
     with SessionLocal() as s:
         # Start with base query - get distinct venues first
-        q = select(Venue.id).join(Venue.courts).join(Court.timeslots).distinct()
+        q = select(Venue.id).join(Venue.courts).join(Court.time_slots).distinct()
 
         # Apply geolocation filter if coordinates provided
         if lat and lng:
@@ -82,12 +82,12 @@ def get_venues():
                 # Try to parse as datetime first
                 if 'T' in datetime_str or ' ' in datetime_str:
                     dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
-                    # Look for timeslots within 2 hours of requested time
+                    # Look for time slots within 2 hours of requested time
                     start_time = dt - timedelta(hours=1)
                     end_time = dt + timedelta(hours=3)
                     q = q.where(and_(
-                        Timeslot.starts_at >= start_time,
-                        Timeslot.starts_at <= end_time
+                        TimeSlot.starts_at >= start_time,
+                        TimeSlot.starts_at <= end_time
                     ))
                 else:
                     # Parse as date only
@@ -95,14 +95,14 @@ def get_venues():
                     start_of_day = dt.replace(hour=0, minute=0, second=0)
                     end_of_day = start_of_day + timedelta(days=1)
                     q = q.where(and_(
-                        Timeslot.starts_at >= start_of_day,
-                        Timeslot.starts_at < end_of_day
+                        TimeSlot.starts_at >= start_of_day,
+                        TimeSlot.starts_at < end_of_day
                     ))
             except ValueError:
                 return jsonify({"error": "Invalid datetime format. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS"}), 400
         else:
-            # No datetime filter - only show bookable timeslots
-            q = q.where(Timeslot.is_bookable == True)
+            # No datetime filter - only show bookable time slots
+            q = q.where(TimeSlot.is_bookable == True)
 
         # Get venue IDs that match criteria
         venue_ids = s.execute(q).scalars().all()
@@ -131,7 +131,7 @@ def get_venues():
             venues = s.execute(venues_query).scalars().all()
             venue_results = [(venue, None) for venue in venues]
 
-        # Assemble results with timeslots
+        # Assemble results with time_slots
         results = []
         for venue_result in venue_results:
             if lat and lng:
@@ -141,46 +141,46 @@ def get_venues():
                 v = venue_result[0]  # venue object
                 distance = venue_result[1]  # None
 
-            # Get all bookable timeslots for this venue
-            timeslots_query = select(Timeslot).join(Court).where(
+            # Get all bookable time slots for this venue
+            time_slots_query = select(TimeSlot).join(Court).where(
                 Court.venue_id == v.id,
-                Timeslot.is_bookable == True
+                TimeSlot.is_bookable == True
             )
-            
-            # Apply datetime filter to timeslots if specified
+
+            # Apply datetime filter to time slots if specified
             if datetime_str:
                 try:
                     if 'T' in datetime_str or ' ' in datetime_str:
                         dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
                         start_time = dt - timedelta(hours=1)
                         end_time = dt + timedelta(hours=3)
-                        timeslots_query = timeslots_query.where(and_(
-                            Timeslot.starts_at >= start_time,
-                            Timeslot.starts_at <= end_time
+                        time_slots_query = time_slots_query.where(and_(
+                            TimeSlot.starts_at >= start_time,
+                            TimeSlot.starts_at <= end_time
                         ))
                     else:
                         dt = datetime.strptime(datetime_str, "%Y-%m-%d")
                         start_of_day = dt.replace(hour=0, minute=0, second=0)
                         end_of_day = start_of_day + timedelta(days=1)
-                        timeslots_query = timeslots_query.where(and_(
-                            Timeslot.starts_at >= start_of_day,
-                            Timeslot.starts_at < end_of_day
+                        time_slots_query = time_slots_query.where(and_(
+                            TimeSlot.starts_at >= start_of_day,
+                            TimeSlot.starts_at < end_of_day
                         ))
                 except ValueError:
                     pass  # Already handled above
 
-            # Apply sport type filter to timeslots
+            # Apply sport type filter to time slots
             if sport_type:
-                timeslots_query = timeslots_query.where(
+                time_slots_query = time_slots_query.where(
                     Court.sport_type.ilike(f"%{sport_type}%")
                 )
 
-            timeslots = s.execute(timeslots_query.order_by(Timeslot.starts_at)).scalars().all()
-            
-            if timeslots:  # Only include venues with available timeslots
+            time_slots = s.execute(time_slots_query.order_by(TimeSlot.starts_at)).scalars().all()
+
+            if time_slots:  # Only include venues with available time slots
                 venue_data = {
                     "venue": _serialize_venue(v),
-                    "timeslots": [_serialize_timeslot(ts) for ts in timeslots]
+                    "time_slots": [_serialize_time_slot(ts) for ts in time_slots]
                 }
                 
                 if distance is not None:
@@ -219,9 +219,9 @@ def get_venue_by_id(venue_id):
         }), 200
 
 
-@bp.get("/<uuid:venue_id>/courts/<uuid:court_id>/timeslots")
-def get_court_timeslots(venue_id, court_id):
-    """Get available timeslots for a court"""
+@bp.get("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots")
+def get_court_time_slots(venue_id, court_id):
+    """Get available time slots for a court"""
     date_str = request.args.get("date")
 
     with SessionLocal() as s:
@@ -229,7 +229,7 @@ def get_court_timeslots(venue_id, court_id):
         if not court or court.venue_id != venue_id:
             return jsonify({"error": "Court not found"}), 404
 
-        query = select(Timeslot).where(Timeslot.court_id == court_id)
+        query = select(TimeSlot).where(TimeSlot.court_id == court_id)
 
         if date_str:
             try:
@@ -237,14 +237,14 @@ def get_court_timeslots(venue_id, court_id):
                 start_of_day = dt.replace(hour=0, minute=0, second=0)
                 end_of_day = start_of_day + timedelta(days=1)
                 query = query.where(and_(
-                    Timeslot.starts_at >= start_of_day,
-                    Timeslot.starts_at < end_of_day
+                    TimeSlot.starts_at >= start_of_day,
+                    TimeSlot.starts_at < end_of_day
                 ))
             except ValueError:
                 return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
 
-        timeslots = s.execute(
-            query.where(Timeslot.is_bookable == True).order_by(Timeslot.starts_at)
+        time_slots = s.execute(
+            query.where(TimeSlot.is_bookable == True).order_by(TimeSlot.starts_at)
         ).scalars().all()
 
-        return jsonify([_serialize_timeslot(ts) for ts in timeslots]), 200
+        return jsonify([_serialize_time_slot(ts) for ts in time_slots]), 200

@@ -100,7 +100,7 @@ class Court(Base):
     venue: Mapped[Venue] = relationship(back_populates="courts")
 
     # 單一場地出租的時段
-    timeslots: Mapped[list["Timeslot"]] = relationship(
+    time_slots: Mapped[list["TimeSlot"]] = relationship(
         back_populates="court", cascade="all, delete-orphan"
     )
 
@@ -112,11 +112,11 @@ class Court(Base):
 
 
 # =============================================================================
-# Timeslot（場地出租時段）- Unified timeslot model
+# TimeSlot（場地出租時段）- Unified time slot model
 #   - 使用 EXCLUDE 約束 + GiST/tstzrange 防止同一球場所屬的時段重疊
 # =============================================================================
-class Timeslot(Base):
-    __tablename__ = "timeslots"
+class TimeSlot(Base):
+    __tablename__ = "time_slots"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -154,33 +154,33 @@ class Timeslot(Base):
         nullable=False,
     )
 
-    court: Mapped[Court] = relationship(back_populates="timeslots")
+    court: Mapped[Court] = relationship(back_populates="time_slots")
 
-    # Bookings for this timeslot
+    # Bookings for this time slot
     bookings: Mapped[list["Booking"]] = relationship(
-        back_populates="timeslot", cascade="all, delete-orphan"
+        back_populates="time_slot", cascade="all, delete-orphan"
     )
 
     __table_args__ = (
-        sa.CheckConstraint("ends_at > starts_at", name="ck_timeslot_valid_range"),
+        sa.CheckConstraint("ends_at > starts_at", name="ck_time_slot_valid_range"),
         sa.CheckConstraint(
             "(price_cents IS NULL) OR (price_cents >= 0)",
-            name="ck_timeslot_price_non_negative",
+            name="ck_time_slot_price_non_negative",
         ),
         sa.CheckConstraint(
             "char_length(currency) = 3 AND upper(currency) = currency",
-            name="ck_timeslot_currency_iso3",
+            name="ck_time_slot_currency_iso3",
         ),
-        sa.Index("ix_timeslots_court_starts_at", "court_id", "starts_at"),
+        sa.Index("ix_time_slots_court_starts_at", "court_id", "starts_at"),
         sa.Index(
-            "ix_timeslots_period_gist",
+            "ix_time_slots_period_gist",
             sa.text("tstzrange(starts_at, ends_at)"),
             postgresql_using="gist",
         ),
         ExcludeConstraint(
             ("court_id", "="),
             (sa.text("tstzrange(starts_at, ends_at)"), "&&"),
-            name="ex_timeslots_overlap",
+            name="ex_time_slots_overlap",
             using="gist",
         ),
     )

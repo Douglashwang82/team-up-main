@@ -2,15 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface User {
-  id: string;
-  email: string;
-  display_name?: string;
-}
+import { apis } from '../api';
+import { UserOut } from '@team-up-main/api-client';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserOut | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, displayName?: string) => Promise<void>;
   logout: () => void;
@@ -20,7 +16,7 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserOut | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -31,19 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('auth_token='))
-        ?.split('=')[1];
+      const userInfo = await apis.auth.getCurrentUser();
 
-      if (token) {
-        // TODO: Validate token with API
-        // For now, assume valid if cookie exists
-        // const response = await fetch('/api/auth/me', {
-        //   headers: { Authorization: `Bearer ${token}` }
-        // });
-        // const userData = await response.json();
-        // setUser(userData);
+      if (userInfo) {
+        setUser(userInfo);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -54,27 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      const data = await response.json();
-
-      // Store token in cookie
-      document.cookie = `auth_token=${data.access_token}; path=/; max-age=86400`; // 24h
-
-      // Set user data
-      setUser({ id: data.user_id, email, display_name: data.display_name });
-
-      // Redirect to intended page or teamups
-      const redirect = new URLSearchParams(window.location.search).get('redirect');
-      router.push(redirect || '/teamups');
+      const response = await apis.auth.login({ loginIn: { email, password } });
+      localStorage.setItem('access_token', response.access_token);
+      localStorage.setItem('refresh_token', response.refresh_token);
+      
+      // Fetch user info
+      const userInfo = await apis.auth.getCurrentUser();
+      setUser(userInfo);
+      
+      router.push('/teamups');
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -83,40 +58,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (email: string, password: string, displayName?: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, display_name: displayName }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Signup failed');
-      }
-
-      const data = await response.json();
-
-      // Store token
-      document.cookie = `auth_token=${data.access_token}; path=/; max-age=86400`;
-
-      // Set user
-      setUser({ id: data.user_id, email, display_name: displayName });
-
-      router.push('/teamups');
+      await apis.auth.signup({ signupIn: { email, password, display_name: displayName } });
+      await login(email, password);
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
-    }
+    } 
   };
 
   const logout = () => {
-    // Clear cookie
-    document.cookie = 'auth_token=; path=/; max-age=0';
-
-    // Clear user
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     setUser(null);
-
-    // Redirect to home
-    router.push('/');
+    router.push('/login');
   };
 
   return (

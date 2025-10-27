@@ -7,7 +7,7 @@ from uuid import UUID
 from app.core.db import SessionLocal
 from app.core.auth import require_auth
 from app.models.booking import Booking
-from app.models.venue import Venue, Court, Timeslot
+from app.models.venue import Venue, Court, TimeSlot
 from app.models.teamup import TeamUp
 
 bp = Blueprint("bookings", __name__)
@@ -18,7 +18,7 @@ def _serialize_booking(booking: Booking) -> dict:
     return {
         "id": str(booking.id),
         "owner_user_id": str(booking.owner_user_id),
-        "timeslot_id": str(booking.timeslot_id),
+        "time_slot_id": str(booking.time_slot_id),
         "teamup_id": str(booking.teamup_id) if booking.teamup_id else None,
         "status": booking.status,
         "payment_status": booking.payment_status,
@@ -27,21 +27,21 @@ def _serialize_booking(booking: Booking) -> dict:
     }
 
 
-def _serialize_booking_detail(booking: Booking, timeslot: Timeslot, court: Court, venue: Venue, teamup: TeamUp | None = None) -> dict:
+def _serialize_booking_detail(booking: Booking, time_slot: TimeSlot, court: Court, venue: Venue, teamup: TeamUp | None = None) -> dict:
     """Serialize booking detail with related data"""
     return {
         "id": str(booking.id),
         "owner_user_id": str(booking.owner_user_id),
-        "timeslot_id": str(booking.timeslot_id),
+        "time_slot_id": str(booking.time_slot_id),
         "teamup_id": str(booking.teamup_id) if booking.teamup_id else None,
         "status": booking.status,
         "payment_status": booking.payment_status,
-        "timeslot": {
-            "id": str(timeslot.id),
-            "starts_at": timeslot.starts_at.isoformat(),
-            "ends_at": timeslot.ends_at.isoformat(),
-            "price_cents": timeslot.price_cents,
-            "currency": timeslot.currency,
+        "time_slot": {
+            "id": str(time_slot.id),
+            "starts_at": time_slot.starts_at.isoformat(),
+            "ends_at": time_slot.ends_at.isoformat(),
+            "price_cents": time_slot.price_cents,
+            "currency": time_slot.currency,
         },
         "court": {
             "id": str(court.id),
@@ -67,43 +67,43 @@ def _serialize_booking_detail(booking: Booking, timeslot: Timeslot, court: Court
 @bp.post("")
 @require_auth
 def create_booking():
-    """Create a new booking for a timeslot"""
+    """Create a new booking for a time slot"""
     data = request.get_json() or {}
 
-    if "timeslot_id" not in data:
-        return jsonify({"error": "timeslot_id_required"}), 400
+    if "time_slot_id" not in data:
+        return jsonify({"error": "time_slot_id_required"}), 400
 
     with SessionLocal() as s:
-        # Verify timeslot exists
+        # Verify time slot exists
         try:
-            timeslot_id = UUID(str(data["timeslot_id"]))
+            time_slot_id = UUID(str(data["time_slot_id"]))
         except ValueError:
-            return jsonify({"error": "invalid_timeslot_id"}), 400
+            return jsonify({"error": "invalid_time_slot_id"}), 400
 
-        timeslot = s.get(Timeslot, timeslot_id)
-        if not timeslot:
-            return jsonify({"error": "timeslot_not_found"}), 404
+        time_slot = s.get(TimeSlot, time_slot_id)
+        if not time_slot:
+            return jsonify({"error": "time_slot_not_found"}), 404
 
-        if not timeslot.is_bookable:
-            return jsonify({"error": "timeslot_not_bookable"}), 400
+        if not time_slot.is_bookable:
+            return jsonify({"error": "time_slot_not_bookable"}), 400
 
-        # Check if timeslot is already booked
+        # Check if time slot is already booked
         existing_booking = s.execute(
             select(Booking).where(
                 and_(
-                    Booking.timeslot_id == timeslot_id,
+                    Booking.time_slot_id == time_slot_id,
                     Booking.status.in_(["pending", "confirmed"])
                 )
             )
         ).scalar_one_or_none()
 
         if existing_booking:
-            return jsonify({"error": "timeslot_already_booked"}), 400
+            return jsonify({"error": "time_slot_already_booked"}), 400
 
         # Create booking
         booking = Booking(
             owner_user_id=g.user_id,
-            timeslot_id=timeslot_id,
+            time_slot_id=time_slot_id,
             teamup_id=data.get("teamup_id"),  # Optional teamup association
             status="pending",
             payment_status="none",
@@ -151,11 +151,11 @@ def get_booking_by_id(booking_id):
             return jsonify({"error": "not_owner"}), 403
 
         # Get related data
-        timeslot = s.get(Timeslot, booking.timeslot_id)
-        if not timeslot:
-            return jsonify({"error": "timeslot_not_found"}), 404
+        time_slot = s.get(TimeSlot, booking.time_slot_id)
+        if not time_slot:
+            return jsonify({"error": "time_slot_not_found"}), 404
 
-        court = s.get(Court, timeslot.court_id)
+        court = s.get(Court, time_slot.court_id)
         if not court:
             return jsonify({"error": "court_not_found"}), 404
 
@@ -168,7 +168,7 @@ def get_booking_by_id(booking_id):
         if booking.teamup_id:
             teamup = s.get(TeamUp, booking.teamup_id)
 
-        return jsonify(_serialize_booking_detail(booking, timeslot, court, venue, teamup))
+        return jsonify(_serialize_booking_detail(booking, time_slot, court, venue, teamup))
 
 
 

@@ -42,6 +42,10 @@ let refreshPromise: Promise<void> | null = null;
  * 4) 若刷新失敗，則維持原 401 回應不變，讓呼叫端自行處理（例如導向登入頁面）
  */
 async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
+
+  // Dealy 3 seconds for testing
+  await new Promise(resolve => setTimeout(resolve, 1500));
+
   // Always send Authorization header if access token exists
   const at = getAccessToken();
   const origReq = new Request(input as any, init);

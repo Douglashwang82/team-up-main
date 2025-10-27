@@ -20,9 +20,9 @@ class TeamUpCreateIn(BaseModel):
     durantion_type: DurationType = "temporary"  # Note: typo matches model
     status: TeamUpStatus = "open"
 
-class TeamUpBookTimeslotIn(BaseModel):
-    """Schema for booking a timeslot for a TeamUp"""
-    timeslot_id: UUID
+class TeamUpBookTimesSlotIn(BaseModel):
+    """Schema for booking a time slot for a TeamUp"""
+    time_slot_id: UUID
 
 class JoinRequestCreateIn(BaseModel):
     """Schema for creating a join request (non-member)"""
@@ -44,8 +44,8 @@ class ParticipantOut(BaseModel):
     role: ParticipantRole
     joined_at: datetime
 
-class TimeslotOut(BaseModel):
-    """Timeslot information in TeamUp bookings"""
+class TimeSlotOut(BaseModel):
+    """Time slot information in TeamUp bookings"""
     id: UUID
     starts_at: datetime
     ends_at: datetime
@@ -70,7 +70,7 @@ class BookingOut(BaseModel):
     id: UUID
     status: str
     payment_status: str
-    timeslot: TimeslotOut
+    time_slot: TimeSlotOut
     court: CourtOut
     venue: VenueOut
 
@@ -127,10 +127,10 @@ class JoinRequestReviewResponse(BaseModel):
     message: str
 
 class TeamUpBookingResponse(BaseModel):
-    """Response when booking a timeslot for TeamUp"""
+    """Response when booking a time slot for TeamUp"""
     id: UUID
     teamup_id: UUID
-    timeslot_id: UUID
+    time_slot_id: UUID
     status: str
     payment_status: str
     created_at: datetime

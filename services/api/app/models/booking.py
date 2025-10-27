@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.core.types import BookingStatus, PaymentStatus
 
 from app.core.db import Base
+from services.api.app.models.venue import TimeSlot
 
 class Booking(Base):
     __tablename__ = "bookings"
@@ -13,8 +14,8 @@ class Booking(Base):
     # Booking owner (required)
     owner_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False)
 
-    # Timeslot reference (required)
-    timeslot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("timeslots.id"), nullable=False)
+    # Time slot reference (required)
+    time_slot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("time_slots.id"), nullable=False)
 
     # Optional TeamUp assignment (nullable - bookings can be individual or assigned to a TeamUp)
     teamup_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("teamups.id"), nullable=True)
@@ -27,5 +28,5 @@ class Booking(Base):
 
     # Relationships
     owner: Mapped["User"] = relationship(foreign_keys=[owner_user_id])
-    timeslot: Mapped["Timeslot"] = relationship(back_populates="bookings")
+    time_slot: Mapped["TimeSlot"] = relationship(back_populates="bookings")
     teamup: Mapped["TeamUp"] = relationship(back_populates="bookings")

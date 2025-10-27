@@ -94,6 +94,22 @@ paths:
         '401':
           description: Invalid credentials
 
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user info
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '401':
+          description: Unauthorized
   # ============================================================================
   # VENUE ROUTES
   # ============================================================================
@@ -370,7 +386,7 @@ paths:
     get:
       tags: [TeamUps]
       summary: List TeamUps with filters
-      operationId: listTeamups
+      operationId: listTeamUps
       parameters:
         - name: status
           in: query
@@ -429,6 +445,41 @@ paths:
           description: Invalid input
         '401':
           description: Unauthorized
+
+  /teamups/search:
+    get:
+      tags: [TeamUps]
+      summary: Search TeamUps by keyword
+      operationId: searchTeamUps
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          description: Search keyword
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of matching TeamUps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamUpOut'
 
   /teamups/{teamup_id}:
     get:
@@ -665,6 +716,26 @@ components:
           type: string
         refresh_token:
           type: string
+
+    UserOut:
+      type: object
+      required: [id, email, display_name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     # ========================================================================
     # VENUE SCHEMAS

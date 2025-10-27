@@ -131,18 +131,18 @@ def test_venues():
         else:
             print_test("Get venue by ID", False, f"Status: {response.status_code}")
 
-    # Test 2.5: Get court timeslots
+    # Test 2.5: Get court time slots
     if test_data.get('venue_detail'):
         venue_id = test_data['venue_detail']['venue']['id']
         court_id = test_data['venue_detail']['courts'][0]['id']
-        response = make_request("GET", f"/venues/{venue_id}/courts/{court_id}/timeslots")
+        response = make_request("GET", f"/venues/{venue_id}/courts/{court_id}/time_slots")
         passed = response.status_code == 200
         if passed:
-            timeslots = response.json()
-            test_data['timeslots'] = timeslots
-            print_test("Get court timeslots", True, f"Found {len(timeslots)} timeslots")
+            time_slots = response.json()
+            test_data['time_slots'] = time_slots
+            print_test("Get court time slots", True, f"Found {len(time_slots)} time slots")
         else:
-            print_test("Get court timeslots", False, f"Status: {response.status_code}")
+            print_test("Get court time slots", False, f"Status: {response.status_code}")
 
 # =============================================================================
 # BOOKING ROUTES
@@ -170,9 +170,9 @@ def test_bookings():
         print_test("Get booking by ID", passed, f"Status: {response.status_code}")
 
     # Test 3.3: Create new booking
-    if test_data.get('timeslots') and len(test_data['timeslots']) > 0:
+    if test_data.get('time_slots') and len(test_data['time_slots']) > 0:
         new_booking = {
-            "timeslot_id": test_data['timeslots'][0]['id']
+            "time_slot_id": test_data['time_slots'][0]['id']
         }
         response = make_request("POST", "/bookings", headers=headers, json=new_booking)
         passed = response.status_code == 201
@@ -258,18 +258,18 @@ def test_teamups():
         print_test("Create new TeamUp", False,
                   f"Status: {response.status_code}, Error: {response.text[:100]}")
 
-    # Test 4.5: Book timeslot for TeamUp
-    if test_data.get('new_teamup') and test_data.get('timeslots') and len(test_data['timeslots']) > 1:
+    # Test 4.5: Book time slot for TeamUp
+    if test_data.get('new_teamup') and test_data.get('time_slots') and len(test_data['time_slots']) > 1:
         teamup_id = test_data['new_teamup']['id']
-        booking_data = {"timeslot_id": test_data['timeslots'][1]['id']}
+        booking_data = {"time_slot_id": test_data['time_slots'][1]['id']}
         response = make_request("POST", f"/teamups/{teamup_id}/book",
                                headers=headers, json=booking_data)
         passed = response.status_code == 201
         if passed:
             booking = response.json()
-            print_test("Book timeslot for TeamUp", True, f"Booking ID: {booking.get('id')}")
+            print_test("Book time_slot for TeamUp", True, f"Booking ID: {booking.get('id')}")
         else:
-            print_test("Book timeslot for TeamUp", False,
+            print_test("Book time_slot for TeamUp", False,
                       f"Status: {response.status_code}, Error: {response.text[:100]}")
 
     # Test 4.6: Get TeamUp bookings
@@ -327,9 +327,9 @@ def print_summary():
     print("\n✅ All route tests completed!")
     print("\nTested endpoints:")
     print("  - Authentication: Login, Signup")
-    print("  - Venues: Search, Get by ID, Get court timeslots")
+    print("  - Venues: Search, Get by ID, Get court time slots")
     print("  - Bookings: List, Get, Create, Update, Cancel")
-    print("  - TeamUps: List, Filter, Get, Create, Book timeslot, Join requests")
+    print("  - TeamUps: List, Filter, Get, Create, Book time slot, Join requests")
     print("\nCheck the results above for any failures.")
     print("\n" + "=" * 80)
 

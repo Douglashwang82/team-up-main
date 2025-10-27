@@ -4,9 +4,11 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 
+from services.api.app.schemas.teamup import TimeSlotOut
+
 class BookingCreateIn(BaseModel):
     """Schema for creating a new booking"""
-    timeslot_id: UUID
+    time_slot_id: UUID
     teamup_id: Optional[UUID] = None  # Optional TeamUp association
 
 class BookingUpdateIn(BaseModel):
@@ -45,7 +47,7 @@ class BookingOut(BaseModel):
     """Basic booking response"""
     id: UUID
     owner_user_id: UUID
-    timeslot_id: UUID
+    time_slot_id: UUID
     teamup_id: Optional[UUID] = None
     status: str
     payment_status: str
@@ -56,11 +58,11 @@ class BookingDetailOut(BaseModel):
     """Detailed booking response with related entities"""
     id: UUID
     owner_user_id: UUID
-    timeslot_id: UUID
+    time_slot_id: UUID
     teamup_id: Optional[UUID] = None
     status: str
     payment_status: str
-    timeslot: TimeslotOut
+    time_slot: TimeSlotOut
     court: CourtOut
     venue: VenueOut
     teamup: Optional[TeamUpOut] = None

@@ -1,72 +1,33 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apis } from '../api';
+import { JoinRequestOut, SearchTeamUpsRequest, TeamUpDetailOut, TeamUpOut } from '@team-up-main/api-client';
 
-interface TeamUp {
-  id: string;
-  title: string;
-  description?: string;
-  owner_user_id: string;
-  max_participants: number;
-  current_participants: number;
-  visibility: 'public' | 'private';
-  durantion_type: 'temporary' | 'recurring';
-  status: 'open' | 'closed' | 'cancelled';
-  created_at: string;
-  updated_at: string;
-}
-
-interface Participant {
-  user_id: string;
-  role: 'owner' | 'member';
-  status: 'active' | 'inactive';
-  joined_at: string;
-}
-
-interface JoinRequest {
-  id: string;
-  user_id: string;
-  teamup_id: string;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-}
-
-interface TeamUpDetail extends TeamUp {
-  participants: Participant[];
-  bookings: any[];
-}
-
-interface TeamUpSearchParams {
-  status?: string;
-  visibility?: string;
-  sport_type?: string;
-}
-
-export function useTeamUps(params?: TeamUpSearchParams) {
-  const [teamups, setTeamUps] = useState<TeamUp[]>([]);
+export function useTeamUps(params?: SearchTeamUpsRequest) {
+  const [teamups, setTeamUps] = useState<TeamUpOut[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!params) {
+      setTeamUps([]);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchTeamUps = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const searchParams = new URLSearchParams();
-        if (params?.status) searchParams.set('status', params.status);
-        if (params?.visibility) searchParams.set('visibility', params.visibility);
-        if (params?.sport_type) searchParams.set('sport_type', params.sport_type);
+        const response: TeamUpOut[] = await apis.teamups.searchTeamUps({
+          keyword: params?.keyword || '',
+          limit: params?.limit,
+          offset: params?.offset,
+        });
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/teamups?${searchParams}`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch teamups: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setTeamUps(data);
+        setTeamUps(response);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
       } finally {
@@ -75,13 +36,13 @@ export function useTeamUps(params?: TeamUpSearchParams) {
     };
 
     fetchTeamUps();
-  }, [params?.status, params?.visibility, params?.sport_type]);
+  }, [params?.keyword, params?.limit, params?.offset]);
 
   return { teamups, isLoading, error };
 }
 
 export function useMyTeamUps() {
-  const [teamups, setTeamUps] = useState<TeamUp[]>([]);
+  const [teamups, setTeamUps] = useState<TeamUpOut[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -126,7 +87,7 @@ export function useMyTeamUps() {
 }
 
 export function useTeamUp(teamupId: string) {
-  const [teamup, setTeamUp] = useState<TeamUpDetail | null>(null);
+  const [teamup, setTeamUp] = useState<TeamUpDetailOut | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -136,14 +97,8 @@ export function useTeamUp(teamupId: string) {
       setError(null);
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teamups/${teamupId}`);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch teamup: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setTeamUp(data);
+        const teamup: TeamUpDetailOut = await apis.teamups.getTeamupById({ teamupId });
+        setTeamUp(teamup);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
       } finally {
@@ -156,7 +111,7 @@ export function useTeamUp(teamupId: string) {
     }
   }, [teamupId]);
 
-  const updateTeamUp = async (updates: Partial<TeamUp>) => {
+  const updateTeamUp = async (updates: Partial<TeamUpOut>) => {
     try {
       const token = document.cookie
         .split('; ')
@@ -256,7 +211,7 @@ export async function createTeamUp(data: {
 }
 
 export function useJoinRequests(teamupId: string) {
-  const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [requests, setRequests] = useState<JoinRequestOut[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -343,30 +298,8 @@ export function useJoinRequests(teamupId: string) {
 
 export async function createJoinRequest(teamupId: string) {
   try {
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_token='))
-      ?.split('=')[1];
-
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/teamups/${teamupId}/join-requests`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to create join request: ${response.statusText}`);
-    }
-
-    return await response.json();
+    await apis.teamups.joinTeamup({ teamupId });
+    return;
   } catch (err) {
     throw err;
   }

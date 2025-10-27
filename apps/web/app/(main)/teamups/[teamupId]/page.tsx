@@ -20,7 +20,7 @@ export default function TeamUpDetailPage() {
 
   async function handleJoinRequest() {
     if (!user) {
-      router.push(`/login?redirect=/teamups/${teamupId}`);
+      alert('You must be signed in to join this TeamUp');
       return;
     }
 

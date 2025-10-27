@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import { useTeamUps } from '@/lib/hooks/useTeamUps';
 import Link from 'next/link';
+import { SearchTeamUpsRequest } from '@team-up-main/api-client';
 
 export default function TeamUpsPage() {
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
-  const [visibilityFilter, setVisibilityFilter] = useState<string | undefined>(undefined);
-  const { teamups, isLoading, error } = useTeamUps({
-    status: statusFilter,
-    visibility: visibilityFilter,
-  });
+  const [keyword, setKeyword] = useState<string>('');
+  const [limit, setLimit] = useState<number>(10);
+  const [offset, setOffset] = useState<number>(0);
+  const [searchParams, setSearchParams] = useState<SearchTeamUpsRequest | null>(null);
+
+  const { teamups, isLoading, error } = useTeamUps(searchParams ?? undefined);
 
   function getStatusColor(status: string): string {
     switch (status) {
@@ -18,8 +19,6 @@ export default function TeamUpsPage() {
         return 'bg-green-100 text-green-700 border-green-200';
       case 'closed':
         return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-700 border-red-200';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-200';
     }
@@ -73,48 +72,43 @@ export default function TeamUpsPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Status
+                Title
               </label>
-              <select
-                value={statusFilter || ''}
-                onChange={(e) => setStatusFilter(e.target.value || undefined)}
+              <input
+                type="text"
+                value={keyword || ''}
+                placeholder='e.g., "basketball", "morning run"'
+                onChange={(e) => setKeyword(e.target.value || '')}
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+            {/* Submit Button */}
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  if (keyword.trim() === '') return; // Do not submit if keyword is empty
+                  setSearchParams({ keyword, limit, offset });
+                }}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg"
               >
-                <option value="">All Statuses</option>
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+                Search
+              </button>
             </div>
 
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Visibility
-              </label>
-              <select
-                value={visibilityFilter || ''}
-                onChange={(e) => setVisibilityFilter(e.target.value || undefined)}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              >
-                <option value="">All</option>
-                <option value="public">Public</option>
-                <option value="private">Private</option>
-              </select>
-            </div>
-
-            {(statusFilter || visibilityFilter) && (
+            {/* Clear Filters */}
+            {/* {(statusFilter || titleFilter) && (
               <div className="flex items-end">
                 <button
                   onClick={() => {
                     setStatusFilter(undefined);
-                    setVisibilityFilter(undefined);
+                    setTitleFilter(undefined);
                   }}
                   className="px-5 py-3 text-sm text-blue-600 hover:text-blue-700 font-medium hover:bg-blue-50 rounded-xl transition-colors"
                 >
                   Clear Filters
                 </button>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
@@ -201,14 +195,6 @@ export default function TeamUpsPage() {
                       </svg>
                       {new Date(teamup.created_at).toLocaleDateString()}
                     </span>
-                    {teamup.durantion_type === 'recurring' && (
-                      <span className="flex items-center gap-1 text-blue-600 font-medium">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Recurring
-                      </span>
-                    )}
                   </div>
 
                   {/* Participants Progress */}
