@@ -5,15 +5,17 @@
  * 這版專為 @openapitools/OpenAPI Generator (typescript-fetch) 設計：
  * - 使用 Configuration.basePath + accessToken
  * - 自訂 fetch：401 時用 refresh_token 換新 access_token，然後重試原請求一次
- * - 與產生的 API 類別（如 EventsApi、AuthApi、HealthApi）搭配
+ * - 與產生的 API 類別（如 TeamUpsApi、AuthApi、HealthApi）搭配
  */
 
 import {
   Configuration,
   // 下面的類名依你的 OpenAPI tag 生成，常見如：
-  // EventsApi, AuthApi, HealthApi ...
+  // TeamUpsApi, AuthApi, HealthApi ...
   // 如果你的類名不同，改成實際輸出的名稱即可。
-  AuthApi, EventsApi, HealthApi
+  AuthApi, HealthApi,
+  VenuesApi,
+  TeamUpsApi,
 } from '@team-up-main/api-client';
 
 const basePath =
@@ -22,12 +24,12 @@ const basePath =
 const getAccessToken = () =>
   typeof window === 'undefined'
     ? ''
-    : localStorage.getItem('access_token') || '';
+    : localStorage.getItem('accessToken') || '';
 
 const getRefreshToken = () =>
   typeof window === 'undefined'
     ? undefined
-    : localStorage.getItem('refresh_token') || undefined;
+    : localStorage.getItem('refreshToken') || undefined;
 
 // 防止同時多個 401 造成「刷新風暴」
 let refreshPromise: Promise<void> | null = null;
@@ -40,6 +42,10 @@ let refreshPromise: Promise<void> | null = null;
  * 4) 若刷新失敗，則維持原 401 回應不變，讓呼叫端自行處理（例如導向登入頁面）
  */
 async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
+
+  // Dealy 3 seconds for testing
+  // await new Promise(resolve => setTimeout(resolve, 1500));
+
   // Always send Authorization header if access token exists
   const at = getAccessToken();
   const origReq = new Request(input as any, init);
@@ -52,8 +58,10 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
   if (!res.ok) {
   // Login failed, clear tokens
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    // Clear auth cookie
+    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   }
   // Optionally, show error to user
 }
@@ -67,7 +75,7 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
       const r = await fetch(`${basePath}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: rt }),
+        body: JSON.stringify({ refreshToken: rt }),
       });
       if (!r.ok) {
         refreshPromise = null;
@@ -75,8 +83,12 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
       }
       const data: any = await r.json();
       if (typeof window !== 'undefined') {
-        if (data.access_token) localStorage.setItem('access_token', data.access_token);
-        if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+        if (data.accessToken) {
+          localStorage.setItem('accessToken', data.accessToken);
+          // Update auth cookie
+          document.cookie = `auth_token=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+        }
+        if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
       }
     })().finally(() => {
       refreshPromise = null;
@@ -111,9 +123,10 @@ const config = new Configuration({
 // 直接導出已配置好的 API 實例（依你的產生器輸出的類別調整）
 export const apis = {
   auth: new AuthApi(config),
-  events: new EventsApi(config),
   health: new HealthApi(config),
+  venues: new VenuesApi(config),
+  teamups: new TeamUpsApi(config),
 };
 
 // 若你偏好與先前相似的用法，也可包一層別名（依實際方法名調整或直接用 apis.* 即可）
-// 例如：const list = await apis.events.listAllEvents({ limit: 20 });
+// 例如：const list = await apis.teamups.listTeamUps({ limit: 20 });

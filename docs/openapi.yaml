@@ -1,9 +1,35 @@
 openapi: 3.0.3
 info:
-  title: Sports Meetup API
-  version: 0.1.0
+  title: TeamUp API
+  description: |
+    Sports venue booking and team formation API
+
+    Features:
+    - Venue search with geolocation
+    - Timeslot booking
+    - TeamUp creation and management
+    - Join request workflow
+  version: 1.0.0
+  contact:
+    name: TeamUp API Support
 servers:
   - url: http://localhost:8080
+    description: Development server
+  - url: https://api.teamup.example.com
+    description: Production server
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Auth
+    description: Authentication and user management
+  - name: Venues
+    description: Venue and timeslot search
+  - name: Bookings
+    description: Booking management
+  - name: TeamUps
+    description: TeamUp creation and management
+
 paths:
   /health:
     get:
@@ -23,10 +49,13 @@ paths:
                     type: string
                     example: ok
 
+  # ============================================================================
+  # AUTH ROUTES
+  # ============================================================================
   /auth/signup:
     post:
       tags: [Auth]
-      summary: Sign up
+      summary: Sign up new user
       operationId: signup
       requestBody:
         required: true
@@ -36,18 +65,18 @@ paths:
               $ref: '#/components/schemas/SignupIn'
       responses:
         '201':
-          description: Created
+          description: User created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tokens'
+                $ref: '#/components/schemas/TokenOut'
         '409':
-          description: Email taken
+          description: Email already exists
 
   /auth/login:
     post:
       tags: [Auth]
-      summary: Login
+      summary: Login user
       operationId: login
       requestBody:
         required: true
@@ -57,11 +86,11 @@ paths:
               $ref: '#/components/schemas/LoginIn'
       responses:
         '200':
-          description: OK
+          description: Login successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tokens'
+                $ref: '#/components/schemas/TokenOut'
         '401':
           description: Invalid credentials
 
@@ -69,262 +98,1113 @@ paths:
     get:
       tags: [Auth]
       summary: Get current user info
-      operationId: getMe
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: OK
+          description: Current user info
           content:
             application/json:
               schema:
-                type: object
-                required: [id, email, display_name]
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  email:
-                    type: string
-                    format: email
-                  display_name:
-                    type: string
-                    nullable: true
+                $ref: '#/components/schemas/UserOut'
         '401':
           description: Unauthorized
-    patch:
-      tags: [Auth]
-      summary: Update current user info
-      operationId: updateMe
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                display_name:
-                  type: string
-                  nullable: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [id, email, display_name]
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  email:
-                    type: string
-                    format: email
-                  display_name:
-                    type: string
-                    nullable: true
-        '401':
-          description: Unauthorized
-
-  /auth/refresh:
-    post:
-      tags: [Auth]
-      summary: Refresh token
-      operationId: refreshToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [refresh_token]
-              properties:
-                refresh_token:
-                  type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tokens'
-        '401':
-          description: Invalid token
-
-  /events:
+  # ============================================================================
+  # VENUE ROUTES
+  # ============================================================================
+  /venues:
     get:
-      tags: [Events]
-      summary: List events near a point
-      operationId: getEventsPoint
+      tags: [Venues]
+      summary: Search venues with available timeslots
+      description: |
+        Search venues based on location, datetime, and sport type.
+        Supports geolocation-based search with distance filtering.
+      operationId: searchVenues
       parameters:
-        - in: query
-          name: lat
-          schema: { type: number }
-        - in: query
-          name: lng
-          schema: { type: number }
-        - in: query
-          name: radius
+        - name: lat
+          in: query
+          description: Latitude coordinate
           schema:
             type: number
-            default: 5
-            description: radius in km
-        - in: query
-          name: sport
+            format: float
+            example: 25.0330
+        - name: lng
+          in: query
+          description: Longitude coordinate
           schema:
-            $ref: '#/components/schemas/Sport'
-        - in: query
-          name: start
-          schema: { type: string, format: date-time }
-        - in: query
-          name: end
-          schema: { type: string, format: date-time }
+            type: number
+            format: float
+            example: 121.5654
+        - name: distance
+          in: query
+          description: Search radius in meters (default 5000m)
+          schema:
+            type: number
+            format: float
+            default: 5000
+            example: 5000
+        - name: datetime
+          in: query
+          description: ISO datetime (YYYY-MM-DDTHH:MM:SS) or date (YYYY-MM-DD)
+          schema:
+            type: string
+            example: "2025-10-20"
+        - name: sport_type
+          in: query
+          description: Filter by sport type
+          schema:
+            type: string
+            example: basketball
       responses:
         '200':
-          description: OK
+          description: List of venues with available timeslots
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/EventOut'
-        '400':
-          description: lat_lng_required
+                  $ref: '#/components/schemas/VenueSearchResult'
+
+  /venues/{venue_id}:
+    get:
+      tags: [Venues]
+      summary: Get venue details
+      operationId: getVenueById
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Venue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueDetail'
+        '404':
+          description: Venue not found
+
+  /venues/{venue_id}/courts/{court_id}/timeslots:
+    get:
+      tags: [Venues]
+      summary: Get available timeslots for a court
+      operationId: getCourtTimeslots
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          description: Filter by date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2025-10-20"
+      responses:
+        '200':
+          description: List of available timeslots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSlotOut'
+        '404':
+          description: Venue or court not found
+
+  # ============================================================================
+  # BOOKING ROUTES
+  # ============================================================================
+  /bookings:
+    get:
+      tags: [Bookings]
+      summary: List user's bookings
+      operationId: listBookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingOut'
+        '401':
+          description: Unauthorized
+
     post:
-      tags: [Events]
-      summary: Create event
-      operationId: createEvent
+      tags: [Bookings]
+      summary: Create a new booking
+      operationId: createBooking
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventCreateIn'
+              $ref: '#/components/schemas/BookingCreateIn'
       responses:
         '201':
-          description: Created
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingOut'
+        '400':
+          description: Invalid timeslot or already booked
+        '401':
+          description: Unauthorized
+        '404':
+          description: Timeslot not found
+
+  /bookings/{booking_id}:
+    get:
+      tags: [Bookings]
+      summary: Get booking details
+      operationId: getBookingById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetailOut'
+        '403':
+          description: Not the booking owner
+        '404':
+          description: Booking not found
+
+    patch:
+      tags: [Bookings]
+      summary: Update booking status
+      operationId: updateBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingUpdateIn'
+      responses:
+        '200':
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingOut'
+        '403':
+          description: Not the booking owner
+        '404':
+          description: Booking not found
+
+    delete:
+      tags: [Bookings]
+      summary: Cancel booking
+      operationId: cancelBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking cancelled
           content:
             application/json:
               schema:
                 type: object
-                required: [id]
                 properties:
-                  id:
+                  ok:
+                    type: boolean
+                  message:
                     type: string
-                    format: uuid
-
-  /events/{id}/join:
-    post:
-      tags: [Events]
-      summary: Join event
-      operationId: joinEvent
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: Joined
-
-  /events/{id}/leave:
-    delete:
-      tags: [Events]
-      summary: Leave event
-      operationId: leaveEvent
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: Left
-
-  /events/{id}:
-    get:
-      tags: [Events]
-      summary: Get event details
-      operationId: getEventById
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EventOut'
+        '403':
+          description: Not the booking owner
         '404':
-          description: Event not found
+          description: Booking not found
 
-  /events/all:
+  # ============================================================================
+  # TEAMUP ROUTES
+  # ============================================================================
+  /teamups:
     get:
-      tags: [Events]
-      summary: Get all events (no filter)
-      operationId: getAllEvents
+      tags: [TeamUps]
+      summary: List TeamUps with filters
+      operationId: listTeamUps
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed]
+            default: open
+        - name: visibility
+          in: query
+          schema:
+            type: string
+            enum: [public, private]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
-          description: OK
+          description: List of TeamUps
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/EventOut'
+                  $ref: '#/components/schemas/TeamUpOut'
 
+    post:
+      tags: [TeamUps]
+      summary: Create a new TeamUp
+      operationId: createTeamup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpCreateIn'
+      responses:
+        '201':
+          description: TeamUp created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamUpOut'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+
+  /teamups/search:
+    get:
+      tags: [TeamUps]
+      summary: Search TeamUps by keyword
+      operationId: searchTeamUps
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          description: Search keyword
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of matching TeamUps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamUpOut'
+
+  /teamups/{teamup_id}:
+    get:
+      tags: [TeamUps]
+      summary: Get TeamUp details
+      operationId: getTeamupById
+      parameters:
+        - name: teamup_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: TeamUp details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamUpDetailOut'
+        '404':
+          description: TeamUp not found
+
+  /teamups/{teamup_id}/book:
+    post:
+      tags: [TeamUps]
+      summary: Book a timeslot for TeamUp (owner only)
+      description: TeamUp owner can book multiple timeslots for the team
+      operationId: bookTimeslotForTeamup
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: teamup_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpBookTimeSlotIn'
+      responses:
+        '201':
+          description: Timeslot booked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamUpBookingResponse'
+        '400':
+          description: Invalid timeslot or already booked
+        '403':
+          description: Not the TeamUp owner
+        '404':
+          description: TeamUp or timeslot not found
+
+  /teamups/{teamup_id}/bookings:
+    get:
+      tags: [TeamUps]
+      summary: List all bookings for a TeamUp
+      operationId: listTeamupBookings
+      parameters:
+        - name: teamup_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of TeamUp bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamUpBookingDetail'
+        '404':
+          description: TeamUp not found
+
+  /teamups/{teamup_id}/join:
+    post:
+      tags: [TeamUps]
+      summary: Submit join request to TeamUp
+      description: |
+        Submit a join request to join a TeamUp.
+        Authenticated users auto-fill their info, non-authenticated users must provide details.
+      operationId: joinTeamup
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: teamup_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRequestCreateIn'
+      responses:
+        '201':
+          description: Join request submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequestSubmitResponse'
+        '400':
+          description: TeamUp not open / Already applied / TeamUp full
+        '404':
+          description: TeamUp not found
+
+  /teamups/{teamup_id}/join-requests:
+    get:
+      tags: [TeamUps]
+      summary: List join requests (owner only)
+      operationId: listJoinRequests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: teamup_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of join requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JoinRequestOut'
+        '403':
+          description: Not the TeamUp owner
+        '404':
+          description: TeamUp not found
+
+  /teamups/{teamup_id}/join-requests/{request_id}/review:
+    post:
+      tags: [TeamUps]
+      summary: Review join request (owner only)
+      description: Approve or reject a join request
+      operationId: reviewJoinRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: teamup_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRequestReviewIn'
+      responses:
+        '200':
+          description: Review completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequestReviewResponse'
+        '400':
+          description: Invalid action / Already reviewed / TeamUp full
+        '403':
+          description: Not the TeamUp owner
+        '404':
+          description: TeamUp or request not found
+
+# ==============================================================================
+# COMPONENTS
+# ==============================================================================
 components:
-  schemas:
-    Tokens:
-      type: object
-      required: [access_token, refresh_token]
-      properties:
-        access_token: { type: string }
-        refresh_token: { type: string }
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login/signup
 
+  schemas:
+    # ========================================================================
+    # AUTH SCHEMAS
+    # ========================================================================
     SignupIn:
       type: object
       required: [email, password]
       properties:
-        email: { type: string, format: email }
-        password: { type: string, minLength: 6 }
-        display_name: { type: string, nullable: true }
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          minLength: 6
+          example: password123
+        display_name:
+          type: string
+          nullable: true
+          example: John Doe
 
     LoginIn:
       type: object
       required: [email, password]
       properties:
-        email: { type: string, format: email }
-        password: { type: string }
+        email:
+          type: string
+          format: email
+        password:
+          type: string
 
-    Sport:
-      type: string
-      enum: [basketball, badminton, running, gym, tennis]
-
-    EventCreateIn:
+    TokenOut:
       type: object
-      required: [title, sport, starts_at, ends_at, capacity, lat, lng]
+      required: [access_token, refresh_token]
       properties:
-        title: { type: string }
-        sport: { $ref: '#/components/schemas/Sport' }
-        starts_at: { type: string, format: date-time }
-        ends_at: { type: string, format: date-time }
-        capacity: { type: integer, minimum: 1 }
-        lat: { type: number }
-        lng: { type: number }
-        address: { type: string, nullable: true }
+        access_token:
+          type: string
+        refresh_token:
+          type: string
 
-    EventOut:
+    UserOut:
       type: object
-      required: [id, title, sport, starts_at, ends_at, capacity]
+      required: [id, email, display_name, created_at, updated_at]
       properties:
-        id: { type: string, format: uuid }
-        title: { type: string }
-        sport: { $ref: '#/components/schemas/Sport' }
-        starts_at: { type: string, format: date-time }
-        ends_at: { type: string, format: date-time }
-        capacity: { type: integer }
-        address: { type: string, nullable: true }
-        status: { type: string, enum: [upcoming, ongoing, past, cancelled] }
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ========================================================================
+    # VENUE SCHEMAS
+    # ========================================================================
+    VenueSearchResult:
+      type: object
+      required: [venue, time_slots]
+      properties:
+        venue:
+          $ref: '#/components/schemas/VenueOut'
+        time_slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSlotOut'
+
+    VenueOut:
+      type: object
+      required: [id, name, address]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+          nullable: true
+        distance_meters:
+          type: number
+          format: float
+          nullable: true
+          description: Distance from search coordinates (only when lat/lng provided)
+
+    VenueDetail:
+      type: object
+      required: [id, name, address, courts, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+          nullable: true
+        contact_phone:
+          type: string
+          nullable: true
+        partner_code:
+          type: string
+          nullable: true
+        courts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtOut'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CourtOut:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sport_type:
+          type: string
+          nullable: true
+
+    TimeSlotOut:
+      type: object
+      required: [id, court_id, starts_at, ends_at, currency, is_bookable]
+      properties:
+        id:
+          type: string
+          format: uuid
+        court_id:
+          type: string
+          format: uuid
+        court_name:
+          type: string
+          nullable: true
+          description: Only present in search results
+        sport_type:
+          type: string
+          nullable: true
+          description: Only present in search results
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        price_cents:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+          example: TWD
+        is_bookable:
+          type: boolean
+
+    # ========================================================================
+    # BOOKING SCHEMAS
+    # ========================================================================
+    BookingCreateIn:
+      type: object
+      required: [time_slot_id]
+      properties:
+        time_slot_id:
+          type: string
+          format: uuid
+        teamup_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional TeamUp association
+
+    BookingUpdateIn:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        payment_status:
+          type: string
+          enum: [none, pending, succeeded, failed]
+
+    BookingOut:
+      type: object
+      required: [id, owner_user_id, time_slot_id, status, payment_status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_user_id:
+          type: string
+          format: uuid
+        time_slot_id:
+          type: string
+          format: uuid
+        teamup_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        payment_status:
+          type: string
+          enum: [none, pending, succeeded, failed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BookingDetailOut:
+      type: object
+      required: [id, owner_user_id, time_slot_id, status, payment_status, time_slot, court, venue, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_user_id:
+          type: string
+          format: uuid
+        time_slot_id:
+          type: string
+          format: uuid
+        teamup_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        payment_status:
+          type: string
+          enum: [none, pending, succeeded, failed]
+        time_slot:
+          $ref: '#/components/schemas/TimeSlotOut'
+        court:
+          $ref: '#/components/schemas/CourtOut'
+        venue:
+          $ref: '#/components/schemas/VenueOut'
+        teamup:
+          $ref: '#/components/schemas/TeamUpOut'
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ========================================================================
+    # TEAMUP SCHEMAS
+    # ========================================================================
+    TeamUpCreateIn:
+      type: object
+      required: [title, max_participants]
+      properties:
+        title:
+          type: string
+          example: Weekend Basketball Game
+        description:
+          type: string
+          nullable: true
+          example: Looking for players for a friendly game
+        max_participants:
+          type: integer
+          minimum: 1
+          example: 10
+        visibility:
+          type: string
+          enum: [public, private]
+          default: public
+        duration_type:
+          type: string
+          enum: [temporary, permanent]
+          default: temporary
+        status:
+          type: string
+          enum: [open, closed]
+          default: open
+
+    TeamUpOut:
+      type: object
+      required: [id, title, status, max_participants, current_participants, visibility, duration_type, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [open, closed]
+        max_participants:
+          type: integer
+        current_participants:
+          type: integer
+        visibility:
+          type: string
+          enum: [public, private]
+        duration_type:
+          type: string
+          enum: [temporary, permanent]
+        created_at:
+          type: string
+          format: date-time
+
+    TeamUpDetailOut:
+      type: object
+      required: [id, title, status, max_participants, current_participants, owner_user_id, visibility, duration_type, participants, bookings, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [open, closed]
+        max_participants:
+          type: integer
+        current_participants:
+          type: integer
+        owner_user_id:
+          type: string
+          format: uuid
+        visibility:
+          type: string
+          enum: [public, private]
+        duration_type:
+          type: string
+          enum: [temporary, permanent]
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantOut'
+        bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamUpBookingDetail'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ParticipantOut:
+      type: object
+      required: [id, user_id, display_name, email, phone, role, joined_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [owner, member]
+        joined_at:
+          type: string
+          format: date-time
+
+    TeamUpBookTimeSlotIn:
+      type: object
+      required: [time_slot_id]
+      properties:
+        time_slot_id:
+          type: string
+          format: uuid
+
+    TeamUpBookingResponse:
+      type: object
+      required: [id, teamup_id, time_slot_id, status, payment_status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamup_id:
+          type: string
+          format: uuid
+        time_slot_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        payment_status:
+          type: string
+          enum: [none, pending, succeeded, failed]
+        created_at:
+          type: string
+          format: date-time
+
+    TeamUpBookingDetail:
+      type: object
+      required: [id, status, payment_status, time_slot, court, venue]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        payment_status:
+          type: string
+          enum: [none, pending, succeeded, failed]
+        time_slot:
+          $ref: '#/components/schemas/TimeSlotOut'
+        court:
+          $ref: '#/components/schemas/CourtOut'
+        venue:
+          $ref: '#/components/schemas/VenueOut'
+        created_at:
+          type: string
+          format: date-time
+
+    # ========================================================================
+    # JOIN REQUEST SCHEMAS
+    # ========================================================================
+    JoinRequestCreateIn:
+      type: object
+      properties:
+        applicant_name:
+          type: string
+          description: Required for non-authenticated users
+        applicant_email:
+          type: string
+          format: email
+          nullable: true
+        applicant_phone:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+
+    JoinRequestOut:
+      type: object
+      required: [id, applicant_name, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicant_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        applicant_name:
+          type: string
+        applicant_email:
+          type: string
+          nullable: true
+        applicant_phone:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [submitted, approved, rejected]
+        created_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    JoinRequestSubmitResponse:
+      type: object
+      required: [id, status, message]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [submitted, approved, rejected]
+        message:
+          type: string
+
+    JoinRequestReviewIn:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [approve, reject]
+
+    JoinRequestReviewResponse:
+      type: object
+      required: [ok, status, message]
+      properties:
+        ok:
+          type: boolean
+        status:
+          type: string
+          enum: [submitted, approved, rejected]
+        message:
+          type: string

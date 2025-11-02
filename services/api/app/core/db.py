@@ -15,5 +15,5 @@ def ensure_postgis_extension():
 
 def create_all_tables():
     from app.models.user import User  # noqa
-    from app.models.event import Event, EventParticipants  # noqa
+    from app.models.event import Event # noqa
     Base.metadata.create_all(engine)
