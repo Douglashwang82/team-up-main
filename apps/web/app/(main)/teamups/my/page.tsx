@@ -132,8 +132,8 @@ export default function MyTeamUpsPage() {
         {/* TeamUps Grid */}
         <div className="grid gap-6 md:grid-cols-2">
           {teamups.map((teamup) => {
-            const isOwner = teamup.owner_user_id === user.id;
-            const progress = getProgressPercentage(teamup.current_participants, teamup.max_participants);
+            const isOwner = teamup.ownerUserId === user.id;
+            const progress = getProgressPercentage(teamup.currentParticipants, teamup.maxParticipants);
 
             return (
               <div
@@ -184,14 +184,14 @@ export default function MyTeamUpsPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      {new Date(teamup.created_at).toLocaleDateString()}
+                      {new Date(teamup.createdAt).toLocaleDateString()}
                     </span>
-                    {teamup.durantion_type === 'recurring' && (
+                    {teamup.durationType === 'permanent' && (
                       <span className="flex items-center gap-1 text-blue-600 font-medium">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Recurring
+                        Permanent
                       </span>
                     )}
                   </div>
@@ -200,7 +200,7 @@ export default function MyTeamUpsPage() {
                   <div className="mb-4">
                     <div className="flex justify-between items-center text-sm mb-2">
                       <span className="font-semibold text-gray-700">
-                        {teamup.current_participants}/{teamup.max_participants} Participants
+                        {teamup.currentParticipants}/{teamup.maxParticipants} Participants
                       </span>
                       <span className="text-gray-500 font-medium">{Math.round(progress)}%</span>
                     </div>

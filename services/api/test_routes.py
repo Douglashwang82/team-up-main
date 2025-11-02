@@ -246,7 +246,7 @@ def test_teamups():
         "description": "Created by automated test",
         "max_participants": 8,
         "visibility": "public",
-        "durantion_type": "temporary"
+        "duration_type": "temporary"
     }
     response = make_request("POST", "/teamups", headers=headers, json=new_teamup)
     passed = response.status_code == 201

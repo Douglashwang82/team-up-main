@@ -165,7 +165,7 @@ export default function BookingsPage() {
                         Booking #{booking.id.slice(0, 8)}
                       </h2>
                       <p className="text-sm text-gray-500">
-                        {new Date(booking.created_at).toLocaleDateString()}
+                        {new Date(booking.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -196,8 +196,8 @@ export default function BookingsPage() {
                       {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                     </span>
                   </span>
-                  <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getPaymentStatusColor(booking.payment_status)}`}>
-                    Payment: {booking.payment_status.charAt(0).toUpperCase() + booking.payment_status.slice(1)}
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getPaymentStatusColor(booking.paymentStatus)}`}>
+                    Payment: {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
                   </span>
                 </div>
 

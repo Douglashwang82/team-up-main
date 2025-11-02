@@ -13,15 +13,14 @@ class TeamUpParticipant(Base):
     teamup_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), sa.ForeignKey("teamups.id", ondelete="CASCADE"), nullable=False
     )
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
+    user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), sa.ForeignKey("users.id")
     )
     role: Mapped[str] = mapped_column(sa.Text, default="member", nullable=False)
     
-    # 非會員參與者資訊
-    display_name: Mapped[str | None]
-    email: Mapped[str | None]
-    phone: Mapped[str | None]
+    display_name: Mapped[str]
+    email: Mapped[str]
+    phone: Mapped[str]
     
     # 關聯到 join_request（如果有的話）
     join_request_id: Mapped[uuid.UUID | None] = mapped_column(

@@ -59,11 +59,11 @@ export default function Navigation() {
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
-                      {user.display_name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                      {user.displayName?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
                     </span>
                   </div>
                   <span className="hidden md:block text-sm font-medium text-gray-700">
-                    {user.display_name || user.email.split('@')[0]}
+                    {user.displayName || user.email.split('@')[0]}
                   </span>
                   <svg
                     className={`w-4 h-4 text-gray-500 transition-transform ${

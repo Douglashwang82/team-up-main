@@ -15,7 +15,7 @@ export default function CreateTeamUpPage() {
   const [description, setDescription] = useState('');
   const [maxParticipants, setMaxParticipants] = useState<number>(10);
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
-  const [durantionType, setDurantionType] = useState<'temporary' | 'recurring'>('temporary');
+  const [durationType, setDurationType] = useState<'temporary' | 'permanent'>('temporary');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -42,10 +42,10 @@ export default function CreateTeamUpPage() {
     try {
       const teamup = await createTeamUp({
         title: title.trim(),
-        description: description.trim() || undefined,
-        max_participants: maxParticipants,
+        description: description.trim() || null,
+        maxParticipants,
         visibility,
-        durantion_type: durantionType,
+        durationType,
       });
 
       router.push(`/teamups/${teamup.id}`);
@@ -195,21 +195,21 @@ export default function CreateTeamUpPage() {
               </div>
 
               <div>
-                <label htmlFor="durantionType" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="durationType" className="block text-sm font-semibold text-gray-700 mb-2">
                   Activity Type
                 </label>
                 <select
-                  id="durantionType"
-                  value={durantionType}
-                  onChange={(e) => setDurantionType(e.target.value as 'temporary' | 'recurring')}
+                  id="durationType"
+                  value={durationType}
+                  onChange={(e) => setDurationType(e.target.value as 'temporary' | 'permanent')}
                   className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 >
                   <option value="temporary">📅 Temporary - One-time event</option>
-                  <option value="recurring">🔄 Recurring - Regular activity</option>
+                  <option value="permanent">🔄 Permanent - Ongoing activity</option>
                 </select>
                 <p className="text-sm text-gray-500 mt-2">
-                  {durantionType === 'recurring'
-                    ? 'Perfect for weekly games or regular meetups'
+                  {durationType === 'permanent'
+                    ? 'Perfect for ongoing activities or long-term projects'
                     : 'Great for special events or one-off activities'}
                 </p>
               </div>

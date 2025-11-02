@@ -120,9 +120,9 @@ export default function CourtTimeslotsPage() {
         {/* Timeslots Grid */}
         <div className="grid gap-4">
           {timeslots.map((timeslot) => {
-            const startTime = new Date(timeslot.starts_at);
-            const endTime = new Date(timeslot.ends_at);
-            const isBookable = timeslot.is_bookable;
+            const startTime = new Date(timeslot.startsAt);
+            const endTime = new Date(timeslot.endsAt);
+            const isBookable = timeslot.isBookable;
             const isBooking = booking === timeslot.id;
 
             return (
@@ -148,9 +148,9 @@ export default function CourtTimeslotsPage() {
                         <h3 className="text-2xl font-bold text-gray-900">
                           {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </h3>
-                        {timeslot.court_name && (
+                        {timeslot.courtName && (
                           <p className="text-sm text-gray-600 mt-1">
-                            {timeslot.court_name}
+                            {timeslot.courtName}
                           </p>
                         )}
                       </div>
@@ -167,14 +167,14 @@ export default function CourtTimeslotsPage() {
                           Available
                         </span>
                       )}
-                      {timeslot.sport_type && (
+                      {timeslot.sportType && (
                         <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
-                          {timeslot.sport_type}
+                          {timeslot.sportType}
                         </span>
                       )}
-                      {timeslot.price_cents !== undefined && (
+                      {timeslot.priceCents !== undefined && (
                         <span className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full text-sm font-bold">
-                          {timeslot.currency} {(timeslot.price_cents / 100).toFixed(2)}
+                          {timeslot.currency} {(timeslot.priceCents / 100).toFixed(2)}
                         </span>
                       )}
                     </div>

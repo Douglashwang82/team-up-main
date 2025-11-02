@@ -4,8 +4,6 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 
-from services.api.app.schemas.teamup import TimeSlotOut
-
 class BookingCreateIn(BaseModel):
     """Schema for creating a new booking"""
     time_slot_id: UUID
@@ -16,8 +14,8 @@ class BookingUpdateIn(BaseModel):
     status: Optional[str] = None  # pending, confirmed, cancelled
     payment_status: Optional[str] = None  # none, pending, succeeded, failed
 
-class TimeslotOut(BaseModel):
-    """Timeslot information in booking response"""
+class TimeSlotOut(BaseModel):
+    """Time slot information in booking response"""
     id: UUID
     starts_at: datetime
     ends_at: datetime

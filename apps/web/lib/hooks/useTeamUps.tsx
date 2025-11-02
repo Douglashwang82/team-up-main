@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apis } from '../api';
-import { JoinRequestOut, SearchTeamUpsRequest, TeamUpDetailOut, TeamUpOut } from '@team-up-main/api-client';
+import { JoinRequestOut, SearchTeamUpsRequest, TeamUpCreateIn, TeamUpDetailOut, TeamUpOut } from '@team-up-main/api-client';
 
 export function useTeamUps(params?: SearchTeamUpsRequest) {
   const [teamups, setTeamUps] = useState<TeamUpOut[]>([]);
@@ -145,11 +145,8 @@ export function useTeamUp(teamupId: string) {
 
   const deleteTeamUp = async () => {
     try {
-      const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('auth_token='))
-        ?.split('=')[1];
-
+      const token = localStorage.getItem('accessToken');
+      
       if (!token) {
         throw new Error('Not authenticated');
       }
@@ -174,37 +171,15 @@ export function useTeamUp(teamupId: string) {
   return { teamup, isLoading, error, updateTeamUp, deleteTeamUp };
 }
 
-export async function createTeamUp(data: {
-  title: string;
-  description?: string;
-  max_participants: number;
-  visibility?: 'public' | 'private';
-  durantion_type?: 'temporary' | 'recurring';
-}) {
+export async function createTeamUp(teamUpCreateIn: TeamUpCreateIn) {
   try {
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_token='))
-      ?.split('=')[1];
+    const token = localStorage.getItem('accessToken');
 
     if (!token) {
       throw new Error('Not authenticated');
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teamups`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create teamup: ${response.statusText}`);
-    }
-
-    return await response.json();
+    return await apis.teamups.createTeamup({ teamUpCreateIn });
   } catch (err) {
     throw err;
   }

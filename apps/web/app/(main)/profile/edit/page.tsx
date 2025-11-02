@@ -17,7 +17,7 @@ export default function EditProfilePage() {
     if (!authLoading && !user) {
       router.push('/login?redirect=/profile/edit');
     } else if (user) {
-      setDisplayName(user.display_name || '');
+      setDisplayName(user.displayName || '');
     }
   }, [user, authLoading, router]);
 
@@ -44,7 +44,7 @@ export default function EditProfilePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          display_name: displayName.trim() || undefined,
+          displayName: displayName.trim() || undefined,
         }),
       });
 

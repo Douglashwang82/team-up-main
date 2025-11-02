@@ -11,7 +11,7 @@ export default function VenueCard({ venue, timeslots }: { venue: any; timeslots:
   async function book(tsId: string) {
     setCreating(tsId);
     try {
-      const res = await apis.venues.bookVenueTimeslot({ bookVenueTimeslotRequest: { timeslot_id: tsId } });
+      const res = await apis.venues.bookVenueTimeslot({ bookVenueTimeslotRequest: { timeslotId: tsId } });
       r.push(`/bookings/${res.id}`);
     } finally {
       setCreating(null);
@@ -26,8 +26,8 @@ export default function VenueCard({ venue, timeslots }: { venue: any; timeslots:
         {timeslots.map((ts) => (
           <div key={ts.id} className="flex items-center justify-between border rounded p-2">
             <div className="text-sm">
-              <div>{new Date(ts.starts_at).toLocaleString()} → {new Date(ts.ends_at).toLocaleString()}</div>
-              <div>{ts.sport_type || "N/A"} · {ts.price_cents ? `$${(ts.price_cents/100).toFixed(2)}` : "-"}</div>
+              <div>{new Date(ts.startsAt).toLocaleString()} → {new Date(ts.endsAt).toLocaleString()}</div>
+              <div>{ts.sportType || "N/A"} · {ts.priceCents ? `$${(ts.priceCents/100).toFixed(2)}` : "-"}</div>
             </div>
             <button
               onClick={() => book(ts.id)}

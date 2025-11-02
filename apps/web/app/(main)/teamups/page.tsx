@@ -152,7 +152,7 @@ export default function TeamUpsPage() {
         {/* TeamUps Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {teamups.map((teamup) => {
-            const progress = getProgressPercentage(teamup.current_participants, teamup.max_participants);
+            const progress = getProgressPercentage(teamup.currentParticipants, teamup.maxParticipants);
             return (
               <Link
                 key={teamup.id}
@@ -193,7 +193,7 @@ export default function TeamUpsPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      {new Date(teamup.created_at).toLocaleDateString()}
+                      {new Date(teamup.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
@@ -201,7 +201,7 @@ export default function TeamUpsPage() {
                   <div>
                     <div className="flex justify-between items-center text-sm mb-2">
                       <span className="font-semibold text-gray-700">
-                        {teamup.current_participants}/{teamup.max_participants} Participants
+                        {teamup.currentParticipants}/{teamup.maxParticipants} Participants
                       </span>
                       <span className="text-gray-500 font-medium">
                         {Math.round(progress)}%

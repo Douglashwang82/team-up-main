@@ -31,9 +31,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (userInfo) {
         setUser(userInfo);
+        // Ensure cookie is set (in case user refreshed page)
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+          document.cookie = `auth_token=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // Clear cookie on auth failure
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     } finally {
       setIsLoading(false);
     }
@@ -42,13 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await apis.auth.login({ loginIn: { email, password } });
-      localStorage.setItem('access_token', response.access_token);
-      localStorage.setItem('refresh_token', response.refresh_token);
-      
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+
+      // Set cookie for middleware authentication check
+      document.cookie = `auth_token=${response.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+
       // Fetch user info
       const userInfo = await apis.auth.getCurrentUser();
       setUser(userInfo);
-      
+
       router.push('/teamups');
     } catch (error) {
       console.error('Login error:', error);
@@ -58,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (email: string, password: string, displayName?: string) => {
     try {
-      await apis.auth.signup({ signupIn: { email, password, display_name: displayName } });
+      await apis.auth.signup({ signupIn: { email, password, displayName: displayName } });
       await login(email, password);
     } catch (error) {
       console.error('Signup error:', error);
@@ -67,8 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    // Remove auth cookie
+    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     setUser(null);
     router.push('/login');
   };

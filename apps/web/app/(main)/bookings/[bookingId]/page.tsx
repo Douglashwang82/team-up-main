@@ -124,8 +124,8 @@ export default function BookingPage() {
                     {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                   </span>
                 </span>
-                <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getPaymentStatusColor(booking.payment_status)}`}>
-                  Payment: {booking.payment_status.charAt(0).toUpperCase() + booking.payment_status.slice(1)}
+                <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getPaymentStatusColor(booking.paymentStatus)}`}>
+                  Payment: {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
                 </span>
               </div>
             </div>
@@ -172,7 +172,7 @@ export default function BookingPage() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900 mb-1">Sport</p>
-                      <p className="text-gray-700 capitalize">{booking.court?.sport_type || 'N/A'}</p>
+                      <p className="text-gray-700 capitalize">{booking.court?.sportType || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -191,7 +191,7 @@ export default function BookingPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900 mb-1">Start Time</p>
-                    <p className="text-gray-700">{new Date(booking.timeslot?.starts_at).toLocaleString()}</p>
+                    <p className="text-gray-700">{new Date(booking.timeslot?.startsAt).toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -203,7 +203,7 @@ export default function BookingPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900 mb-1">End Time</p>
-                    <p className="text-gray-700">{new Date(booking.timeslot?.ends_at).toLocaleString()}</p>
+                    <p className="text-gray-700">{new Date(booking.timeslot?.endsAt).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -231,16 +231,16 @@ export default function BookingPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Price Card */}
-            {booking.timeslot?.price_cents !== undefined && (
+            {booking.timeslot?.priceCents !== undefined && (
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6">
                 <h3 className="font-bold text-gray-900 mb-2">Total Price</h3>
                 <p className="text-4xl font-bold text-green-700">
-                  {booking.timeslot.currency} {(booking.timeslot.price_cents / 100).toFixed(2)}
+                  {booking.timeslot.currency} {(booking.timeslot.priceCents / 100).toFixed(2)}
                 </p>
                 <div className="mt-4">
                   <p className="text-sm font-semibold text-gray-700 mb-2">Payment Status</p>
-                  <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold border ${getPaymentStatusColor(booking.payment_status)}`}>
-                    {booking.payment_status.charAt(0).toUpperCase() + booking.payment_status.slice(1)}
+                  <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold border ${getPaymentStatusColor(booking.paymentStatus)}`}>
+                    {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
                   </span>
                 </div>
               </div>
@@ -289,7 +289,7 @@ export default function BookingPage() {
                   <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Created: {new Date(booking.created_at).toLocaleDateString()}
+                  Created: {new Date(booking.createdAt).toLocaleDateString()}
                 </p>
               </div>
             </div>

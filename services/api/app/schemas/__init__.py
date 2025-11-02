@@ -17,7 +17,7 @@ from .booking import (
 # TeamUp schemas
 from .teamup import (
     TeamUpCreateIn,
-    TeamUpBookTimeslotIn,
+    TeamUpBookTimeSlotIn,
     TeamUpOut,
     TeamUpDetailOut,
     JoinRequestCreateIn,
@@ -37,7 +37,7 @@ from .venue import (
     VenueSearchQueryIn,
     CourtTimeslotsQueryIn,
     CourtOut,
-    TimeslotOut,
+    TimeSlotOut,
 )
 
 __all__ = [
@@ -52,7 +52,7 @@ __all__ = [
     "BookingDetailOut",
     # TeamUp
     "TeamUpCreateIn",
-    "TeamUpBookTimeslotIn",
+    "TeamUpBookTimeSlotIn",
     "TeamUpOut",
     "TeamUpDetailOut",
     "JoinRequestCreateIn",
@@ -69,5 +69,5 @@ __all__ = [
     "VenueSearchQueryIn",
     "CourtTimeslotsQueryIn",
     "CourtOut",
-    "TimeslotOut",
+    "TimeSlotOut",
 ]

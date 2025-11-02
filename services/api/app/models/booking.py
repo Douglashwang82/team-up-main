@@ -5,7 +5,6 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.core.types import BookingStatus, PaymentStatus
 
 from app.core.db import Base
-from services.api.app.models.venue import TimeSlot
 
 class Booking(Base):
     __tablename__ = "bookings"

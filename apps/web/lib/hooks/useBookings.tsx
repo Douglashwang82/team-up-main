@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 
 interface Booking {
   id: string;
-  owner_user_id: string;
-  timeslot_id: string;
-  teamup_id?: string;
+  ownerUserId: string;
+  timeslotId: string;
+  teamupId?: string;
   status: 'pending' | 'confirmed' | 'cancelled';
-  payment_status: 'none' | 'pending' | 'succeeded' | 'failed';
-  created_at: string;
-  updated_at: string;
+  paymentStatus: 'none' | 'pending' | 'succeeded' | 'failed';
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface BookingDetail extends Booking {
@@ -113,7 +113,7 @@ export function useBooking(bookingId: string) {
     }
   }, [bookingId]);
 
-  const updateBooking = async (updates: { status?: string; payment_status?: string }) => {
+  const updateBooking = async (updates: { status?: string; paymentStatus?: string }) => {
     try {
       const token = document.cookie
         .split('; ')
@@ -193,7 +193,7 @@ export async function createBooking(timeslotId: string, teamupId?: string) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ timeslot_id: timeslotId, teamup_id: teamupId }),
+      body: JSON.stringify({ timeslotId: timeslotId, teamupId: teamupId }),
     });
 
     if (!response.ok) {

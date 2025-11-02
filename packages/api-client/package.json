@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "clean": "rimraf dist src",
-    "gen": "openapi-generator-cli generate -g typescript-fetch -i ../../services/api/openapi.yaml -o src --additional-properties=supportsES6=true,useSingleRequestParameter=true,modelPropertyNaming=original,enumPropertyNaming=original,typescriptThreePlus=true",
+    "gen": "openapi-generator-cli generate -g typescript-fetch -i ../../docs/openapi.yaml -o src --additional-properties=supportsES6=true,useSingleRequestParameter=true,modelPropertyNaming=camelCase,enumPropertyNaming=original,typescriptThreePlus=true",
     "build": "tsc -p tsconfig.json",
     "codegen": "pnpm clean && pnpm gen && pnpm build",
     "lint": "eslint . --ext .ts",

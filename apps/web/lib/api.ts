@@ -24,12 +24,12 @@ const basePath =
 const getAccessToken = () =>
   typeof window === 'undefined'
     ? ''
-    : localStorage.getItem('access_token') || '';
+    : localStorage.getItem('accessToken') || '';
 
 const getRefreshToken = () =>
   typeof window === 'undefined'
     ? undefined
-    : localStorage.getItem('refresh_token') || undefined;
+    : localStorage.getItem('refreshToken') || undefined;
 
 // 防止同時多個 401 造成「刷新風暴」
 let refreshPromise: Promise<void> | null = null;
@@ -44,7 +44,7 @@ let refreshPromise: Promise<void> | null = null;
 async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
 
   // Dealy 3 seconds for testing
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  // await new Promise(resolve => setTimeout(resolve, 1500));
 
   // Always send Authorization header if access token exists
   const at = getAccessToken();
@@ -58,8 +58,10 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
   if (!res.ok) {
   // Login failed, clear tokens
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    // Clear auth cookie
+    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   }
   // Optionally, show error to user
 }
@@ -73,7 +75,7 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
       const r = await fetch(`${basePath}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: rt }),
+        body: JSON.stringify({ refreshToken: rt }),
       });
       if (!r.ok) {
         refreshPromise = null;
@@ -81,8 +83,12 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
       }
       const data: any = await r.json();
       if (typeof window !== 'undefined') {
-        if (data.access_token) localStorage.setItem('access_token', data.access_token);
-        if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+        if (data.accessToken) {
+          localStorage.setItem('accessToken', data.accessToken);
+          // Update auth cookie
+          document.cookie = `auth_token=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+        }
+        if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
       }
     })().finally(() => {
       refreshPromise = null;

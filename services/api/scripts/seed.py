@@ -230,7 +230,7 @@ def create_time_slots(session: Session, courts: list[Court]) -> list[TimeSlot]:
         date = today + timedelta(days=day_offset)
 
         # Create time slots: 9-11, 11-13, 14-16, 16-18, 18-20, 20-22
-        time_slots = [
+        slot_definitions = [
             (9, 11, 800),   # Morning - 800 TWD
             (11, 13, 800),
             (14, 16, 1000), # Afternoon - 1000 TWD
@@ -241,7 +241,7 @@ def create_time_slots(session: Session, courts: list[Court]) -> list[TimeSlot]:
 
         # Create slots for each court
         for court in courts:
-            for start_hour, end_hour, price in time_slots:
+            for start_hour, end_hour, price in slot_definitions:
                 starts_at = date.replace(hour=start_hour, minute=0, second=0)
                 ends_at = date.replace(hour=end_hour, minute=0, second=0)
 
@@ -276,7 +276,7 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             "max_participants": 10,
             "visibility": Visibility.public.value,
             "status": "open",
-            "durantion_type": "temporary",
+            "duration_type": "temporary",
         },
         {
             "title": "Badminton Doubles Practice",
@@ -285,7 +285,7 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             "max_participants": 8,
             "visibility": Visibility.public.value,
             "status": "open",
-            "durantion_type": "permanent",
+            "duration_type": "permanent",
         },
         {
             "title": "Friday Night Hoops",
@@ -294,7 +294,7 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             "max_participants": 12,
             "visibility": Visibility.public.value,
             "status": "open",
-            "durantion_type": "permanent",
+            "duration_type": "permanent",
         },
         {
             "title": "Tennis Club - Beginner Friendly",
@@ -303,7 +303,7 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             "max_participants": 6,
             "visibility": Visibility.private.value,
             "status": "open",
-            "durantion_type": "permanent",
+            "duration_type": "permanent",
             "invite_token": "TENNIS2024ABC",
         },
         {
@@ -313,7 +313,7 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             "max_participants": 8,
             "visibility": Visibility.private.value,
             "status": "closed",
-            "durantion_type": "temporary",
+            "duration_type": "temporary",
         },
         {
             "title": "Sunday Morning Badminton",
@@ -322,7 +322,7 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             "max_participants": 8,
             "visibility": Visibility.public.value,
             "status": "open",
-            "durantion_type": "temporary",
+            "duration_type": "temporary",
         },
     ]
 
@@ -335,7 +335,7 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             max_participants=data["max_participants"],
             visibility=data["visibility"],
             status=data["status"],
-            durantion_type=data["durantion_type"],
+            duration_type=data["duration_type"],
             invite_token=data.get("invite_token"),
         )
         session.add(teamup)

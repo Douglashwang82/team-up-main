@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 
-from services.api.app.schemas.teamup import TimeSlotOut
+from app.models.venue import Venue, Court, TimeSlot
 
 class VenueOut(BaseModel):
     """Basic venue information"""
@@ -20,7 +20,7 @@ class CourtOut(BaseModel):
     name: str
     sport_type: Optional[str] = None
 
-class TimeslotOut(BaseModel):
+class TimeSlotOut(BaseModel):
     """Timeslot information"""
     id: UUID
     court_id: UUID

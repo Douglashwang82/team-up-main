@@ -221,7 +221,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TimeslotOut'
+                  $ref: '#/components/schemas/TimeSlotOut'
         '404':
           description: Venue or court not found
 
@@ -523,7 +523,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TeamUpBookTimeslotIn'
+              $ref: '#/components/schemas/TeamUpBookTimeSlotIn'
       responses:
         '201':
           description: Timeslot booked
@@ -742,14 +742,14 @@ components:
     # ========================================================================
     VenueSearchResult:
       type: object
-      required: [venue, timeslots]
+      required: [venue, time_slots]
       properties:
         venue:
           $ref: '#/components/schemas/VenueOut'
-        timeslots:
+        time_slots:
           type: array
           items:
-            $ref: '#/components/schemas/TimeslotOut'
+            $ref: '#/components/schemas/TimeSlotOut'
 
     VenueOut:
       type: object
@@ -815,7 +815,7 @@ components:
           type: string
           nullable: true
 
-    TimeslotOut:
+    TimeSlotOut:
       type: object
       required: [id, court_id, starts_at, ends_at, currency, is_bookable]
       properties:
@@ -853,9 +853,9 @@ components:
     # ========================================================================
     BookingCreateIn:
       type: object
-      required: [timeslot_id]
+      required: [time_slot_id]
       properties:
-        timeslot_id:
+        time_slot_id:
           type: string
           format: uuid
         teamup_id:
@@ -876,7 +876,7 @@ components:
 
     BookingOut:
       type: object
-      required: [id, owner_user_id, timeslot_id, status, payment_status, created_at, updated_at]
+      required: [id, owner_user_id, time_slot_id, status, payment_status, created_at, updated_at]
       properties:
         id:
           type: string
@@ -884,7 +884,7 @@ components:
         owner_user_id:
           type: string
           format: uuid
-        timeslot_id:
+        time_slot_id:
           type: string
           format: uuid
         teamup_id:
@@ -906,7 +906,7 @@ components:
 
     BookingDetailOut:
       type: object
-      required: [id, owner_user_id, timeslot_id, status, payment_status, timeslot, court, venue, created_at, updated_at]
+      required: [id, owner_user_id, time_slot_id, status, payment_status, time_slot, court, venue, created_at, updated_at]
       properties:
         id:
           type: string
@@ -914,7 +914,7 @@ components:
         owner_user_id:
           type: string
           format: uuid
-        timeslot_id:
+        time_slot_id:
           type: string
           format: uuid
         teamup_id:
@@ -927,8 +927,8 @@ components:
         payment_status:
           type: string
           enum: [none, pending, succeeded, failed]
-        timeslot:
-          $ref: '#/components/schemas/TimeslotOut'
+        time_slot:
+          $ref: '#/components/schemas/TimeSlotOut'
         court:
           $ref: '#/components/schemas/CourtOut'
         venue:
@@ -965,7 +965,7 @@ components:
           type: string
           enum: [public, private]
           default: public
-        durantion_type:
+        duration_type:
           type: string
           enum: [temporary, permanent]
           default: temporary
@@ -976,7 +976,7 @@ components:
 
     TeamUpOut:
       type: object
-      required: [id, title, status, max_participants, current_participants, visibility, durantion_type, created_at]
+      required: [id, title, status, max_participants, current_participants, visibility, duration_type, created_at]
       properties:
         id:
           type: string
@@ -996,7 +996,7 @@ components:
         visibility:
           type: string
           enum: [public, private]
-        durantion_type:
+        duration_type:
           type: string
           enum: [temporary, permanent]
         created_at:
@@ -1005,7 +1005,7 @@ components:
 
     TeamUpDetailOut:
       type: object
-      required: [id, title, status, max_participants, current_participants, owner_user_id, visibility, durantion_type, participants, bookings, created_at, updated_at]
+      required: [id, title, status, max_participants, current_participants, owner_user_id, visibility, duration_type, participants, bookings, created_at, updated_at]
       properties:
         id:
           type: string
@@ -1028,7 +1028,7 @@ components:
         visibility:
           type: string
           enum: [public, private]
-        durantion_type:
+        duration_type:
           type: string
           enum: [temporary, permanent]
         participants:
@@ -1048,7 +1048,7 @@ components:
 
     ParticipantOut:
       type: object
-      required: [id, role, joined_at]
+      required: [id, user_id, display_name, email, phone, role, joined_at]
       properties:
         id:
           type: string
@@ -1056,13 +1056,12 @@ components:
         user_id:
           type: string
           format: uuid
-          nullable: true
         display_name:
           type: string
-          nullable: true
         email:
           type: string
-          nullable: true
+        phone:
+          type: string
         role:
           type: string
           enum: [owner, member]
@@ -1070,17 +1069,17 @@ components:
           type: string
           format: date-time
 
-    TeamUpBookTimeslotIn:
+    TeamUpBookTimeSlotIn:
       type: object
-      required: [timeslot_id]
+      required: [time_slot_id]
       properties:
-        timeslot_id:
+        time_slot_id:
           type: string
           format: uuid
 
     TeamUpBookingResponse:
       type: object
-      required: [id, teamup_id, timeslot_id, status, payment_status, created_at]
+      required: [id, teamup_id, time_slot_id, status, payment_status, created_at]
       properties:
         id:
           type: string
@@ -1088,7 +1087,7 @@ components:
         teamup_id:
           type: string
           format: uuid
-        timeslot_id:
+        time_slot_id:
           type: string
           format: uuid
         status:
@@ -1103,7 +1102,7 @@ components:
 
     TeamUpBookingDetail:
       type: object
-      required: [id, status, payment_status, timeslot, court, venue]
+      required: [id, status, payment_status, time_slot, court, venue]
       properties:
         id:
           type: string
@@ -1114,8 +1113,8 @@ components:
         payment_status:
           type: string
           enum: [none, pending, succeeded, failed]
-        timeslot:
-          $ref: '#/components/schemas/TimeslotOut'
+        time_slot:
+          $ref: '#/components/schemas/TimeSlotOut'
         court:
           $ref: '#/components/schemas/CourtOut'
         venue:

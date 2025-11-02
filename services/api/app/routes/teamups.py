@@ -36,15 +36,22 @@ def create_teamup():
     missing = [k for k in required if k not in data]
     if missing:
         return jsonify({"error": "missing_fields", "fields": missing}), 400
+    
+    if g.user_id is None:
+        return jsonify({"error": "authentication_required"}), 401
 
     with SessionLocal() as s:
+        user = s.get(User, g.user_id)
+        if not user:
+            return jsonify({"error": "user_not_found"}), 404
+        
         teamup = TeamUp(
             title=data["title"],
             description=data.get("description"),
             owner_user_id=g.user_id,
             max_participants=data["max_participants"],
             visibility=data.get("visibility", "public"),
-            durantion_type=data.get("durantion_type", "temporary"),
+            duration_type=data.get("duration_type", "temporary"),
             status=data.get("status", "open"),
         )
 
@@ -56,7 +63,9 @@ def create_teamup():
             teamup_id=teamup.id,
             user_id=g.user_id,
             role="owner",
-            display_name=g.user.get("display_name") if hasattr(g, 'user') else None,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
         )
         s.add(owner_participant)
 
@@ -69,8 +78,57 @@ def create_teamup():
             "max_participants": teamup.max_participants,
             "current_participants": 1,
             "visibility": teamup.visibility,
-            "durantion_type": teamup.durantion_type,
+            "duration_type": teamup.duration_type,
         }), 201
+
+# ===[ 更新 TeamUp ]===
+@bp.put("/<uuid:teamup_id>")
+@require_auth
+def update_teamup(teamup_id):
+    """更新 TeamUp"""
+    data = request.get_json() or {}
+
+    with SessionLocal() as s:
+        teamup = s.get(TeamUp, teamup_id)
+        if not teamup:
+            return jsonify({"error": "not_found"}), 404
+
+        if str(teamup.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+
+        # 更新欄位
+        for field in ["title", "description", "status", "max_participants", "visibility", "duration_type"]:
+            if field in data:
+                setattr(teamup, field, data[field])
+
+        s.commit()
+
+        return jsonify({
+            "id": str(teamup.id),
+            "title": teamup.title,
+            "status": teamup.status,
+            "max_participants": teamup.max_participants,
+            "visibility": teamup.visibility,
+            "duration_type": teamup.duration_type,
+        })
+
+# ===[ 刪除 TeamUp ]===
+@bp.delete("/<uuid:teamup_id>")
+@require_auth
+def delete_teamup(teamup_id):
+    """刪除 TeamUp"""
+    with SessionLocal() as s:
+        teamup = s.get(TeamUp, teamup_id)
+        if not teamup:
+            return jsonify({"error": "not_found"}), 404
+
+        if str(teamup.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+
+        s.delete(teamup)
+        s.commit()
+
+        return jsonify({"ok": True}) 
 
 # ===[ Book time slot for TeamUp ]===
 @bp.post("/<uuid:teamup_id>/book")
@@ -229,7 +287,7 @@ def list_teamups():
                 "max_participants": teamup.max_participants,
                 "current_participants": participant_count,
                 "visibility": teamup.visibility,
-                "durantion_type": teamup.durantion_type,
+                "duration_type": teamup.duration_type,
                 "created_at": teamup.created_at.isoformat(),
             })
 
@@ -269,7 +327,7 @@ def search_teamups():
                 "max_participants": teamup.max_participants,
                 "current_participants": participant_count,
                 "visibility": teamup.visibility,
-                "durantion_type": teamup.durantion_type,
+                "duration_type": teamup.duration_type,
                 "created_at": teamup.created_at.isoformat(),
             })
 
@@ -357,7 +415,7 @@ def get_teamup(teamup_id):
             "current_participants": participant_count,
             "owner_user_id": str(teamup.owner_user_id),
             "visibility": teamup.visibility,
-            "durantion_type": teamup.durantion_type,
+            "duration_type": teamup.duration_type,
             "participants": participant_list,
             "bookings": booking_list,
             "created_at": teamup.created_at.isoformat(),

@@ -144,18 +144,18 @@ export default function JoinRequestsPage() {
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
                       <span className="text-white font-bold text-xl">
-                        {request.user_id.slice(0, 2).toUpperCase()}
+                        {request.userId.slice(0, 2).toUpperCase()}
                       </span>
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 text-lg">
-                        User {request.user_id.slice(0, 8)}
+                        User {request.userId.slice(0, 8)}
                       </p>
                       <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        {new Date(request.created_at).toLocaleString()}
+                        {new Date(request.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -213,15 +213,15 @@ export default function JoinRequestsPage() {
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                       <span className="text-gray-600 font-semibold">
-                        {request.user_id.slice(0, 2).toUpperCase()}
+                        {request.userId.slice(0, 2).toUpperCase()}
                       </span>
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">
-                        User {request.user_id.slice(0, 8)}
+                        User {request.userId.slice(0, 8)}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {new Date(request.created_at).toLocaleString()}
+                        {new Date(request.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>

@@ -161,10 +161,10 @@ export default function VenueDetailPage() {
                           <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 mb-2 transition-colors">
                             {court.name}
                           </h3>
-                          {court.sport_type && (
+                          {court.sportType && (
                             <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
-                                {court.sport_type}
+                                {court.sportType}
                               </span>
                             </p>
                           )}
@@ -217,7 +217,7 @@ export default function VenueDetailPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Sports Available</span>
                     <span className="font-semibold text-gray-900">
-                      {new Set(venue.courts.map((c: any) => c.sport_type).filter(Boolean)).size || 1}
+                      {new Set(venue.courts.map((c: any) => c.sportType).filter(Boolean)).size || 1}
                     </span>
                   </div>
                 </div>

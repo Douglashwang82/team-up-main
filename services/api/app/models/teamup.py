@@ -45,7 +45,7 @@ class TeamUp(Base):
     )
 
     # 狀態管理
-    durantion_type: Mapped[str] = mapped_column(sa.Text, default="temporary", nullable=False)  # temporary, permanent
+    duration_type: Mapped[str] = mapped_column(sa.Text, default="temporary", nullable=False)  # temporary, permanent
 
     status: Mapped[str] = mapped_column(sa.Text, default="open", nullable=False)  # open, closed
 

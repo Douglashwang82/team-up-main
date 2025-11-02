@@ -59,12 +59,12 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
             <div className="w-28 h-28 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
               <span className="text-white font-bold text-5xl">
-                {user.display_name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                {user.displayName?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
               </span>
             </div>
             <div className="flex-1 text-center sm:text-left">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                {user.display_name || 'Anonymous User'}
+                {user.displayName || 'Anonymous User'}
               </h2>
               <p className="text-gray-600 text-lg mb-3">{user.email}</p>
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
@@ -100,7 +100,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {user.display_name && (
+            {user.displayName && (
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,7 +109,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-1">Display Name</label>
-                  <p className="text-gray-700">{user.display_name}</p>
+                  <p className="text-gray-700">{user.displayName}</p>
                 </div>
               </div>
             )}

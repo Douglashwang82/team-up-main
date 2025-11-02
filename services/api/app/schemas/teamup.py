@@ -17,10 +17,10 @@ class TeamUpCreateIn(BaseModel):
     description: Optional[str] = None
     max_participants: int
     visibility: Visibility = "public"
-    durantion_type: DurationType = "temporary"  # Note: typo matches model
+    duration_type: DurationType = "temporary"
     status: TeamUpStatus = "open"
 
-class TeamUpBookTimesSlotIn(BaseModel):
+class TeamUpBookTimeSlotIn(BaseModel):
     """Schema for booking a time slot for a TeamUp"""
     time_slot_id: UUID
 
@@ -83,7 +83,7 @@ class TeamUpOut(BaseModel):
     max_participants: int
     current_participants: int
     visibility: Visibility
-    durantion_type: DurationType
+    duration_type: DurationType
     created_at: datetime
 
 class TeamUpDetailOut(BaseModel):
@@ -96,7 +96,7 @@ class TeamUpDetailOut(BaseModel):
     current_participants: int
     owner_user_id: UUID
     visibility: Visibility
-    durantion_type: DurationType
+    duration_type: DurationType
     participants: list[ParticipantOut]
     bookings: list[BookingOut]
     created_at: datetime
