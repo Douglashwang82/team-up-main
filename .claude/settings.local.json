@@ -22,7 +22,13 @@
       "Bash(head -10 /Users/hwangdouglas/Projects/team-up-main/apps/web/app/(main)/teamups/page.tsx)",
       "Bash(pnpm add -D tailwindcss postcss autoprefixer)",
       "Bash(pnpm remove tailwindcss)",
-      "Bash(pnpm add -D tailwindcss@3 @tailwindcss/postcss autoprefixer postcss)"
+      "Bash(pnpm add -D tailwindcss@3 @tailwindcss/postcss autoprefixer postcss)",
+      "Bash(mkdir:*)",
+      "Bash(pnpm install)",
+      "Bash(pnpm start)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm start --clear)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []
