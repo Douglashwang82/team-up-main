@@ -32,7 +32,7 @@ export default function LoginScreen() {
       // Navigation will be handled automatically by the root layout
     } catch (error) {
       setLoading(false);
-      setErrors({ email: 'Login failed. Please try again.' });
+      setErrors({ email: error instanceof Error ? error.message : 'Login failed. Please try again.' });
     }
   };
 

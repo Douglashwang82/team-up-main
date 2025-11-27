@@ -28,7 +28,8 @@
       "Bash(pnpm start)",
       "Bash(pnpm add:*)",
       "Bash(pnpm start --clear)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

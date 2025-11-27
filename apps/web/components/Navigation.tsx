@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import NotificationCenter from './NotificationCenter';
 
 export default function Navigation() {
   const { user, logout } = useAuth();
@@ -18,6 +19,7 @@ export default function Navigation() {
     { href: '/teamups', label: 'TeamUps' },
     { href: '/venues', label: 'Venues' },
     { href: '/events', label: 'Events' },
+    { href: '/tickets', label: 'Tickets' },
   ];
 
   return (
@@ -38,11 +40,10 @@ export default function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isActive(link.href)
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${isActive(link.href)
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+                  }`}
               >
                 {link.label}
               </Link>
@@ -51,6 +52,7 @@ export default function Navigation() {
 
           {/* User Menu / Auth Buttons */}
           <div className="flex items-center space-x-3">
+            {user && <NotificationCenter />}
             {user ? (
               <div className="relative">
                 <button
@@ -66,9 +68,8 @@ export default function Navigation() {
                     {user.displayName || user.email.split('@')[0]}
                   </span>
                   <svg
-                    className={`w-4 h-4 text-gray-500 transition-transform ${
-                      showUserMenu ? 'rotate-180' : ''
-                    }`}
+                    className={`w-4 h-4 text-gray-500 transition-transform ${showUserMenu ? 'rotate-180' : ''
+                      }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -147,11 +148,10 @@ export default function Navigation() {
             <Link
               key={link.href}
               href={link.href}
-              className={`block px-3 py-2 rounded-lg font-medium transition-colors ${
-                isActive(link.href)
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`block px-3 py-2 rounded-lg font-medium transition-colors ${isActive(link.href)
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-700 hover:bg-gray-100'
+                }`}
             >
               {link.label}
             </Link>

@@ -16,6 +16,8 @@ import {
   AuthApi, HealthApi,
   VenuesApi,
   TeamUpsApi,
+  TicketsApi,
+  NotificationsApi,
 } from '@team-up-main/api-client';
 
 const basePath =
@@ -56,15 +58,15 @@ async function customFetch(input: RequestInfo, init?: RequestInit): Promise<Resp
   if (res.status !== 401) return res;
 
   if (!res.ok) {
-  // Login failed, clear tokens
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    // Clear auth cookie
-    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    // Login failed, clear tokens
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      // Clear auth cookie
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+    // Optionally, show error to user
   }
-  // Optionally, show error to user
-}
 
   // If 401 and refresh token exists, try to refresh
   const rt = getRefreshToken();
@@ -126,6 +128,8 @@ export const apis = {
   health: new HealthApi(config),
   venues: new VenuesApi(config),
   teamups: new TeamUpsApi(config),
+  tickets: new TicketsApi(config),
+  notifications: new NotificationsApi(config),
 };
 
 // 若你偏好與先前相似的用法，也可包一層別名（依實際方法名調整或直接用 apis.* 即可）

@@ -1,14 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apis } from './api';
+import { UserOut, ResponseError } from '@team-up-main/api-client';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserOut | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
@@ -18,45 +14,75 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserOut | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (e.g., from AsyncStorage)
-    // For now, we'll just set loading to false
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
+    checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    // TODO: Implement actual login API call
-    // For now, simulate login
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  const checkAuth = async () => {
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      if (token) {
+        const userInfo = await apis.auth.getCurrentUser();
+        // @ts-ignore
+        setUser(userInfo);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    setUser({
-      id: '1',
-      email,
-      firstName: 'John',
-      lastName: 'Doe',
-    });
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await apis.auth.login({ loginIn: { email, password } });
+      await AsyncStorage.setItem('accessToken', response.accessToken);
+      await AsyncStorage.setItem('refreshToken', response.refreshToken);
+
+      const userInfo = await apis.auth.getCurrentUser();
+      // @ts-ignore
+      setUser(userInfo);
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof ResponseError) {
+        try {
+          const body = await error.response.json();
+          if (body.message) {
+            throw new Error(body.message);
+          }
+        } catch (e) {
+          // If parsing fails, throw original error or generic one
+          if (e instanceof Error && e.message !== 'Login failed') {
+            // ignore json parse error
+          }
+        }
+      }
+      throw error;
+    }
   };
 
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
-    // TODO: Implement actual signup API call
-    // For now, simulate signup
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    setUser({
-      id: '1',
-      email,
-      firstName,
-      lastName,
-    });
+    try {
+      await apis.auth.signup({
+        signupIn: {
+          email,
+          password,
+          displayName: `${firstName} ${lastName}`
+        }
+      });
+      await login(email, password);
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
-    // TODO: Clear AsyncStorage/SecureStore
+    await AsyncStorage.removeItem('accessToken');
+    await AsyncStorage.removeItem('refreshToken');
     setUser(null);
   };
 

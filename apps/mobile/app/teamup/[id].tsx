@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Card from '../../../components/Card';
-import Button from '../../../components/Button';
-import { Colors } from '../../../constants/Colors';
+import Card from '../../components/Card';
+import Button from '../../components/Button';
+import { Colors } from '../../constants/Colors';
 
 export default function TeamUpDetailScreen() {
   const router = useRouter();
