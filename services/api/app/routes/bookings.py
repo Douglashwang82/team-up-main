@@ -8,7 +8,7 @@ from app.core.db import SessionLocal
 from app.core.auth import require_auth
 from app.models.booking import Booking
 from app.models.venue import Venue, Court, TimeSlot
-from app.models.teamup import TeamUp
+from app.models.event import Event
 
 bp = Blueprint("bookings", __name__)
 
@@ -19,7 +19,7 @@ def _serialize_booking(booking: Booking) -> dict:
         "id": str(booking.id),
         "owner_user_id": str(booking.owner_user_id),
         "time_slot_id": str(booking.time_slot_id),
-        "teamup_id": str(booking.teamup_id) if booking.teamup_id else None,
+        "event_id": str(booking.event_id) if booking.event_id else None,
         "status": booking.status,
         "payment_status": booking.payment_status,
         "created_at": booking.created_at.isoformat(),
@@ -27,13 +27,13 @@ def _serialize_booking(booking: Booking) -> dict:
     }
 
 
-def _serialize_booking_detail(booking: Booking, time_slot: TimeSlot, court: Court, venue: Venue, teamup: TeamUp | None = None) -> dict:
+def _serialize_booking_detail(booking: Booking, time_slot: TimeSlot, court: Court, venue: Venue, event: Event | None = None) -> dict:
     """Serialize booking detail with related data"""
     return {
         "id": str(booking.id),
         "owner_user_id": str(booking.owner_user_id),
         "time_slot_id": str(booking.time_slot_id),
-        "teamup_id": str(booking.teamup_id) if booking.teamup_id else None,
+        "event_id": str(booking.event_id) if booking.event_id else None,
         "status": booking.status,
         "payment_status": booking.payment_status,
         "time_slot": {
@@ -54,11 +54,11 @@ def _serialize_booking_detail(booking: Booking, time_slot: TimeSlot, court: Cour
             "address": venue.address,
             "city": venue.city,
         },
-        "teamup": {
-            "id": str(teamup.id),
-            "title": teamup.title,
-            "description": teamup.description,
-        } if teamup else None,
+        "event": {
+            "id": str(event.id),
+            "title": event.title,
+            "description": event.description,
+        } if event else None,
         "created_at": booking.created_at.isoformat(),
         "updated_at": booking.updated_at.isoformat(),
     }
@@ -104,7 +104,7 @@ def create_booking():
         booking = Booking(
             owner_user_id=g.user_id,
             time_slot_id=time_slot_id,
-            teamup_id=data.get("teamup_id"),  # Optional teamup association
+            event_id=data.get("event_id"),  # Optional event association
             status="pending",
             payment_status="none",
         )
@@ -163,12 +163,12 @@ def get_booking_by_id(booking_id):
         if not venue:
             return jsonify({"error": "venue_not_found"}), 404
 
-        # Get teamup if booking is associated with one
-        teamup = None
-        if booking.teamup_id:
-            teamup = s.get(TeamUp, booking.teamup_id)
+        # Get event if booking is associated with one
+        event = None
+        if booking.event_id:
+            event = s.get(Event, booking.event_id)
 
-        return jsonify(_serialize_booking_detail(booking, time_slot, court, venue, teamup))
+        return jsonify(_serialize_booking_detail(booking, time_slot, court, venue, event))
 
 
 

@@ -11,6 +11,7 @@ class Base(DeclarativeBase):
 def ensure_postgis_extension():
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS btree_gist"))
         conn.commit()
 
 def create_all_tables():

@@ -1,7 +1,7 @@
 import uuid
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from app.core.db import Base
 
 class Notification(Base):
@@ -16,12 +16,14 @@ class Notification(Base):
     type: Mapped[str] = mapped_column(sa.Text, nullable=False) # match_found, event_invite, etc.
     is_read: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
     
-    related_entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True) # e.g., TeamUp ID
-    related_entity_type: Mapped[str | None] = mapped_column(sa.Text, nullable=True) # e.g., "teamup"
+    related_event_ids: Mapped[list[uuid.UUID] | None] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=True) # e.g., Event IDs
 
     created_at: Mapped[sa.DateTime] = mapped_column(
         sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
     )
-
+    updated_at: Mapped[sa.DateTime] = mapped_column(
+        sa.DateTime(timezone=True), server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False
+    )
+    
     # Relationships
-    user = relationship("User", backref="notifications")
+    user: Mapped["User"] = relationship("User", backref="notifications")

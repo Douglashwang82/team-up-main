@@ -1,18 +1,18 @@
-# app/models/teamup_join_request.py
+# app/models/event_join_request.py
 import uuid, sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.db import Base
 from app.core.types import joinRequestStatus
 
-class TeamUpJoinRequest(Base):
-    __tablename__ = "teamup_join_requests"
+class EventJoinRequest(Base):
+    __tablename__ = "event_join_requests"
     
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
     )
-    teamup_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("teamups.id", ondelete="CASCADE"), nullable=False
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), sa.ForeignKey("events.id", ondelete="CASCADE"), nullable=False
     )
     applicant_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), sa.ForeignKey("users.id")
@@ -31,14 +31,14 @@ class TeamUpJoinRequest(Base):
     reviewed_at: Mapped[sa.DateTime | None] = mapped_column(sa.DateTime(timezone=True))
     
     # 關聯
-    teamup: Mapped["TeamUp"] = relationship(back_populates="join_requests")
+    event: Mapped["Event"] = relationship(back_populates="join_requests")
     
     __table_args__ = (
         sa.CheckConstraint(
             "status IN ('submitted', 'approved', 'rejected')", 
-            name="ck_teamup_join_requests_status"
+            name="ck_event_join_requests_status"
         ),
-        sa.Index("ix_teamup_join_requests_teamup_status", "teamup_id", "status"),
-        sa.Index("ix_teamup_join_requests_applicant", "applicant_user_id"),
+        sa.Index("ix_event_join_requests_event_status", "event_id", "status"),
+        sa.Index("ix_event_join_requests_applicant", "applicant_user_id"),
     )
 

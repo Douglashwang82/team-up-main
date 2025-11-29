@@ -5,8 +5,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.core.db import Base
 from app.core.types import Visibility
 
-class TeamUp(Base):
-    __tablename__ = "teamups"
+class Event(Base):
+    __tablename__ = "events"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
@@ -31,17 +31,17 @@ class TeamUp(Base):
     )
 
     # 關聯
-    join_requests: Mapped[list["TeamUpJoinRequest"]] = relationship(
-        back_populates="teamup", cascade="all, delete-orphan"
+    join_requests: Mapped[list["EventJoinRequest"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
     )
 
-    participants: Mapped[list["TeamUpParticipant"]] = relationship(
-        back_populates="teamup", cascade="all, delete-orphan"
+    participants: Mapped[list["EventParticipant"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
     )
 
     # 預約關聯
     bookings: Mapped[list["Booking"]] = relationship(
-        back_populates="teamup"
+        back_populates="event"
     )
 
     # 狀態管理
@@ -53,11 +53,11 @@ class TeamUp(Base):
 
     # 限制條件和索引    
     __table_args__ = (
-        sa.CheckConstraint("max_participants > 0", name="ck_teamup_max_gte_min"),
-        sa.CheckConstraint("status IN ('open', 'closed')", name="ck_teamup_status"),
-        sa.CheckConstraint("visibility IN ('public', 'private')", name="ck_teamup_visibility"),
-        sa.Index("ix_teamups_owner_status", "owner_user_id", "status"),
-        sa.Index("ix_teamups_visibility", "visibility"),
-        sa.Index("ix_teamups_invite_token", "invite_token"),
+        sa.CheckConstraint("max_participants > 0", name="ck_event_max_gte_min"),
+        sa.CheckConstraint("status IN ('open', 'closed')", name="ck_event_status"),
+        sa.CheckConstraint("visibility IN ('public', 'private')", name="ck_event_visibility"),
+        sa.Index("ix_events_owner_status", "owner_user_id", "status"),
+        sa.Index("ix_events_visibility", "visibility"),
+        sa.Index("ix_events_invite_token", "invite_token"),
     )
 

@@ -12,7 +12,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./services/api/docker-initdb:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d team_up"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d team_up" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -30,6 +30,7 @@ services:
       JWT_SECRET: change_me
       BOOTSTRAP_DB: "1"
       FLASK_RUN_PORT: "8080"
+      FLASK_DEBUG: "1"
     ports:
       - "8080:8080"
     volumes:

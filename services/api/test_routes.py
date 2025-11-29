@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive route testing script for TeamUp API
+Comprehensive route testing script for Event API
 Tests all endpoints with seeded data
 """
 import requests
@@ -203,92 +203,92 @@ def test_bookings():
 # =============================================================================
 # TEAMUP ROUTES
 # =============================================================================
-def test_teamups():
+def test_events():
     print_section("4. TEAMUP ROUTES")
 
     headers = {"Authorization": f"Bearer {auth_tokens['alice']}"}
 
-    # Test 4.1: List TeamUps
-    response = make_request("GET", "/teamups")
+    # Test 4.1: List Events
+    response = make_request("GET", "/events")
     passed = response.status_code == 200
     if passed:
-        teamups = response.json()
-        test_data['teamups'] = teamups
-        print_test("List all TeamUps", True, f"Found {len(teamups)} TeamUps")
+        events = response.json()
+        test_data['events'] = events
+        print_test("List all Events", True, f"Found {len(events)} Events")
     else:
-        print_test("List all TeamUps", False, f"Status: {response.status_code}")
+        print_test("List all Events", False, f"Status: {response.status_code}")
 
-    # Test 4.2: Filter TeamUps by status
-    response = make_request("GET", "/teamups", params={"status": "open"})
+    # Test 4.2: Filter Events by status
+    response = make_request("GET", "/events", params={"status": "open"})
     passed = response.status_code == 200
     if passed:
-        teamups = response.json()
-        print_test("Filter TeamUps by status", True, f"Found {len(teamups)} open TeamUps")
+        events = response.json()
+        print_test("Filter Events by status", True, f"Found {len(events)} open Events")
     else:
-        print_test("Filter TeamUps by status", False, f"Status: {response.status_code}")
+        print_test("Filter Events by status", False, f"Status: {response.status_code}")
 
-    # Test 4.3: Get specific TeamUp
-    if test_data.get('teamups') and len(test_data['teamups']) > 0:
-        teamup_id = test_data['teamups'][0]['id']
-        response = make_request("GET", f"/teamups/{teamup_id}")
+    # Test 4.3: Get specific Event
+    if test_data.get('events') and len(test_data['events']) > 0:
+        event_id = test_data['events'][0]['id']
+        response = make_request("GET", f"/events/{event_id}")
         passed = response.status_code == 200
         if passed:
-            teamup = response.json()
-            test_data['teamup_detail'] = teamup
-            print_test("Get TeamUp by ID", True,
-                      f"TeamUp: {teamup.get('title')}, Participants: {teamup.get('current_participants')}")
+            event = response.json()
+            test_data['event_detail'] = event
+            print_test("Get Event by ID", True,
+                      f"Event: {event.get('title')}, Participants: {event.get('current_participants')}")
         else:
-            print_test("Get TeamUp by ID", False, f"Status: {response.status_code}")
+            print_test("Get Event by ID", False, f"Status: {response.status_code}")
 
-    # Test 4.4: Create new TeamUp
-    new_teamup = {
+    # Test 4.4: Create new Event
+    new_event = {
         "title": "API Test Basketball Game",
         "description": "Created by automated test",
         "max_participants": 8,
         "visibility": "public",
         "duration_type": "temporary"
     }
-    response = make_request("POST", "/teamups", headers=headers, json=new_teamup)
+    response = make_request("POST", "/events", headers=headers, json=new_event)
     passed = response.status_code == 201
     if passed:
-        teamup = response.json()
-        test_data['new_teamup'] = teamup
-        print_test("Create new TeamUp", True, f"TeamUp ID: {teamup.get('id')}")
+        event = response.json()
+        test_data['new_event'] = event
+        print_test("Create new Event", True, f"Event ID: {event.get('id')}")
     else:
-        print_test("Create new TeamUp", False,
+        print_test("Create new Event", False,
                   f"Status: {response.status_code}, Error: {response.text[:100]}")
 
-    # Test 4.5: Book time slot for TeamUp
-    if test_data.get('new_teamup') and test_data.get('time_slots') and len(test_data['time_slots']) > 1:
-        teamup_id = test_data['new_teamup']['id']
+    # Test 4.5: Book time slot for Event
+    if test_data.get('new_event') and test_data.get('time_slots') and len(test_data['time_slots']) > 1:
+        event_id = test_data['new_event']['id']
         booking_data = {"time_slot_id": test_data['time_slots'][1]['id']}
-        response = make_request("POST", f"/teamups/{teamup_id}/book",
+        response = make_request("POST", f"/events/{event_id}/book",
                                headers=headers, json=booking_data)
         passed = response.status_code == 201
         if passed:
             booking = response.json()
-            print_test("Book time_slot for TeamUp", True, f"Booking ID: {booking.get('id')}")
+            print_test("Book time_slot for Event", True, f"Booking ID: {booking.get('id')}")
         else:
-            print_test("Book time_slot for TeamUp", False,
+            print_test("Book time_slot for Event", False,
                       f"Status: {response.status_code}, Error: {response.text[:100]}")
 
-    # Test 4.6: Get TeamUp bookings
-    if test_data.get('teamup_detail'):
-        teamup_id = test_data['teamup_detail']['id']
-        response = make_request("GET", f"/teamups/{teamup_id}/bookings")
+    # Test 4.6: Get Event bookings
+    if test_data.get('event_detail'):
+        event_id = test_data['event_detail']['id']
+        response = make_request("GET", f"/events/{event_id}/bookings")
         passed = response.status_code == 200
         if passed:
             bookings = response.json()
-            print_test("Get TeamUp bookings", True, f"Found {len(bookings)} bookings")
+            print_test("Get Event bookings", True, f"Found {len(bookings)} bookings")
         else:
-            print_test("Get TeamUp bookings", False, f"Status: {response.status_code}")
+            print_test("Get Event bookings", False, f"Status: {response.status_code}")
 
     # Test 4.7: Submit join request (as Bob)
-    if test_data.get('new_teamup'):
+    if test_data.get('new_event'):
         headers_bob = {"Authorization": f"Bearer {auth_tokens['bob']}"}
-        teamup_id = test_data['new_teamup']['id']
+        event_id = test_data['new_event']['id']
         join_data = {"message": "I'd like to join this game!"}
-        response = make_request("POST", f"/teamups/{teamup_id}/join",
+        response = make_request("POST", f"/events/{event_id}/join",
                                headers=headers_bob, json=join_data)
         passed = response.status_code == 201
         if passed:
@@ -299,9 +299,9 @@ def test_teamups():
             print_test("Submit join request", False, f"Status: {response.status_code}")
 
     # Test 4.8: List join requests (as owner Alice)
-    if test_data.get('new_teamup'):
-        teamup_id = test_data['new_teamup']['id']
-        response = make_request("GET", f"/teamups/{teamup_id}/join-requests", headers=headers)
+    if test_data.get('new_event'):
+        event_id = test_data['new_event']['id']
+        response = make_request("GET", f"/events/{event_id}/join-requests", headers=headers)
         passed = response.status_code == 200
         if passed:
             requests_list = response.json()
@@ -310,11 +310,11 @@ def test_teamups():
             print_test("List join requests", False, f"Status: {response.status_code}")
 
     # Test 4.9: Approve join request
-    if test_data.get('new_teamup') and test_data.get('join_request'):
-        teamup_id = test_data['new_teamup']['id']
+    if test_data.get('new_event') and test_data.get('join_request'):
+        event_id = test_data['new_event']['id']
         request_id = test_data['join_request']['id']
         review_data = {"action": "approve"}
-        response = make_request("POST", f"/teamups/{teamup_id}/join-requests/{request_id}/review",
+        response = make_request("POST", f"/events/{event_id}/join-requests/{request_id}/review",
                                headers=headers, json=review_data)
         passed = response.status_code == 200
         print_test("Approve join request", passed, f"Status: {response.status_code}")
@@ -329,7 +329,7 @@ def print_summary():
     print("  - Authentication: Login, Signup")
     print("  - Venues: Search, Get by ID, Get court time slots")
     print("  - Bookings: List, Get, Create, Update, Cancel")
-    print("  - TeamUps: List, Filter, Get, Create, Book time slot, Join requests")
+    print("  - Events: List, Filter, Get, Create, Book time slot, Join requests")
     print("\nCheck the results above for any failures.")
     print("\n" + "=" * 80)
 
@@ -346,7 +346,7 @@ def main():
         # test_auth()
         test_venues()
         # test_bookings()
-        # test_teamups()
+        # test_events()
         # print_summary()
     except KeyboardInterrupt:
         print("\n\n⚠️  Tests interrupted by user")

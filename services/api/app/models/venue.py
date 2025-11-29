@@ -178,7 +178,7 @@ class TimeSlot(Base):
             postgresql_using="gist",
         ),
         ExcludeConstraint(
-            ("court_id", "="),
+            (sa.cast(sa.column("court_id"), sa.Text), "="),
             (sa.text("tstzrange(starts_at, ends_at)"), "&&"),
             name="ex_time_slots_overlap",
             using="gist",

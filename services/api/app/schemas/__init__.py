@@ -14,19 +14,19 @@ from .booking import (
     BookingDetailOut,
 )
 
-# TeamUp schemas
-from .teamup import (
-    TeamUpCreateIn,
-    TeamUpBookTimeSlotIn,
-    TeamUpOut,
-    TeamUpDetailOut,
-    JoinRequestCreateIn,
-    JoinRequestReviewIn,
-    JoinRequestOut,
-    JoinRequestSubmitResponse,
-    JoinRequestReviewResponse,
-    TeamUpBookingResponse,
-    ParticipantOut as TeamUpParticipantOut,
+# Event schemas
+from .event import (
+    EventCreateIn,
+    EventBookTimeSlotIn,
+    EventOut,
+    EventDetailOut,
+    EventJoinRequestCreateIn,
+    EventJoinRequestReviewIn,
+    EventJoinRequestOut,
+    EventJoinRequestSubmitResponse,
+    EventJoinRequestReviewResponse,
+    EventBookingResponse,
+    ParticipantOut as EventParticipantOut,
 )
 
 # Venue schemas
@@ -50,18 +50,18 @@ __all__ = [
     "BookingUpdateIn",
     "BookingOut",
     "BookingDetailOut",
-    # TeamUp
-    "TeamUpCreateIn",
-    "TeamUpBookTimeSlotIn",
-    "TeamUpOut",
-    "TeamUpDetailOut",
-    "JoinRequestCreateIn",
-    "JoinRequestReviewIn",
-    "JoinRequestOut",
-    "JoinRequestSubmitResponse",
-    "JoinRequestReviewResponse",
-    "TeamUpBookingResponse",
-    "TeamUpParticipantOut",
+    # Event
+    "EventCreateIn",
+    "EventBookTimeSlotIn",
+    "EventOut",
+    "EventDetailOut",
+    "EventJoinRequestCreateIn",
+    "EventJoinRequestReviewIn",
+    "EventJoinRequestOut",
+    "EventJoinRequestSubmitResponse",
+    "EventJoinRequestReviewResponse",
+    "EventBookingResponse",
+    "EventParticipantOut",
     # Venue
     "VenueOut",
     "VenueDetailOut",

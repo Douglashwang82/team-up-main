@@ -4,7 +4,7 @@ from sqlalchemy import select, and_, or_
 from datetime import datetime
 
 from app.models.ticket import Ticket
-from app.models.teamup import TeamUp
+from app.models.event import Event
 from app.models.notification import Notification
 from app.models.user import User
 from app.models.venue import Venue, Court, TimeSlot
@@ -29,15 +29,15 @@ def process_ticket(db: Session, ticket: Ticket):
     # 2. Search for matching tickets to create a new event
     match_with_other_tickets(db, ticket)
 
-def find_existing_events(db: Session, ticket: Ticket) -> list[TeamUp]:
+def find_existing_events(db: Session, ticket: Ticket) -> list[Event]:
     """
-    Find existing TeamUp events that match the ticket criteria.
+    Find existing Event events that match the ticket criteria.
     """
     # Basic criteria: Sport, Status=Open, Visibility=Public
-    # We look for TeamUps that have a Booking on the same Date/Time 
+    # We look for Events that have a Booking on the same Date/Time 
     # AND the Court's sport_type matches.
     
-    # Join TeamUp -> Booking -> TimeSlot -> Court
+    # Join Event -> Booking -> TimeSlot -> Court
     # Check Court.sport_type == ticket.sport_type
     # Check TimeSlot.starts_at date and time match ticket preferences
     
@@ -45,13 +45,13 @@ def find_existing_events(db: Session, ticket: Ticket) -> list[TeamUp]:
     ticket_start_dt = datetime.combine(ticket.date, ticket.start_time)
     
     stmt = (
-        select(TeamUp)
-        .join(Booking, TeamUp.bookings)
+        select(Event)
+        .join(Booking, Event.bookings)
         .join(TimeSlot, Booking.time_slot)
         .join(Court, TimeSlot.court)
         .where(
-            TeamUp.status == 'open',
-            TeamUp.visibility == 'public',
+            Event.status == 'open',
+            Event.visibility == 'public',
             Court.sport_type == ticket.sport_type,
         )
     )
@@ -87,7 +87,7 @@ def find_existing_events(db: Session, ticket: Ticket) -> list[TeamUp]:
         
     return matches
 
-def match_with_events(db: Session, ticket: Ticket, events: list[TeamUp]):
+def match_with_events(db: Session, ticket: Ticket, events: list[Event]):
     """
     Match a ticket with existing events.
     """
@@ -96,14 +96,14 @@ def match_with_events(db: Session, ticket: Ticket, events: list[TeamUp]):
     # Update ticket status
     ticket.status = 'matched'
     
-    # Create notification for user for EACH event
-    for event in events:
+    # Create a single notification with all matched event IDs
+    if events:
+        event_titles = ", ".join([e.title for e in events])
         notification = Notification(
             user_id=ticket.user_id,
-            message=f"We found a match! Join event: {event.title}",
+            message=f"We found {len(events)} match(es)! Events: {event_titles}",
             type="match_found",
-            related_entity_id=event.id,
-            related_entity_type="teamup"
+            related_event_ids=[e.id for e in events]
         )
         db.add(notification)
     
@@ -149,16 +149,16 @@ def match_with_other_tickets(db: Session, ticket: Ticket):
 
 def create_event_from_tickets(db: Session, primary_ticket: Ticket, other_tickets: list[Ticket]):
     """
-    Create a new TeamUp event from a group of tickets.
+    Create a new Event from a group of tickets.
     """
     logger.info(f"Creating event for tickets {primary_ticket.id} and {[t.id for t in other_tickets]}")
     
     # 1. Create Event
     # We need a venue. Use the primary ticket's preferred venue or a default?
-    # For now, we won't actually book a venue (that's complex), just create the TeamUp intent.
+    # For now, we won't actually book a venue (that's complex), just create the Event intent.
     # Or we need to pick a venue from the intersection of venue_ids.
     
-    event = TeamUp(
+    event = Event(
         title=f"{primary_ticket.sport_type} Match",
         description=f"Auto-generated match for {primary_ticket.sport_type}",
         owner_user_id=primary_ticket.user_id, # Assign primary as owner
@@ -178,8 +178,7 @@ def create_event_from_tickets(db: Session, primary_ticket: Ticket, other_tickets
             user_id=t.user_id,
             message=f"Match found! A new event has been created: {event.title}",
             type="event_created",
-            related_entity_id=event.id,
-            related_entity_type="teamup"
+            related_event_ids=[event.id]
         )
         db.add(notification)
         

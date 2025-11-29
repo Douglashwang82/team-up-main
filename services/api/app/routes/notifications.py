@@ -25,8 +25,7 @@ def get_notifications():
             "message": n.message,
             "type": n.type,
             "is_read": n.is_read,
-            "related_entity_id": str(n.related_entity_id) if n.related_entity_id else None,
-            "related_entity_type": n.related_entity_type,
+            "related_event_ids": [str(eid) for eid in n.related_event_ids] if n.related_event_ids else [],
             "created_at": n.created_at.isoformat()
         } for n in notifications])
 

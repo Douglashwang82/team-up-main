@@ -16,8 +16,8 @@ class Booking(Base):
     # Time slot reference (required)
     time_slot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("time_slots.id"), nullable=False)
 
-    # Optional TeamUp assignment (nullable - bookings can be individual or assigned to a TeamUp)
-    teamup_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("teamups.id"), nullable=True)
+    # Optional Event assignment (nullable - bookings can be individual or assigned to a Event)
+    event_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("events.id"), nullable=True)
 
     status: Mapped[str] = mapped_column(sa.Text, default=BookingStatus.pending.value, nullable=False)
     payment_status: Mapped[str] = mapped_column(sa.Text, default=PaymentStatus.none.value, nullable=False)
@@ -28,4 +28,4 @@ class Booking(Base):
     # Relationships
     owner: Mapped["User"] = relationship(foreign_keys=[owner_user_id])
     time_slot: Mapped["TimeSlot"] = relationship(back_populates="bookings")
-    teamup: Mapped["TeamUp"] = relationship(back_populates="bookings")
+    event: Mapped["Event"] = relationship(back_populates="bookings")

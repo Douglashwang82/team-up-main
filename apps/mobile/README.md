@@ -1,6 +1,6 @@
-# TeamUp Mobile App
+# Event Mobile App
 
-A React Native mobile application built with Expo and Expo Router for the TeamUp platform.
+A React Native mobile application built with Expo and Expo Router for the Event platform.
 
 ## Features
 
@@ -9,11 +9,11 @@ A React Native mobile application built with Expo and Expo Router for the TeamUp
 - **Signup Screen** - Create a new account with email, password, and name
 
 ### Main Screens
-- **TeamUps List** - Browse and search for available TeamUps
-- **TeamUp Details** - View detailed information about a TeamUp and join/leave
-- **My TeamUps** - View TeamUps you've created or joined
+- **Events List** - Browse and search for available Events
+- **Event Details** - View detailed information about a Event and join/leave
+- **My Events** - View Events you've created or joined
 - **Profile** - View and manage your profile and settings
-- **Create TeamUp** - Create a new TeamUp activity
+- **Create Event** - Create a new Event activity
 
 ## Project Structure
 
@@ -26,18 +26,18 @@ apps/mobile/
 │   │   └── signup.tsx     # Signup screen
 │   ├── (tabs)/            # Main tab navigation
 │   │   ├── _layout.tsx    # Tab layout
-│   │   ├── index.tsx      # TeamUps list screen
-│   │   ├── my-teamups.tsx # My TeamUps screen
+│   │   ├── index.tsx      # Events list screen
+│   │   ├── my-events.tsx # My Events screen
 │   │   ├── profile.tsx    # Profile screen
-│   │   ├── new-teamup.tsx # Create TeamUp screen
-│   │   └── teamup/
-│   │       └── [id].tsx   # TeamUp details screen
+│   │   ├── new-event.tsx # Create Event screen
+│   │   └── event/
+│   │       └── [id].tsx   # Event details screen
 │   └── _layout.tsx        # Root layout
 ├── components/            # Reusable UI components
 │   ├── Button.tsx         # Custom button component
 │   ├── Card.tsx           # Card container component
 │   ├── Input.tsx          # Text input component
-│   └── TeamUpCard.tsx     # TeamUp list item component
+│   └── EventCard.tsx     # Event list item component
 ├── constants/             # App constants
 │   └── Colors.ts          # Color palette
 └── lib/                   # Utilities and hooks
@@ -62,8 +62,8 @@ A text input component with label and error message support.
 ### Card
 A container component with consistent styling for content cards.
 
-### TeamUpCard
-A specialized card component for displaying TeamUp information in lists.
+### EventCard
+A specialized card component for displaying Event information in lists.
 
 ## Getting Started
 
@@ -114,10 +114,10 @@ pnpm web
    - Add optimistic updates for better UX
 
 3. **Additional Features**
-   - Date/time picker for TeamUp scheduling
+   - Date/time picker for Event scheduling
    - Venue selection and maps integration
    - Push notifications
-   - Image upload for profiles and TeamUps
+   - Image upload for profiles and Events
    - Real-time updates
 
 4. **Styling Enhancements**

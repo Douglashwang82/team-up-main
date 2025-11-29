@@ -7,7 +7,7 @@ from datetime import datetime
 class BookingCreateIn(BaseModel):
     """Schema for creating a new booking"""
     time_slot_id: UUID
-    teamup_id: Optional[UUID] = None  # Optional TeamUp association
+    event_id: Optional[UUID] = None  # Optional Event association
 
 class BookingUpdateIn(BaseModel):
     """Schema for updating booking status"""
@@ -35,8 +35,8 @@ class VenueOut(BaseModel):
     address: str
     city: Optional[str] = None
 
-class TeamUpOut(BaseModel):
-    """TeamUp information in booking response"""
+class EventOut(BaseModel):
+    """Event information in booking response"""
     id: UUID
     title: str
     description: Optional[str] = None
@@ -46,7 +46,7 @@ class BookingOut(BaseModel):
     id: UUID
     owner_user_id: UUID
     time_slot_id: UUID
-    teamup_id: Optional[UUID] = None
+    event_id: Optional[UUID] = None
     status: str
     payment_status: str
     created_at: datetime
@@ -57,12 +57,12 @@ class BookingDetailOut(BaseModel):
     id: UUID
     owner_user_id: UUID
     time_slot_id: UUID
-    teamup_id: Optional[UUID] = None
+    event_id: Optional[UUID] = None
     status: str
     payment_status: str
     time_slot: TimeSlotOut
     court: CourtOut
     venue: VenueOut
-    teamup: Optional[TeamUpOut] = None
+    event: Optional[EventOut] = None
     created_at: datetime
     updated_at: datetime

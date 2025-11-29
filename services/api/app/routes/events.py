@@ -7,9 +7,9 @@ from uuid import UUID
 
 from app.core.db import SessionLocal
 from app.core.auth import optional_auth, require_auth
-from app.models.teamup import TeamUp as Event
-from app.models.teamup_join_request import TeamUpJoinRequest as JoinRequest
-from app.models.teamup_participant import TeamUpParticipant as EventParticipant
+from app.models.event import Event
+from app.models.event_join_request import EventJoinRequest as JoinRequest
+from app.models.event_participant import EventParticipant
 from app.models.venue import TimeSlot, Court, Venue
 from app.models.user import User
 from app.models.booking import Booking
@@ -61,7 +61,7 @@ def create_event():
 
         # Auto-add owner as participant
         owner_participant = EventParticipant(
-            teamup_id=event.id, # Model field still teamup_id
+            event_id=event.id,
             user_id=g.user_id,
             role="owner",
             display_name=user.display_name,
@@ -180,7 +180,7 @@ def book_time_slot_for_event(event_id):
         booking = Booking(
             owner_user_id=g.user_id,
             time_slot_id=time_slot_id,
-            teamup_id=event_id, # Model field still teamup_id
+            event_id=event_id,
             status=BookingStatus.pending.value,
             payment_status=PaymentStatus.none.value,
         )
@@ -191,7 +191,7 @@ def book_time_slot_for_event(event_id):
 
         return jsonify({
             "id": str(booking.id),
-            "event_id": str(booking.teamup_id),
+            "event_id": str(booking.event_id),
             "time_slot_id": str(booking.time_slot_id),
             "status": booking.status,
             "payment_status": booking.payment_status,
@@ -217,7 +217,7 @@ def list_event_bookings(event_id):
             ).join(
                 Venue, Court.venue_id == Venue.id
             ).where(
-                Booking.teamup_id == event_id # Model field still teamup_id
+                Booking.event_id == event_id
             ).order_by(TimeSlot.starts_at)
         ).all()
 
@@ -277,7 +277,7 @@ def list_events():
             # Calculate participant count
             participant_count = s.scalar(
                 select(func.count()).select_from(EventParticipant)
-                .where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
+                .where(EventParticipant.event_id == event.id)
             ) or 0
 
             event_list.append({
@@ -317,7 +317,7 @@ def search_events():
             # Calculate participant count
             participant_count = s.scalar(
                 select(func.count()).select_from(EventParticipant)
-                .where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
+                .where(EventParticipant.event_id == event.id)
             ) or 0
 
             event_list.append({
@@ -347,14 +347,14 @@ def get_event(event_id):
         # Calculate participant count
         participant_count = s.scalar(
             select(func.count()).select_from(EventParticipant)
-            .where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
+            .where(EventParticipant.event_id == event.id)
         ) or 0
 
         # Get participants list
         participants = s.execute(
             select(EventParticipant, User).outerjoin(
                 User, EventParticipant.user_id == User.id
-            ).where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
+            ).where(EventParticipant.event_id == event.id)
         ).all()
 
         participant_list = []
@@ -377,7 +377,7 @@ def get_event(event_id):
             ).join(
                 Venue, Court.venue_id == Venue.id
             ).where(
-                Booking.teamup_id == event_id # Model field still teamup_id
+                Booking.event_id == event_id
             ).order_by(TimeSlot.starts_at)
         ).all()
 
@@ -441,7 +441,7 @@ def join_event(event_id):
         # Check if full
         current_count = s.scalar(
             select(func.count()).select_from(EventParticipant)
-            .where(EventParticipant.teamup_id == event_id) # Model field still teamup_id
+            .where(EventParticipant.event_id == event_id)
         ) or 0
         
         if current_count >= event.max_participants:
@@ -452,7 +452,7 @@ def join_event(event_id):
             existing_request = s.execute(
                 select(JoinRequest).where(
                     and_(
-                        JoinRequest.teamup_id == event_id, # Model field still teamup_id
+                        JoinRequest.event_id == event_id,
                         JoinRequest.applicant_user_id == g.user_id,
                         JoinRequest.status == "submitted"
                     )
@@ -465,7 +465,7 @@ def join_event(event_id):
             existing_participant = s.execute(
                 select(EventParticipant).where(
                     and_(
-                        EventParticipant.teamup_id == event_id, # Model field still teamup_id
+                        EventParticipant.event_id == event_id,
                         EventParticipant.user_id == g.user_id
                     )
                 )
@@ -483,7 +483,7 @@ def join_event(event_id):
                 select(Notification).where(
                     and_(
                         Notification.user_id == g.user_id,
-                        Notification.related_entity_id == event_id,
+                        Notification.related_event_ids.contains([event_id]),
                         Notification.type == "match_found"
                     )
                 )
@@ -494,7 +494,7 @@ def join_event(event_id):
                 status = "approved"
 
             join_request = JoinRequest(
-                teamup_id=event_id, # Model field still teamup_id
+                event_id=event_id,
                 applicant_user_id=g.user_id,
                 applicant_name=user.display_name or user.email,
                 applicant_email=user.email,
@@ -505,11 +505,10 @@ def join_event(event_id):
             
             s.add(join_request)
             s.flush() # Get ID
-            
             if status == "approved":
                 # Auto-add participant
                 participant = EventParticipant(
-                    teamup_id=event_id, # Model field still teamup_id
+                    event_id=event_id,
                     user_id=g.user_id,
                     role="member",
                     display_name=user.display_name or user.email,
@@ -527,7 +526,7 @@ def join_event(event_id):
                 return jsonify({"error": "missing_fields", "fields": missing}), 400
             
             join_request = JoinRequest(
-                teamup_id=event_id, # Model field still teamup_id
+                event_id=event_id,
                 applicant_user_id=None,
                 applicant_name=data["applicant_name"],
                 applicant_email=data["applicant_email"],
@@ -560,7 +559,7 @@ def list_join_requests(event_id):
         
         requests = s.execute(
             select(JoinRequest).where(
-                JoinRequest.teamup_id == event_id # Model field still teamup_id
+                JoinRequest.event_id == event_id
             ).order_by(JoinRequest.created_at.desc())
         ).scalars().all()
         
@@ -596,7 +595,7 @@ def review_join_request(event_id, request_id):
             return jsonify({"error": "not_owner"}), 403
         
         join_request = s.get(JoinRequest, request_id)
-        if not join_request or join_request.teamup_id != event_id: # Model field still teamup_id
+        if not join_request or join_request.event_id != event_id:
             return jsonify({"error": "request_not_found"}), 404
         
         if join_request.status != "submitted":
@@ -606,7 +605,7 @@ def review_join_request(event_id, request_id):
             # Check if full
             current_count = s.scalar(
                 select(func.count()).select_from(EventParticipant)
-                .where(EventParticipant.teamup_id == event_id) # Model field still teamup_id
+                .where(EventParticipant.event_id == event_id)
             ) or 0
 
             if current_count >= event.max_participants:
@@ -615,7 +614,7 @@ def review_join_request(event_id, request_id):
             # Add participant
             try:
                 participant = EventParticipant(
-                    teamup_id=event_id, # Model field still teamup_id
+                    event_id=event_id,
                     user_id=join_request.applicant_user_id,
                     role="member",
                     display_name=join_request.applicant_name,

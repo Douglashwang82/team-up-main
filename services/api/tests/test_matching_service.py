@@ -1,32 +1,9 @@
 import pytest
 from datetime import date, time, datetime, timedelta
-from app.models import Ticket, TeamUp, User, Venue, Notification
-from app.services.matching_service import MatchingService
-from app.core.db import Base, engine, SessionLocal
+from app.models import Ticket, Event, User, Venue, Notification
+from app.services.matching_service import process_ticket
 
-@pytest.fixture(scope="module")
-def db():
-    Base.metadata.create_all(bind=engine)
-    session = SessionLocal()
-    yield session
-    session.close()
-    Base.metadata.drop_all(bind=engine)
-
-@pytest.fixture
-def user(db):
-    user = User(email="test@example.com", password_hash="hash", display_name="Test User")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-@pytest.fixture
-def user2(db):
-    user = User(email="test2@example.com", password_hash="hash", display_name="Test User 2")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+# Note: db, user, and user2 fixtures are provided by conftest.py
 
 def test_create_ticket(db, user):
     ticket = Ticket(
@@ -43,7 +20,7 @@ def test_create_ticket(db, user):
     assert ticket.status == "open"
 
 def test_matching_service_create_event(db, user, user2):
-    # Create two matching tickets
+    # Create and process first ticket (should remain open - no matches)
     ticket1 = Ticket(
         user_id=user.id,
         date=date(2025, 11, 21),
@@ -53,7 +30,15 @@ def test_matching_service_create_event(db, user, user2):
         intensity="Medium"
     )
     db.add(ticket1)
-    
+    db.commit()
+    db.refresh(ticket1)
+
+    # Process first ticket (no match yet)
+    process_ticket(db, ticket1)
+    db.refresh(ticket1)
+    assert ticket1.status == "open"
+
+    # Create second matching ticket
     ticket2 = Ticket(
         user_id=user2.id,
         date=date(2025, 11, 21),
@@ -64,16 +49,10 @@ def test_matching_service_create_event(db, user, user2):
     )
     db.add(ticket2)
     db.commit()
-    
-    service = MatchingService(db)
-    
-    # Process first ticket (no match yet)
-    service.process_ticket(ticket1)
-    db.refresh(ticket1)
-    assert ticket1.status == "open"
-    
+    db.refresh(ticket2)
+
     # Process second ticket (should match with first)
-    service.process_ticket(ticket2)
+    process_ticket(db, ticket2)
     
     db.refresh(ticket1)
     db.refresh(ticket2)
@@ -82,7 +61,7 @@ def test_matching_service_create_event(db, user, user2):
     assert ticket2.status == "matched"
     
     # Check if event was created
-    event = db.query(TeamUp).filter(TeamUp.title.like("tennis Match%")).first()
+    event = db.query(Event).filter(Event.title.like("tennis Match%")).first()
     assert event is not None
     assert event.status == "open"
     

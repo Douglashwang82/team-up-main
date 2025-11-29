@@ -1,6 +1,6 @@
 """
 Seed script for TeamUp database
-Creates sample data for all models including users, venues, courts, time slots, teamups, bookings, and participants
+Creates sample data for all models including users, venues, courts, time slots, events, bookings, and participants
 
 Usage:
     python seed.py
@@ -21,9 +21,9 @@ from geoalchemy2 import WKTElement
 from app.core.db import engine, Base
 from app.models.user import User
 from app.models.venue import Venue, Court, TimeSlot
-from app.models.teamup import TeamUp
-from app.models.teamup_participant import TeamUpParticipant
-from app.models.teamup_join_request import TeamUpJoinRequest
+from app.models.event import Event
+from app.models.event_participant import EventParticipant
+from app.models.event_join_request import EventJoinRequest
 from app.models.booking import Booking
 from app.core.types import Visibility, BookingStatus, PaymentStatus, joinRequestStatus
 
@@ -33,10 +33,10 @@ def clear_all_data(session: Session):
     print("🗑️  Clearing existing data...")
 
     # Delete in reverse order of dependencies
-    session.query(TeamUpParticipant).delete()
-    session.query(TeamUpJoinRequest).delete()
+    session.query(EventParticipant).delete()
+    session.query(EventJoinRequest).delete()
     session.query(Booking).delete()
-    session.query(TeamUp).delete()
+    session.query(Event).delete()
     session.query(TimeSlot).delete()
     session.query(Court).delete()
     session.query(Venue).delete()
@@ -264,11 +264,11 @@ def create_time_slots(session: Session, courts: list[Court]) -> list[TimeSlot]:
     return time_slots
 
 
-def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlot]) -> list[TeamUp]:
-    """Create sample TeamUps"""
-    print("\n⚽ Creating TeamUps...")
+def create_events(session: Session, users: list[User], time_slots: list[TimeSlot]) -> list[Event]:
+    """Create sample Events"""
+    print("\n⚽ Creating Events...")
 
-    teamups_data = [
+    events_data = [
         {
             "title": "Weekend Basketball Game",
             "description": "Looking for players for a friendly basketball game this weekend. All skill levels welcome!",
@@ -326,9 +326,9 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
         },
     ]
 
-    teamups = []
-    for data in teamups_data:
-        teamup = TeamUp(
+    events = []
+    for data in events_data:
+        event = Event(
             title=data["title"],
             description=data["description"],
             owner_user_id=data["owner"].id,
@@ -338,26 +338,26 @@ def create_teamups(session: Session, users: list[User], time_slots: list[TimeSlo
             duration_type=data["duration_type"],
             invite_token=data.get("invite_token"),
         )
-        session.add(teamup)
-        teamups.append(teamup)
+        session.add(event)
+        events.append(event)
 
     session.commit()
-    print(f"✅ Created {len(teamups)} TeamUps")
-    return teamups
+    print(f"✅ Created {len(events)} Events")
+    return events
 
 
-def create_participants(session: Session, teamups: list[TeamUp], users: list[User]):
-    """Create TeamUp participants"""
+def create_participants(session: Session, events: list[Event], users: list[User]):
+    """Create Event participants"""
     print("\n👥 Creating participants...")
 
     participants_count = 0
 
-    # TeamUp 0: Weekend Basketball (Alice's team)
+    # Event 0: Weekend Basketball (Alice's team)
     # Owner + 3 members
     for i, user in enumerate([users[0], users[1], users[2], users[3]]):
         role = "owner" if i == 0 else "member"
-        participant = TeamUpParticipant(
-            teamup_id=teamups[0].id,
+        participant = EventParticipant(
+            event_id=events[0].id,
             user_id=user.id,
             role=role,
             display_name=user.display_name,
@@ -367,12 +367,12 @@ def create_participants(session: Session, teamups: list[TeamUp], users: list[Use
         session.add(participant)
         participants_count += 1
 
-    # TeamUp 1: Badminton Doubles (Bob's team)
+    # Event 1: Badminton Doubles (Bob's team)
     # Owner + 2 members
     for i, user in enumerate([users[1], users[4], users[5]]):
         role = "owner" if i == 0 else "member"
-        participant = TeamUpParticipant(
-            teamup_id=teamups[1].id,
+        participant = EventParticipant(
+            event_id=events[1].id,
             user_id=user.id,
             role=role,
             display_name=user.display_name,
@@ -382,12 +382,12 @@ def create_participants(session: Session, teamups: list[TeamUp], users: list[Use
         session.add(participant)
         participants_count += 1
 
-    # TeamUp 2: Friday Night Hoops (Charlie's team) - CONFIRMED with full roster
+    # Event 2: Friday Night Hoops (Charlie's team) - CONFIRMED with full roster
     # Owner + 5 members
     for i, user in enumerate([users[2], users[0], users[1], users[3], users[4], users[5]]):
         role = "owner" if i == 0 else "member"
-        participant = TeamUpParticipant(
-            teamup_id=teamups[2].id,
+        participant = EventParticipant(
+            event_id=events[2].id,
             user_id=user.id,
             role=role,
             display_name=user.display_name,
@@ -397,12 +397,12 @@ def create_participants(session: Session, teamups: list[TeamUp], users: list[Use
         session.add(participant)
         participants_count += 1
 
-    # TeamUp 3: Tennis Club (Diana's team)
+    # Event 3: Tennis Club (Diana's team)
     # Owner + 1 member
     for i, user in enumerate([users[3], users[2]]):
         role = "owner" if i == 0 else "member"
-        participant = TeamUpParticipant(
-            teamup_id=teamups[3].id,
+        participant = EventParticipant(
+            event_id=events[3].id,
             user_id=user.id,
             role=role,
             display_name=user.display_name,
@@ -412,12 +412,12 @@ def create_participants(session: Session, teamups: list[TeamUp], users: list[Use
         session.add(participant)
         participants_count += 1
 
-    # TeamUp 4: Volleyball Tournament (Evan's team) - CONFIRMED
+    # Event 4: Volleyball Tournament (Evan's team) - CONFIRMED
     # Owner + 5 members
     for i, user in enumerate([users[4], users[0], users[1], users[2], users[3], users[5]]):
         role = "owner" if i == 0 else "member"
-        participant = TeamUpParticipant(
-            teamup_id=teamups[4].id,
+        participant = EventParticipant(
+            event_id=events[4].id,
             user_id=user.id,
             role=role,
             display_name=user.display_name,
@@ -427,12 +427,12 @@ def create_participants(session: Session, teamups: list[TeamUp], users: list[Use
         session.add(participant)
         participants_count += 1
 
-    # TeamUp 5: Sunday Badminton (Fiona's team)
+    # Event 5: Sunday Badminton (Fiona's team)
     # Owner + 2 members
     for i, user in enumerate([users[5], users[1], users[3]]):
         role = "owner" if i == 0 else "member"
-        participant = TeamUpParticipant(
-            teamup_id=teamups[5].id,
+        participant = EventParticipant(
+            event_id=events[5].id,
             user_id=user.id,
             role=role,
             display_name=user.display_name,
@@ -446,37 +446,37 @@ def create_participants(session: Session, teamups: list[TeamUp], users: list[Use
     print(f"✅ Created {participants_count} participants")
 
 
-def create_join_requests(session: Session, teamups: list[TeamUp], users: list[User]):
+def create_join_requests(session: Session, events: list[Event], users: list[User]):
     """Create sample join requests"""
     print("\n📝 Creating join requests...")
 
     requests_data = [
         {
-            "teamup": teamups[0],  # Weekend Basketball
+            "event": events[0],  # Weekend Basketball
             "applicant": users[4],  # Evan
             "message": "I'd love to join! I play center position.",
             "status": joinRequestStatus.submitted.value,
         },
         {
-            "teamup": teamups[0],  # Weekend Basketball
+            "event": events[0],  # Weekend Basketball
             "applicant": users[5],  # Fiona
             "message": "Can I join? I'm a beginner but eager to learn!",
             "status": joinRequestStatus.approved.value,
         },
         {
-            "teamup": teamups[1],  # Badminton Doubles
+            "event": events[1],  # Badminton Doubles
             "applicant": users[3],  # Diana
             "message": "Looking for regular practice partners!",
             "status": joinRequestStatus.submitted.value,
         },
         {
-            "teamup": teamups[3],  # Tennis Club (invite-only)
+            "event": events[3],  # Tennis Club (invite-only)
             "applicant": users[0],  # Alice
             "message": "Got the invite token from a friend. Excited to learn!",
             "status": joinRequestStatus.submitted.value,
         },
         {
-            "teamup": teamups[5],  # Sunday Badminton
+            "event": events[5],  # Sunday Badminton
             "applicant": users[2],  # Charlie
             "message": "Perfect timing! Count me in.",
             "status": joinRequestStatus.rejected.value,
@@ -484,8 +484,8 @@ def create_join_requests(session: Session, teamups: list[TeamUp], users: list[Us
     ]
 
     for data in requests_data:
-        request = TeamUpJoinRequest(
-            teamup_id=data["teamup"].id,
+        request = EventJoinRequest(
+            event_id=data["event"].id,
             applicant_user_id=data["applicant"].id,
             applicant_name=data["applicant"].display_name,
             applicant_email=data["applicant"].email,
@@ -500,7 +500,7 @@ def create_join_requests(session: Session, teamups: list[TeamUp], users: list[Us
     print(f"✅ Created {len(requests_data)} join requests")
 
 
-def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], time_slots: list[TimeSlot]):
+def create_bookings(session: Session, events: list[Event], users: list[User], time_slots: list[TimeSlot]):
     """Create sample bookings"""
     print("\n📅 Creating bookings...")
 
@@ -508,88 +508,88 @@ def create_bookings(session: Session, teamups: list[TeamUp], users: list[User], 
     bookable_time_slots = [ts for ts in time_slots if ts.is_bookable]
 
     bookings_data = [
-        # TeamUp bookings
+        # Event bookings
         {
             "owner": users[0],  # Alice
-            "teamup": teamups[0],  # Weekend Basketball
+            "event": events[0],  # Weekend Basketball
             "time_slot": bookable_time_slots[5],  # Saturday morning
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[1],  # Bob
-            "teamup": teamups[1],  # Badminton Doubles
+            "event": events[1],  # Badminton Doubles
             "time_slot": bookable_time_slots[15],  # Next week
             "status": BookingStatus.pending.value,
             "payment_status": PaymentStatus.pending.value,
         },
         {
             "owner": users[2],  # Charlie
-            "teamup": teamups[2],  # Friday Night Hoops (confirmed teamup)
+            "event": events[2],  # Friday Night Hoops (confirmed event)
             "time_slot": bookable_time_slots[25],  # Friday evening
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[3],  # Diana
-            "teamup": teamups[3],  # Tennis Club
+            "event": events[3],  # Tennis Club
             "time_slot": bookable_time_slots[35],
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[4],  # Evan
-            "teamup": teamups[4],  # Volleyball Tournament
+            "event": events[4],  # Volleyball Tournament
             "time_slot": bookable_time_slots[45],
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[5],  # Fiona
-            "teamup": teamups[5],  # Sunday Badminton
+            "event": events[5],  # Sunday Badminton
             "time_slot": bookable_time_slots[55],  # Sunday morning
             "status": BookingStatus.pending.value,
             "payment_status": PaymentStatus.pending.value,
         },
-        # Individual bookings (no teamup)
+        # Individual bookings (no event)
         {
             "owner": users[0],  # Alice - individual booking
-            "teamup": None,
+            "event": None,
             "time_slot": bookable_time_slots[10],
             "status": BookingStatus.confirmed.value,
             "payment_status": PaymentStatus.succeeded.value,
         },
         {
             "owner": users[1],  # Bob - individual booking
-            "teamup": None,
+            "event": None,
             "time_slot": bookable_time_slots[20],
             "status": BookingStatus.pending.value,
             "payment_status": PaymentStatus.none.value,
         },
         {
             "owner": users[3],  # Diana - cancelled booking
-            "teamup": None,
+            "event": None,
             "time_slot": bookable_time_slots[30],
             "status": BookingStatus.cancelled.value,
             "payment_status": PaymentStatus.failed.value,
         },
     ]
 
-    teamup_booking_count = 0
+    event_booking_count = 0
     for data in bookings_data:
         booking = Booking(
             owner_user_id=data["owner"].id,
             time_slot_id=data["time_slot"].id,
-            teamup_id=data["teamup"].id if data.get("teamup") else None,
+            event_id=data["event"].id if data.get("event") else None,
             status=data["status"],
             payment_status=data["payment_status"],
         )
         session.add(booking)
-        if data.get("teamup"):
-            teamup_booking_count += 1
+        if data.get("event"):
+            event_booking_count += 1
 
     session.commit()
-    print(f"✅ Created {len(bookings_data)} bookings ({teamup_booking_count} assigned to TeamUps)")
+    print(f"✅ Created {len(bookings_data)} bookings ({event_booking_count} assigned to Events)")
 
 
 def print_summary(session: Session):
@@ -602,16 +602,16 @@ def print_summary(session: Session):
     venue_count = session.query(Venue).count()
     court_count = session.query(Court).count()
     time_slot_count = session.query(TimeSlot).count()
-    teamup_count = session.query(TeamUp).count()
-    participant_count = session.query(TeamUpParticipant).count()
-    join_request_count = session.query(TeamUpJoinRequest).count()
+    event_count = session.query(Event).count()
+    participant_count = session.query(EventParticipant).count()
+    join_request_count = session.query(EventJoinRequest).count()
     booking_count = session.query(Booking).count()
 
     print(f"👤 Users:              {user_count}")
     print(f"🏟️  Venues:             {venue_count}")
     print(f"🎾 Courts:             {court_count}")
     print(f"⏰ Time Slots:          {time_slot_count}")
-    print(f"⚽ TeamUps:            {teamup_count}")
+    print(f"⚽ Events:              {event_count}")
     print(f"👥 Participants:       {participant_count}")
     print(f"📝 Join Requests:      {join_request_count}")
     print(f"📅 Bookings:           {booking_count}")
@@ -643,10 +643,10 @@ def main():
         users = create_users(session)
         venues, courts = create_venues_and_courts(session)
         time_slots = create_time_slots(session, courts)
-        teamups = create_teamups(session, users, time_slots)
-        create_participants(session, teamups, users)
-        create_join_requests(session, teamups, users)
-        create_bookings(session, teamups, users, time_slots)
+        events = create_events(session, users, time_slots)
+        create_participants(session, events, users)
+        create_join_requests(session, events, users)
+        create_bookings(session, events, users, time_slots)
 
         # Print summary
         print_summary(session)

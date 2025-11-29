@@ -1,6 +1,7 @@
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
+from pydantic_core import ValidationError as PydanticValidationError
 from .core.config import settings
 from .core.db import Base, engine, ensure_postgis_extension, create_all_tables
 
@@ -31,6 +32,18 @@ def create_app() -> Flask:
     app.register_blueprint(bookings_bp, url_prefix="/bookings")
     app.register_blueprint(tickets_bp)
     app.register_blueprint(notifications_bp)
+
+    @app.errorhandler(PydanticValidationError)
+    def handle_validation_error(e):
+        """Handle Pydantic validation errors"""
+        errors = []
+        for error in e.errors():
+            errors.append({
+                "field": ".".join(str(x) for x in error["loc"]),
+                "message": error["msg"],
+                "type": error["type"]
+            })
+        return jsonify({"error": "validation_error", "details": errors}), 422
 
     @app.errorhandler(Exception)
     def handle_err(e):

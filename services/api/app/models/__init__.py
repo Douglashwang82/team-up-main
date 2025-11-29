@@ -1,7 +1,7 @@
 from .user import User
-from .teamup import TeamUp
-from .teamup_participant import TeamUpParticipant
-from .teamup_join_request import TeamUpJoinRequest
+from .event import Event
+from .event_participant import EventParticipant
+from .event_join_request import EventJoinRequest
 from .venue import Venue, Court, TimeSlot
 from .booking import Booking
 from .ticket import Ticket

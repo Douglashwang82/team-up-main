@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app, g
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from passlib.hash import bcrypt
+from pydantic import ValidationError
 import jwt, datetime
 from app.core.db import SessionLocal
 from app.core.config import settings
@@ -19,7 +20,11 @@ def _issue_tokens(user_id: str):
 
 @bp.post("/signup")
 def signup():
-    data = SignupIn(**request.get_json())
+    try:
+        data = SignupIn(**request.get_json())
+    except ValidationError as e:
+        return jsonify({"error": "validation_error", "details": e.errors()}), 422
+
     with SessionLocal() as s:
         u = User(email=data.email, password_hash=bcrypt.hash(data.password), display_name=data.display_name)
         s.add(u)
