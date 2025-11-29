@@ -1,22 +1,27 @@
-from flask import Blueprint, request, jsonify
-from app.core.db import get_db
+from flask import Blueprint, request, jsonify, g
+from sqlalchemy import select, desc
+from datetime import datetime
+
+from app.core.db import SessionLocal
 from app.models import Ticket
-from app.services.matching_service import MatchingService
+from app.services.matching_service import process_ticket
 from app.core.auth import require_auth
-from datetime import datetime, time
 
 bp = Blueprint("tickets", __name__, url_prefix="/tickets")
 
 @bp.route("", methods=["POST"])
 @require_auth
-def create_ticket(user_id):
-    data = request.get_json()
+def create_ticket():
+    data = request.get_json() or {}
     
     # Validate data (basic validation)
     required_fields = ["date", "start_time", "duration_minutes", "sport_type", "intensity"]
-    for field in required_fields:
-        if field not in data:
-            return jsonify({"error": f"Missing field: {field}"}), 400
+    missing = [k for k in required_fields if k not in data]
+    if missing:
+        return jsonify({"error": "missing_fields", "fields": missing}), 400
+
+    if g.user_id is None:
+        return jsonify({"error": "authentication_required"}), 401
 
     try:
         # Handle Date (YYYY-MM-DD or ISO)
@@ -34,9 +39,9 @@ def create_ticket(user_id):
     except ValueError:
         return jsonify({"error": "Invalid date or time format"}), 400
 
-    with get_db() as db:
+    with SessionLocal() as s:
         ticket = Ticket(
-            user_id=user_id,
+            user_id=g.user_id,
             date=date_obj,
             start_time=time_obj,
             duration_minutes=data["duration_minutes"],
@@ -47,27 +52,34 @@ def create_ticket(user_id):
             price_max=data.get("price_max"),
             currency=data.get("currency", "USD")
         )
-        db.add(ticket)
-        db.commit()
-        db.refresh(ticket)
+        s.add(ticket)
+        s.commit()
+        s.refresh(ticket)
         
         # Trigger matching
-        service = MatchingService(db)
-        service.process_ticket(ticket)
+        process_ticket(s, ticket)
         
         return jsonify({
-            "id": ticket.id,
+            "id": str(ticket.id),
             "status": ticket.status,
             "message": "Ticket created and matching started"
         }), 201
 
 @bp.route("", methods=["GET"])
 @require_auth
-def get_tickets(user_id):
-    with get_db() as db:
-        tickets = db.query(Ticket).filter(Ticket.user_id == user_id).all()
+def get_tickets():
+    if g.user_id is None:
+        return jsonify({"error": "authentication_required"}), 401
+
+    with SessionLocal() as s:
+        tickets = s.execute(
+            select(Ticket)
+            .where(Ticket.user_id == g.user_id)
+            .order_by(desc(Ticket.created_at))
+        ).scalars().all()
+
         return jsonify([{
-            "id": t.id,
+            "id": str(t.id),
             "date": t.date.isoformat(),
             "start_time": t.start_time.isoformat(),
             "sport_type": t.sport_type,

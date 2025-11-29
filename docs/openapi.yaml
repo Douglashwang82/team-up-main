@@ -380,13 +380,13 @@ paths:
           description: Booking not found
 
   # ============================================================================
-  # TEAMUP ROUTES
+  # EVENT ROUTES
   # ============================================================================
-  /teamups:
+  /events:
     get:
-      tags: [TeamUps]
-      summary: List TeamUps with filters
-      operationId: listTeamUps
+      tags: [Events]
+      summary: List Events with filters
+      operationId: listEvents
       parameters:
         - name: status
           in: query
@@ -414,18 +414,18 @@ paths:
             default: 0
       responses:
         '200':
-          description: List of TeamUps
+          description: List of Events
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TeamUpOut'
+                  $ref: '#/components/schemas/EventOut'
 
     post:
-      tags: [TeamUps]
-      summary: Create a new TeamUp
-      operationId: createTeamup
+      tags: [Events]
+      summary: Create a new Event
+      operationId: createEvent
       security:
         - bearerAuth: []
       requestBody:
@@ -433,24 +433,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TeamUpCreateIn'
+              $ref: '#/components/schemas/EventCreateIn'
       responses:
         '201':
-          description: TeamUp created
+          description: Event created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TeamUpOut'
+                $ref: '#/components/schemas/EventOut'
         '400':
           description: Invalid input
         '401':
           description: Unauthorized
 
-  /teamups/search:
+  /events/search:
     get:
-      tags: [TeamUps]
-      summary: Search TeamUps by keyword
-      operationId: searchTeamUps
+      tags: [Events]
+      summary: Search Events by keyword
+      operationId: searchEvents
       parameters:
         - name: keyword
           in: query
@@ -473,21 +473,21 @@ paths:
             default: 0
       responses:
         '200':
-          description: List of matching TeamUps
+          description: List of matching Events
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TeamUpOut'
+                  $ref: '#/components/schemas/EventOut'
 
-  /teamups/{teamup_id}:
+  /events/{event_id}:
     get:
-      tags: [TeamUps]
-      summary: Get TeamUp details
-      operationId: getTeamupById
+      tags: [Events]
+      summary: Get Event details
+      operationId: getEventById
       parameters:
-        - name: teamup_id
+        - name: event_id
           in: path
           required: true
           schema:
@@ -495,24 +495,24 @@ paths:
             format: uuid
       responses:
         '200':
-          description: TeamUp details
+          description: Event details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TeamUpDetailOut'
+                $ref: '#/components/schemas/EventDetailOut'
         '404':
-          description: TeamUp not found
+          description: Event not found
 
-  /teamups/{teamup_id}/book:
+  /events/{event_id}/book:
     post:
-      tags: [TeamUps]
-      summary: Book a timeslot for TeamUp (owner only)
-      description: TeamUp owner can book multiple timeslots for the team
-      operationId: bookTimeslotForTeamup
+      tags: [Events]
+      summary: Book a timeslot for Event (owner only)
+      description: Event owner can book multiple timeslots for the team
+      operationId: bookTimeslotForEvent
       security:
         - bearerAuth: []
       parameters:
-        - name: teamup_id
+        - name: event_id
           in: path
           required: true
           schema:
@@ -523,28 +523,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TeamUpBookTimeSlotIn'
+              $ref: '#/components/schemas/EventBookTimeSlotIn'
       responses:
         '201':
           description: Timeslot booked
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TeamUpBookingResponse'
+                $ref: '#/components/schemas/EventBookingResponse'
         '400':
           description: Invalid timeslot or already booked
         '403':
-          description: Not the TeamUp owner
+          description: Not the Event owner
         '404':
-          description: TeamUp or timeslot not found
+          description: Event or timeslot not found
 
-  /teamups/{teamup_id}/bookings:
+  /events/{event_id}/bookings:
     get:
-      tags: [TeamUps]
-      summary: List all bookings for a TeamUp
-      operationId: listTeamupBookings
+      tags: [Events]
+      summary: List all bookings for a Event
+      operationId: listEventBookings
       parameters:
-        - name: teamup_id
+        - name: event_id
           in: path
           required: true
           schema:
@@ -552,29 +552,29 @@ paths:
             format: uuid
       responses:
         '200':
-          description: List of TeamUp bookings
+          description: List of Event bookings
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TeamUpBookingDetail'
+                  $ref: '#/components/schemas/EventBookingDetail'
         '404':
-          description: TeamUp not found
+          description: Event not found
 
-  /teamups/{teamup_id}/join:
+  /events/{event_id}/join:
     post:
-      tags: [TeamUps]
-      summary: Submit join request to TeamUp
+      tags: [Events]
+      summary: Submit join request to Event
       description: |
-        Submit a join request to join a TeamUp.
+        Submit a join request to join a Event.
         Authenticated users auto-fill their info, non-authenticated users must provide details.
-      operationId: joinTeamup
+      operationId: joinEvent
       security:
         - bearerAuth: []
         - {}
       parameters:
-        - name: teamup_id
+        - name: event_id
           in: path
           required: true
           schema:
@@ -593,19 +593,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinRequestSubmitResponse'
         '400':
-          description: TeamUp not open / Already applied / TeamUp full
+          description: Event not open / Already applied / Event full
         '404':
-          description: TeamUp not found
+          description: Event not found
 
-  /teamups/{teamup_id}/join-requests:
+  /events/{event_id}/join-requests:
     get:
-      tags: [TeamUps]
+      tags: [Events]
       summary: List join requests (owner only)
       operationId: listJoinRequests
       security:
         - bearerAuth: []
       parameters:
-        - name: teamup_id
+        - name: event_id
           in: path
           required: true
           schema:
@@ -621,20 +621,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/JoinRequestOut'
         '403':
-          description: Not the TeamUp owner
+          description: Not the Event owner
         '404':
-          description: TeamUp not found
+          description: Event not found
 
-  /teamups/{teamup_id}/join-requests/{request_id}/review:
+  /events/{event_id}/join-requests/{request_id}/review:
     post:
-      tags: [TeamUps]
+      tags: [Events]
       summary: Review join request (owner only)
       description: Approve or reject a join request
       operationId: reviewJoinRequest
       security:
         - bearerAuth: []
       parameters:
-        - name: teamup_id
+        - name: event_id
           in: path
           required: true
           schema:
@@ -660,11 +660,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/JoinRequestReviewResponse'
         '400':
-          description: Invalid action / Already reviewed / TeamUp full
+          description: Invalid action / Already reviewed / Event full
         '403':
-          description: Not the TeamUp owner
+          description: Not the Event owner
         '404':
-          description: TeamUp or request not found
+          description: Event or request not found
 
   # ============================================================================
   # TICKET ROUTES
@@ -1030,8 +1030,8 @@ components:
           $ref: '#/components/schemas/CourtOut'
         venue:
           $ref: '#/components/schemas/VenueOut'
-        teamup:
-          $ref: '#/components/schemas/TeamUpOut'
+        event:
+          $ref: '#/components/schemas/EventOut'
           nullable: true
         created_at:
           type: string
@@ -1043,7 +1043,7 @@ components:
     # ========================================================================
     # TEAMUP SCHEMAS
     # ========================================================================
-    TeamUpCreateIn:
+    EventCreateIn:
       type: object
       required: [title, max_participants]
       properties:
@@ -1071,7 +1071,7 @@ components:
           enum: [open, closed]
           default: open
 
-    TeamUpOut:
+    EventOut:
       type: object
       required: [id, title, status, max_participants, current_participants, visibility, duration_type, created_at]
       properties:
@@ -1100,7 +1100,7 @@ components:
           type: string
           format: date-time
 
-    TeamUpDetailOut:
+    EventDetailOut:
       type: object
       required: [id, title, status, max_participants, current_participants, owner_user_id, visibility, duration_type, participants, bookings, created_at, updated_at]
       properties:
@@ -1131,11 +1131,11 @@ components:
         participants:
           type: array
           items:
-            $ref: '#/components/schemas/ParticipantOut'
+            $ref: '#/components/schemas/EventParticipantOut'
         bookings:
           type: array
           items:
-            $ref: '#/components/schemas/TeamUpBookingDetail'
+            $ref: '#/components/schemas/EventBookingDetail'
         created_at:
           type: string
           format: date-time
@@ -1143,7 +1143,7 @@ components:
           type: string
           format: date-time
 
-    ParticipantOut:
+    EventParticipantOut:
       type: object
       required: [id, user_id, display_name, email, phone, role, joined_at]
       properties:
@@ -1166,7 +1166,7 @@ components:
           type: string
           format: date-time
 
-    TeamUpBookTimeSlotIn:
+    EventBookTimeSlotIn:
       type: object
       required: [time_slot_id]
       properties:
@@ -1174,14 +1174,14 @@ components:
           type: string
           format: uuid
 
-    TeamUpBookingResponse:
+    EventBookingResponse:
       type: object
-      required: [id, teamup_id, time_slot_id, status, payment_status, created_at]
+      required: [id, event_id, time_slot_id, status, payment_status, created_at]
       properties:
         id:
           type: string
           format: uuid
-        teamup_id:
+        event_id:
           type: string
           format: uuid
         time_slot_id:
@@ -1197,7 +1197,7 @@ components:
           type: string
           format: date-time
 
-    TeamUpBookingDetail:
+    EventBookingDetail:
       type: object
       required: [id, status, payment_status, time_slot, court, venue]
       properties:

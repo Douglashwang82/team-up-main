@@ -9,24 +9,28 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@expo/vector-icons": "^14.0.4",
+    "@expo/metro-runtime": "^6.1.2",
+    "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
-    "@react-native-community/datetimepicker": "^8.5.0",
+    "@react-native-community/datetimepicker": "8.4.4",
     "@team-up-main/api-client": "workspace:*",
-    "expo": "~53.0.23",
-    "expo-location": "^18.1.6",
+    "expo": "^54.0.0",
+    "expo-linking": "^8.0.9",
+    "expo-location": "~19.0.7",
     "expo-router": "^6.0.14",
-    "expo-status-bar": "^2.2.3",
-    "react": "19.0.0",
-    "react-native": "0.79.6",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
     "react-native-maps": "1.20.1",
     "react-native-safe-area-context": "^5.4.0",
-    "react-native-screens": "^4.11.1"
+    "react-native-screens": "~4.16.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.0.10",
-    "typescript": "~5.8.3"
+    "@types/react": "~19.2.7",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "~5.9.2"
   },
   "private": true
 }

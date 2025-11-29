@@ -3,7 +3,7 @@ import {
     AuthApi,
     HealthApi,
     VenuesApi,
-    TeamUpsApi,
+    EventsApi,
     TicketsApi,
     NotificationsApi,
 } from '@team-up-main/api-client';
@@ -113,7 +113,7 @@ export const apis = {
     auth: new AuthApi(config),
     health: new HealthApi(config),
     venues: new VenuesApi(config),
-    teamups: new TeamUpsApi(config),
+    events: new EventsApi(config),
     tickets: new TicketsApi(config),
     notifications: new NotificationsApi(config),
 };

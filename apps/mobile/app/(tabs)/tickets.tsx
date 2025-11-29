@@ -58,7 +58,7 @@ export default function TicketsScreen() {
             <View style={styles.details}>
                 <View style={styles.detailRow}>
                     <Ionicons name="calendar-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>{item.date}</Text>
+                    <Text style={styles.detailText}>{item.date.toLocaleDateString()}</Text>
                 </View>
                 <View style={styles.detailRow}>
                     <Ionicons name="time-outline" size={16} color="#666" />

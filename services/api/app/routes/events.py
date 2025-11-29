@@ -1,4 +1,4 @@
-# app/routes/teamups.py
+# app/routes/events.py
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import select, func, and_, desc
 from sqlalchemy.exc import IntegrityError
@@ -7,15 +7,16 @@ from uuid import UUID
 
 from app.core.db import SessionLocal
 from app.core.auth import optional_auth, require_auth
-from app.models.teamup import TeamUp
-from app.models.teamup_join_request import TeamUpJoinRequest
-from app.models.teamup_participant import TeamUpParticipant
+from app.models.teamup import TeamUp as Event
+from app.models.teamup_join_request import TeamUpJoinRequest as JoinRequest
+from app.models.teamup_participant import TeamUpParticipant as EventParticipant
 from app.models.venue import TimeSlot, Court, Venue
 from app.models.user import User
 from app.models.booking import Booking
+from app.models.notification import Notification
 from app.core.types import BookingStatus, PaymentStatus
 
-bp = Blueprint("teamups", __name__)
+bp = Blueprint("events", __name__)
 
 def _parse_dt(s: str):
     """Parse datetime string, defaulting to UTC if no timezone info"""
@@ -25,11 +26,11 @@ def _parse_dt(s: str):
         dt = dt.replace(tzinfo=timezone.utc)
     return dt
 
-# ===[ 建立 TeamUp ]===
+# ===[ Create Event ]===
 @bp.post("")
 @require_auth
-def create_teamup():
-    """建立新的 TeamUp"""
+def create_event():
+    """Create new Event"""
     data = request.get_json() or {}
 
     required = ["title", "max_participants"]
@@ -45,7 +46,7 @@ def create_teamup():
         if not user:
             return jsonify({"error": "user_not_found"}), 404
         
-        teamup = TeamUp(
+        event = Event(
             title=data["title"],
             description=data.get("description"),
             owner_user_id=g.user_id,
@@ -55,12 +56,12 @@ def create_teamup():
             status=data.get("status", "open"),
         )
 
-        s.add(teamup)
-        s.flush()  # 取得 ID
+        s.add(event)
+        s.flush()  # Get ID
 
-        # 自動加入 owner 為參與者
-        owner_participant = TeamUpParticipant(
-            teamup_id=teamup.id,
+        # Auto-add owner as participant
+        owner_participant = EventParticipant(
+            teamup_id=event.id, # Model field still teamup_id
             user_id=g.user_id,
             role="owner",
             display_name=user.display_name,
@@ -72,81 +73,81 @@ def create_teamup():
         s.commit()
 
         return jsonify({
-            "id": str(teamup.id),
-            "title": teamup.title,
-            "status": teamup.status,
-            "max_participants": teamup.max_participants,
+            "id": str(event.id),
+            "title": event.title,
+            "status": event.status,
+            "max_participants": event.max_participants,
             "current_participants": 1,
-            "visibility": teamup.visibility,
-            "duration_type": teamup.duration_type,
+            "visibility": event.visibility,
+            "duration_type": event.duration_type,
         }), 201
 
-# ===[ 更新 TeamUp ]===
-@bp.put("/<uuid:teamup_id>")
+# ===[ Update Event ]===
+@bp.put("/<uuid:event_id>")
 @require_auth
-def update_teamup(teamup_id):
-    """更新 TeamUp"""
+def update_event(event_id):
+    """Update Event"""
     data = request.get_json() or {}
 
     with SessionLocal() as s:
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
+        event = s.get(Event, event_id)
+        if not event:
             return jsonify({"error": "not_found"}), 404
 
-        if str(teamup.owner_user_id) != str(g.user_id):
+        if str(event.owner_user_id) != str(g.user_id):
             return jsonify({"error": "not_owner"}), 403
 
-        # 更新欄位
+        # Update fields
         for field in ["title", "description", "status", "max_participants", "visibility", "duration_type"]:
             if field in data:
-                setattr(teamup, field, data[field])
+                setattr(event, field, data[field])
 
         s.commit()
 
         return jsonify({
-            "id": str(teamup.id),
-            "title": teamup.title,
-            "status": teamup.status,
-            "max_participants": teamup.max_participants,
-            "visibility": teamup.visibility,
-            "duration_type": teamup.duration_type,
+            "id": str(event.id),
+            "title": event.title,
+            "status": event.status,
+            "max_participants": event.max_participants,
+            "visibility": event.visibility,
+            "duration_type": event.duration_type,
         })
 
-# ===[ 刪除 TeamUp ]===
-@bp.delete("/<uuid:teamup_id>")
+# ===[ Delete Event ]===
+@bp.delete("/<uuid:event_id>")
 @require_auth
-def delete_teamup(teamup_id):
-    """刪除 TeamUp"""
+def delete_event(event_id):
+    """Delete Event"""
     with SessionLocal() as s:
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
+        event = s.get(Event, event_id)
+        if not event:
             return jsonify({"error": "not_found"}), 404
 
-        if str(teamup.owner_user_id) != str(g.user_id):
+        if str(event.owner_user_id) != str(g.user_id):
             return jsonify({"error": "not_owner"}), 403
 
-        s.delete(teamup)
+        s.delete(event)
         s.commit()
 
         return jsonify({"ok": True}) 
 
-# ===[ Book time slot for TeamUp ]===
-@bp.post("/<uuid:teamup_id>/book")
+# ===[ Book time slot for Event ]===
+@bp.post("/<uuid:event_id>/book")
 @require_auth
-def book_time_slot_for_teamup(teamup_id):
-    """Book a time slot for a TeamUp (can book multiple)"""
+def book_time_slot_for_event(event_id):
+    """Book a time slot for an Event (can book multiple)"""
     data = request.get_json() or {}
 
     if "time_slot_id" not in data:
         return jsonify({"error": "time_slot_id_required"}), 400
 
     with SessionLocal() as s:
-        # Verify TeamUp exists and user is owner
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
-            return jsonify({"error": "teamup_not_found"}), 404
+        # Verify Event exists and user is owner
+        event = s.get(Event, event_id)
+        if not event:
+            return jsonify({"error": "event_not_found"}), 404
 
-        if str(teamup.owner_user_id) != str(g.user_id):
+        if str(event.owner_user_id) != str(g.user_id):
             return jsonify({"error": "not_owner"}), 403
 
         # Verify time slot exists
@@ -175,11 +176,11 @@ def book_time_slot_for_teamup(teamup_id):
         if existing_booking:
             return jsonify({"error": "time_slot_already_booked"}), 400
 
-        # Create booking for TeamUp
+        # Create booking for Event
         booking = Booking(
             owner_user_id=g.user_id,
             time_slot_id=time_slot_id,
-            teamup_id=teamup_id,
+            teamup_id=event_id, # Model field still teamup_id
             status=BookingStatus.pending.value,
             payment_status=PaymentStatus.none.value,
         )
@@ -190,24 +191,24 @@ def book_time_slot_for_teamup(teamup_id):
 
         return jsonify({
             "id": str(booking.id),
-            "teamup_id": str(booking.teamup_id),
+            "event_id": str(booking.teamup_id),
             "time_slot_id": str(booking.time_slot_id),
             "status": booking.status,
             "payment_status": booking.payment_status,
             "created_at": booking.created_at.isoformat(),
         }), 201
 
-# ===[ List TeamUp bookings ]===
-@bp.get("/<uuid:teamup_id>/bookings")
+# ===[ List Event bookings ]===
+@bp.get("/<uuid:event_id>/bookings")
 @optional_auth
-def list_teamup_bookings(teamup_id):
-    """List all bookings for a TeamUp"""
+def list_event_bookings(event_id):
+    """List all bookings for an Event"""
     with SessionLocal() as s:
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
-            return jsonify({"error": "teamup_not_found"}), 404
+        event = s.get(Event, event_id)
+        if not event:
+            return jsonify({"error": "event_not_found"}), 404
 
-        # Get all bookings for this TeamUp
+        # Get all bookings for this Event
         bookings = s.execute(
             select(Booking, TimeSlot, Court, Venue).join(
                 TimeSlot, Booking.time_slot_id == TimeSlot.id
@@ -216,7 +217,7 @@ def list_teamup_bookings(teamup_id):
             ).join(
                 Venue, Court.venue_id == Venue.id
             ).where(
-                Booking.teamup_id == teamup_id
+                Booking.teamup_id == event_id # Model field still teamup_id
             ).order_by(TimeSlot.starts_at)
         ).all()
 
@@ -249,54 +250,54 @@ def list_teamup_bookings(teamup_id):
 
         return jsonify(booking_list)
 
-# ===[ 列出 TeamUp ]===
+# ===[ List Events ]===
 @bp.get("")
 @optional_auth
-def list_teamups():
-    """列出 TeamUp，支援篩選"""
+def list_events():
+    """List Events, support filtering"""
     status = request.args.get("status", "open")
     visibility = request.args.get("visibility")
     limit = min(int(request.args.get("limit", 20)), 100)
     offset = max(int(request.args.get("offset", 0)), 0)
 
     with SessionLocal() as s:
-        query = select(TeamUp)
+        query = select(Event)
 
         if status:
-            query = query.where(TeamUp.status == status)
+            query = query.where(Event.status == status)
         if visibility:
-            query = query.where(TeamUp.visibility == visibility)
+            query = query.where(Event.visibility == visibility)
 
         results = s.execute(
-            query.order_by(desc(TeamUp.created_at)).offset(offset).limit(limit)
+            query.order_by(desc(Event.created_at)).offset(offset).limit(limit)
         ).scalars().all()
 
-        teamup_list = []
-        for teamup in results:
-            # 計算參與者數量
+        event_list = []
+        for event in results:
+            # Calculate participant count
             participant_count = s.scalar(
-                select(func.count()).select_from(TeamUpParticipant)
-                .where(TeamUpParticipant.teamup_id == teamup.id)
+                select(func.count()).select_from(EventParticipant)
+                .where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
             ) or 0
 
-            teamup_list.append({
-                "id": str(teamup.id),
-                "title": teamup.title,
-                "description": teamup.description,
-                "status": teamup.status,
-                "max_participants": teamup.max_participants,
+            event_list.append({
+                "id": str(event.id),
+                "title": event.title,
+                "description": event.description,
+                "status": event.status,
+                "max_participants": event.max_participants,
                 "current_participants": participant_count,
-                "visibility": teamup.visibility,
-                "duration_type": teamup.duration_type,
-                "created_at": teamup.created_at.isoformat(),
+                "visibility": event.visibility,
+                "duration_type": event.duration_type,
+                "created_at": event.created_at.isoformat(),
             })
 
-        return jsonify(teamup_list)
+        return jsonify(event_list)
 
-# ===[ 列出 TeamUp 基於 Title ]===
+# ===[ Search Events ]===
 @bp.get("/search")
 @optional_auth
-def search_teamups():
+def search_events():
     keyword = request.args.get("keyword", "").strip()
     limit = min(int(request.args.get("limit", 20)), 100)
     offset = max(int(request.args.get("offset", 0)), 0)
@@ -305,55 +306,55 @@ def search_teamups():
         return jsonify({"error": "title_keyword_required"}), 400
 
     with SessionLocal() as s:
-        query = select(TeamUp).where(TeamUp.title.ilike(f"%{keyword}%"))
+        query = select(Event).where(Event.title.ilike(f"%{keyword}%"))
 
         results = s.execute(
-            query.order_by(desc(TeamUp.created_at)).offset(offset).limit(limit)
+            query.order_by(desc(Event.created_at)).offset(offset).limit(limit)
         ).scalars().all()
 
-        teamup_list = []
-        for teamup in results:
-            # 計算參與者數量
+        event_list = []
+        for event in results:
+            # Calculate participant count
             participant_count = s.scalar(
-                select(func.count()).select_from(TeamUpParticipant)
-                .where(TeamUpParticipant.teamup_id == teamup.id)
+                select(func.count()).select_from(EventParticipant)
+                .where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
             ) or 0
 
-            teamup_list.append({
-                "id": str(teamup.id),
-                "title": teamup.title,
-                "description": teamup.description,
-                "status": teamup.status,
-                "max_participants": teamup.max_participants,
+            event_list.append({
+                "id": str(event.id),
+                "title": event.title,
+                "description": event.description,
+                "status": event.status,
+                "max_participants": event.max_participants,
                 "current_participants": participant_count,
-                "visibility": teamup.visibility,
-                "duration_type": teamup.duration_type,
-                "created_at": teamup.created_at.isoformat(),
+                "visibility": event.visibility,
+                "duration_type": event.duration_type,
+                "created_at": event.created_at.isoformat(),
             })
 
-        return jsonify(teamup_list)
+        return jsonify(event_list)
 
-# ===[ 取得單一 TeamUp ]===
-@bp.get("/<uuid:teamup_id>")
+# ===[ Get Single Event ]===
+@bp.get("/<uuid:event_id>")
 @optional_auth
-def get_teamup(teamup_id):
-    """取得 TeamUp 詳情"""
+def get_event(event_id):
+    """Get Event details"""
     with SessionLocal() as s:
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
+        event = s.get(Event, event_id)
+        if not event:
             return jsonify({"error": "not_found"}), 404
 
-        # 計算參與者數量
+        # Calculate participant count
         participant_count = s.scalar(
-            select(func.count()).select_from(TeamUpParticipant)
-            .where(TeamUpParticipant.teamup_id == teamup.id)
+            select(func.count()).select_from(EventParticipant)
+            .where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
         ) or 0
 
-        # 取得參與者列表
+        # Get participants list
         participants = s.execute(
-            select(TeamUpParticipant, User).outerjoin(
-                User, TeamUpParticipant.user_id == User.id
-            ).where(TeamUpParticipant.teamup_id == teamup.id)
+            select(EventParticipant, User).outerjoin(
+                User, EventParticipant.user_id == User.id
+            ).where(EventParticipant.teamup_id == event.id) # Model field still teamup_id
         ).all()
 
         participant_list = []
@@ -367,7 +368,7 @@ def get_teamup(teamup_id):
                 "joined_at": participant.created_at.isoformat(),
             })
 
-        # 取得關聯的 bookings
+        # Get associated bookings
         bookings = s.execute(
             select(Booking, TimeSlot, Court, Venue).join(
                 TimeSlot, Booking.time_slot_id == TimeSlot.id
@@ -376,7 +377,7 @@ def get_teamup(teamup_id):
             ).join(
                 Venue, Court.venue_id == Venue.id
             ).where(
-                Booking.teamup_id == teamup_id
+                Booking.teamup_id == event_id # Model field still teamup_id
             ).order_by(TimeSlot.starts_at)
         ).all()
 
@@ -407,53 +408,53 @@ def get_teamup(teamup_id):
             })
 
         return jsonify({
-            "id": str(teamup.id),
-            "title": teamup.title,
-            "description": teamup.description,
-            "status": teamup.status,
-            "max_participants": teamup.max_participants,
+            "id": str(event.id),
+            "title": event.title,
+            "description": event.description,
+            "status": event.status,
+            "max_participants": event.max_participants,
             "current_participants": participant_count,
-            "owner_user_id": str(teamup.owner_user_id),
-            "visibility": teamup.visibility,
-            "duration_type": teamup.duration_type,
+            "owner_user_id": str(event.owner_user_id),
+            "visibility": event.visibility,
+            "duration_type": event.duration_type,
             "participants": participant_list,
             "bookings": booking_list,
-            "created_at": teamup.created_at.isoformat(),
-            "updated_at": teamup.updated_at.isoformat(),
+            "created_at": event.created_at.isoformat(),
+            "updated_at": event.updated_at.isoformat(),
         })
 
-# ===[ 申請加入 TeamUp ]===
-@bp.post("/<uuid:teamup_id>/join")
+# ===[ Join Event ]===
+@bp.post("/<uuid:event_id>/join")
 @optional_auth
-def join_teamup(teamup_id):
-    """申請加入 TeamUp"""
+def join_event(event_id):
+    """Request to join Event"""
     data = request.get_json(silent=True) or {}
     
     with SessionLocal() as s:
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
+        event = s.get(Event, event_id)
+        if not event:
             return jsonify({"error": "not_found"}), 404
         
-        if teamup.status != "open":
-            return jsonify({"error": "teamup_not_open"}), 400
+        if event.status != "open":
+            return jsonify({"error": "event_not_open"}), 400
         
-        # 檢查是否已達上限
+        # Check if full
         current_count = s.scalar(
-            select(func.count()).select_from(TeamUpParticipant)
-            .where(TeamUpParticipant.teamup_id == teamup_id)
+            select(func.count()).select_from(EventParticipant)
+            .where(EventParticipant.teamup_id == event_id) # Model field still teamup_id
         ) or 0
         
-        if current_count >= teamup.max_participants:
-            return jsonify({"error": "teamup_full"}), 400
+        if current_count >= event.max_participants:
+            return jsonify({"error": "event_full"}), 400
         
-        # 檢查是否已申請或已參與
+        # Check if already applied or joined
         if g.user_id:
             existing_request = s.execute(
-                select(TeamUpJoinRequest).where(
+                select(JoinRequest).where(
                     and_(
-                        TeamUpJoinRequest.teamup_id == teamup_id,
-                        TeamUpJoinRequest.applicant_user_id == g.user_id,
-                        TeamUpJoinRequest.status == "submitted"
+                        JoinRequest.teamup_id == event_id, # Model field still teamup_id
+                        JoinRequest.applicant_user_id == g.user_id,
+                        JoinRequest.status == "submitted"
                     )
                 )
             ).scalar_one_or_none()
@@ -462,10 +463,10 @@ def join_teamup(teamup_id):
                 return jsonify({"error": "already_applied"}), 400
             
             existing_participant = s.execute(
-                select(TeamUpParticipant).where(
+                select(EventParticipant).where(
                     and_(
-                        TeamUpParticipant.teamup_id == teamup_id,
-                        TeamUpParticipant.user_id == g.user_id
+                        EventParticipant.teamup_id == event_id, # Model field still teamup_id
+                        EventParticipant.user_id == g.user_id
                     )
                 )
             ).scalar_one_or_none()
@@ -473,27 +474,60 @@ def join_teamup(teamup_id):
             if existing_participant:
                 return jsonify({"error": "already_joined"}), 400
         
-        # 建立申請
+        # Create request
         if g.user_id:
             user = s.get(User, g.user_id)
-            join_request = TeamUpJoinRequest(
-                teamup_id=teamup_id,
+            
+            # Check for existing match notification to auto-approve
+            match_notification = s.execute(
+                select(Notification).where(
+                    and_(
+                        Notification.user_id == g.user_id,
+                        Notification.related_entity_id == event_id,
+                        Notification.type == "match_found"
+                    )
+                )
+            ).scalar_one_or_none()
+            
+            status = "submitted"
+            if match_notification:
+                status = "approved"
+
+            join_request = JoinRequest(
+                teamup_id=event_id, # Model field still teamup_id
                 applicant_user_id=g.user_id,
                 applicant_name=user.display_name or user.email,
                 applicant_email=user.email,
                 applicant_phone=user.phone,
                 message=data.get("message"),
-                status="submitted",
+                status=status,
             )
+            
+            s.add(join_request)
+            s.flush() # Get ID
+            
+            if status == "approved":
+                # Auto-add participant
+                participant = EventParticipant(
+                    teamup_id=event_id, # Model field still teamup_id
+                    user_id=g.user_id,
+                    role="member",
+                    display_name=user.display_name or user.email,
+                    email=user.email,
+                    phone=user.phone,
+                    join_request_id=join_request.id,
+                )
+                s.add(participant)
+                
         else:
-            # 非會員申請
+            # Non-member application
             required = ["applicant_name", "applicant_email"]
             missing = [k for k in required if k not in data]
             if missing:
                 return jsonify({"error": "missing_fields", "fields": missing}), 400
             
-            join_request = TeamUpJoinRequest(
-                teamup_id=teamup_id,
+            join_request = JoinRequest(
+                teamup_id=event_id, # Model field still teamup_id
                 applicant_user_id=None,
                 applicant_name=data["applicant_name"],
                 applicant_email=data["applicant_email"],
@@ -501,33 +535,33 @@ def join_teamup(teamup_id):
                 message=data.get("message"),
                 status="submitted",
             )
+            s.add(join_request)
         
-        s.add(join_request)
         s.commit()
         
         return jsonify({
             "id": str(join_request.id),
             "status": join_request.status,
-            "message": "Join request submitted successfully"
+            "message": "Join request submitted successfully" if join_request.status == "submitted" else "Joined successfully"
         }), 201
 
-# ===[ 列出加入申請 ]===
-@bp.get("/<uuid:teamup_id>/join-requests")
+# ===[ List Join Requests ]===
+@bp.get("/<uuid:event_id>/join-requests")
 @require_auth
-def list_join_requests(teamup_id):
-    """列出 TeamUp 的加入申請（僅 owner 可查看）"""
+def list_join_requests(event_id):
+    """List join requests for an Event (Owner only)"""
     with SessionLocal() as s:
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
+        event = s.get(Event, event_id)
+        if not event:
             return jsonify({"error": "not_found"}), 404
         
-        if str(teamup.owner_user_id) != str(g.user_id):
+        if str(event.owner_user_id) != str(g.user_id):
             return jsonify({"error": "not_owner"}), 403
         
         requests = s.execute(
-            select(TeamUpJoinRequest).where(
-                TeamUpJoinRequest.teamup_id == teamup_id
-            ).order_by(TeamUpJoinRequest.created_at.desc())
+            select(JoinRequest).where(
+                JoinRequest.teamup_id == event_id # Model field still teamup_id
+            ).order_by(JoinRequest.created_at.desc())
         ).scalars().all()
         
         return jsonify([{
@@ -542,11 +576,11 @@ def list_join_requests(teamup_id):
             "reviewed_at": req.reviewed_at.isoformat() if req.reviewed_at else None,
         } for req in requests])
 
-# ===[ 審核加入申請 ]===
-@bp.post("/<uuid:teamup_id>/join-requests/<uuid:request_id>/review")
+# ===[ Review Join Request ]===
+@bp.post("/<uuid:event_id>/join-requests/<uuid:request_id>/review")
 @require_auth
-def review_join_request(teamup_id, request_id):
-    """審核加入申請（僅 owner 可操作）"""
+def review_join_request(event_id, request_id):
+    """Review join request (Owner only)"""
     data = request.get_json(silent=True) or {}
     action = (data.get("action") or "").lower()
     
@@ -554,34 +588,34 @@ def review_join_request(teamup_id, request_id):
         return jsonify({"error": "invalid_action"}), 400
     
     with SessionLocal() as s:
-        teamup = s.get(TeamUp, teamup_id)
-        if not teamup:
-            return jsonify({"error": "teamup_not_found"}), 404
+        event = s.get(Event, event_id)
+        if not event:
+            return jsonify({"error": "event_not_found"}), 404
         
-        if str(teamup.owner_user_id) != str(g.user_id):
+        if str(event.owner_user_id) != str(g.user_id):
             return jsonify({"error": "not_owner"}), 403
         
-        join_request = s.get(TeamUpJoinRequest, request_id)
-        if not join_request or join_request.teamup_id != teamup_id:
+        join_request = s.get(JoinRequest, request_id)
+        if not join_request or join_request.teamup_id != event_id: # Model field still teamup_id
             return jsonify({"error": "request_not_found"}), 404
         
         if join_request.status != "submitted":
             return jsonify({"error": "already_reviewed"}), 400
         
         if action == "approve":
-            # 檢查是否已達上限
+            # Check if full
             current_count = s.scalar(
-                select(func.count()).select_from(TeamUpParticipant)
-                .where(TeamUpParticipant.teamup_id == teamup_id)
+                select(func.count()).select_from(EventParticipant)
+                .where(EventParticipant.teamup_id == event_id) # Model field still teamup_id
             ) or 0
 
-            if current_count >= teamup.max_participants:
-                return jsonify({"error": "teamup_full"}), 400
+            if current_count >= event.max_participants:
+                return jsonify({"error": "event_full"}), 400
 
-            # 加入參與者
+            # Add participant
             try:
-                participant = TeamUpParticipant(
-                    teamup_id=teamup_id,
+                participant = EventParticipant(
+                    teamup_id=event_id, # Model field still teamup_id
                     user_id=join_request.applicant_user_id,
                     role="member",
                     display_name=join_request.applicant_name,
@@ -606,3 +640,4 @@ def review_join_request(teamup_id, request_id):
             "status": join_request.status,
             "message": f"Request {action}d successfully"
         })
+

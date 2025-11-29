@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apis } from '../lib/api';
 import { NotificationOut } from '@team-up-main/api-client';
@@ -38,6 +38,40 @@ export default function NotificationCenter() {
     };
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    const handleNotificationPress = async (notification: NotificationOut) => {
+        if (notification.type === 'match_found' && notification.relatedEntityId) {
+            Alert.alert(
+                "Match Found!",
+                "Do you want to join this event?",
+                [
+                    {
+                        text: "Cancel",
+                        style: "cancel"
+                    },
+                    {
+                        text: "Join",
+                        onPress: async () => {
+                            try {
+                                await apis.teamups.joinTeamup({
+                                    teamupId: notification.relatedEntityId!,
+                                    joinRequestCreateIn: { message: "Joined via match notification" }
+                                });
+                                Alert.alert("Success", "You have joined the event!");
+                                markAsRead(notification.id);
+                                setModalVisible(false);
+                            } catch (error) {
+                                console.error('Failed to join teamup', error);
+                                Alert.alert("Error", "Failed to join event. It might be full or you already joined.");
+                            }
+                        }
+                    }
+                ]
+            );
+        } else {
+            markAsRead(notification.id);
+        }
+    };
 
     return (
         <>
@@ -82,7 +116,7 @@ export default function NotificationCenter() {
                                             styles.notificationItem,
                                             !item.isRead && styles.unreadItem
                                         ]}
-                                        onPress={() => markAsRead(item.id)}
+                                        onPress={() => handleNotificationPress(item)}
                                     >
                                         <Text style={styles.message}>{item.message}</Text>
                                         <Text style={styles.time}>

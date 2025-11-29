@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   almostFull: {
     fontSize: 11,
-    color: Colors.error[600],
+    color: Colors.error[700],
     fontWeight: '500',
     marginTop: 4,
   },
