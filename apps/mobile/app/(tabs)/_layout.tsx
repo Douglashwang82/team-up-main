@@ -7,23 +7,27 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary[600],
-        tabBarInactiveTintColor: Colors.gray[400],
+        tabBarActiveTintColor: Colors.primary[400],
+        tabBarInactiveTintColor: Colors.gray[500],
         tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopColor: Colors.gray[200],
+          backgroundColor: Colors.gray[900],
+          borderTopColor: Colors.gray[800],
           paddingBottom: 8,
           paddingTop: 8,
           height: 60,
         },
         headerShown: true,
+        headerStyle: {
+          backgroundColor: Colors.gray[900],
+        },
+        headerTintColor: Colors.white,
         headerRight: () => <NotificationCenter />,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'TeamUps',
+          title: 'Events',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people" size={size} color={color} />
           ),
@@ -39,9 +43,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="my-teamups"
+        name="tickets"
         options={{
-          title: 'My TeamUps',
+          title: 'Tickets',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="ticket" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="my-events"
+        options={{
+          title: 'My Events',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" size={size} color={color} />
           ),
@@ -56,21 +69,12 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="tickets"
-        options={{
-          title: 'Tickets',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="ticket" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="teamup"
         options={{
           href: null,
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="new-teamup"
         options={{

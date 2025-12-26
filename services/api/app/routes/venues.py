@@ -8,6 +8,8 @@ from app.core.db import SessionLocal
 from app.models.venue import Venue, Court, TimeSlot
 from geoalchemy2.functions import ST_DWithin, ST_Distance
 from geoalchemy2.elements import WKTElement
+from geoalchemy2.shape import to_shape
+import shapely.wkb
 
 bp = Blueprint("venues", __name__)
 
@@ -28,6 +30,8 @@ def _serialize_venue(v: Venue) -> dict:
         "name": v.name,
         "address": v.address,
         "city": v.city,
+        "latitude": v.latitude,
+        "longitude": v.longitude,
     }
 
 @bp.get("")
@@ -177,16 +181,15 @@ def get_venues():
 
             time_slots = s.execute(time_slots_query.order_by(TimeSlot.starts_at)).scalars().all()
 
-            if time_slots:  # Only include venues with available time slots
-                venue_data = {
-                    "venue": _serialize_venue(v),
-                    "time_slots": [_serialize_time_slot(ts) for ts in time_slots]
-                }
-                
-                if distance is not None:
-                    venue_data["distance_meters"] = round(float(distance), 2)
-                
-                results.append(venue_data)
+            venue_data = {
+                "venue": _serialize_venue(v),
+                "time_slots": [_serialize_time_slot(ts) for ts in time_slots]
+            }
+            
+            if distance is not None:
+                venue_data["distance_meters"] = round(float(distance), 2)
+            
+            results.append(venue_data)
 
         return jsonify(results), 200
 
@@ -248,3 +251,211 @@ def get_court_time_slots(venue_id, court_id):
         ).scalars().all()
 
         return jsonify([_serialize_time_slot(ts) for ts in time_slots]), 200
+
+
+@bp.post("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots")
+def create_time_slot(venue_id, court_id):
+    """Create a new time slot for a court"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+    
+    required_fields = ["starts_at", "ends_at"]
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+    
+    with SessionLocal() as s:
+        # Verify court exists and belongs to venue
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+        
+        try:
+            # Parse datetime strings
+            starts_at = datetime.fromisoformat(data["starts_at"].replace('Z', '+00:00'))
+            ends_at = datetime.fromisoformat(data["ends_at"].replace('Z', '+00:00'))
+            
+            # Validate time range
+            if ends_at <= starts_at:
+                return jsonify({"error": "ends_at must be after starts_at"}), 400
+            
+            # Create time slot
+            time_slot = TimeSlot(
+                court_id=court_id,
+                starts_at=starts_at,
+                ends_at=ends_at,
+                price_cents=data.get("price_cents"),
+                currency=data.get("currency", "USD"),
+                is_bookable=data.get("is_bookable", True)
+            )
+            
+            s.add(time_slot)
+            s.commit()
+            s.refresh(time_slot)
+            
+            return jsonify(_serialize_time_slot(time_slot)), 201
+            
+        except ValueError as e:
+            return jsonify({"error": f"Invalid datetime format: {str(e)}"}), 400
+        except Exception as e:
+            s.rollback()
+            return jsonify({"error": f"Failed to create time slot: {str(e)}"}), 500
+
+@bp.post("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots")
+def create_time_slots(venue_id, court_id):
+    """Create multiple time slots for a court
+    body:
+        time_slots (list): A list of time slots
+        time_slots[i].starts_at (str): The start time of the time slot
+        time_slots[i].ends_at (str): The end time of the time slot
+        time_slots[i].price_cents (int): The price of the time slot in cents
+        time_slots[i].currency (str): The currency of the time slot
+        time_slots[i].is_bookable (bool): Whether the time slot is bookable
+    Args:
+        venue_id (uuid): The ID of the venue
+        court_id (uuid): The ID of the court
+    
+    Returns:
+        A list of time slots
+    """
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+    
+    if "time_slots" not in data:
+        return jsonify({"error": "time_slots required"}), 400
+    
+    with SessionLocal() as s:
+        # Verify court exists and belongs to venue
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+        
+        # Create time slots
+        time_slots = []
+        for time_slot_data in data["time_slots"]:
+            try:
+                starts_at = datetime.fromisoformat(time_slot_data["starts_at"].replace('Z', '+00:00'))
+                ends_at = datetime.fromisoformat(time_slot_data["ends_at"].replace('Z', '+00:00'))
+                
+                # Validate time range
+                if ends_at <= starts_at:
+                    return jsonify({"error": "ends_at must be after starts_at"}), 400
+
+                # Check overlap
+                existing_time_slots = s.execute(
+                    select(TimeSlot)
+                    .where(TimeSlot.court_id == court_id)
+                    .where(TimeSlot.starts_at < ends_at)
+                    .where(TimeSlot.ends_at > starts_at)
+                ).scalars().all()
+                
+                if existing_time_slots:
+                    return jsonify({"error": "Time slot overlaps with existing time slots"}), 400
+                
+                # Create time slot
+                time_slot = TimeSlot(
+                    court_id=court_id,
+                    starts_at=starts_at,
+                    ends_at=ends_at,
+                    price_cents=time_slot_data.get("price_cents"),
+                    currency=time_slot_data.get("currency", "USD"),
+                    is_bookable=time_slot_data.get("is_bookable", True)
+                )
+                
+                s.add(time_slot)
+                s.commit()
+                s.refresh(time_slot)
+                
+                time_slots.append(_serialize_time_slot(time_slot))
+                
+            except ValueError as e:
+                return jsonify({"error": f"Invalid datetime format: {str(e)}"}), 400
+            except Exception as e:
+                s.rollback()
+                return jsonify({"error": f"Failed to create time slot: {str(e)}"}), 500
+        
+        return jsonify(time_slots), 201
+
+@bp.patch("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots/<uuid:time_slot_id>")
+def update_time_slot(venue_id, court_id, time_slot_id):
+    """Update a time slot"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+    
+    with SessionLocal() as s:
+        # Verify court exists and belongs to venue
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+        
+        # Get time slot
+        time_slot = s.get(TimeSlot, time_slot_id)
+        if not time_slot or time_slot.court_id != court_id:
+            return jsonify({"error": "Time slot not found"}), 404
+        
+        try:
+            # Update fields if provided
+            if "starts_at" in data:
+                time_slot.starts_at = datetime.fromisoformat(data["starts_at"].replace('Z', '+00:00'))
+            
+            if "ends_at" in data:
+                time_slot.ends_at = datetime.fromisoformat(data["ends_at"].replace('Z', '+00:00'))
+            
+            # Validate time range
+            if time_slot.ends_at <= time_slot.starts_at:
+                return jsonify({"error": "ends_at must be after starts_at"}), 400
+            
+            if "price_cents" in data:
+                time_slot.price_cents = data["price_cents"]
+            
+            if "currency" in data:
+                time_slot.currency = data["currency"]
+            
+            if "is_bookable" in data:
+                time_slot.is_bookable = data["is_bookable"]
+            
+            s.commit()
+            s.refresh(time_slot)
+            
+            return jsonify(_serialize_time_slot(time_slot)), 200
+            
+        except ValueError as e:
+            return jsonify({"error": f"Invalid datetime format: {str(e)}"}), 400
+        except Exception as e:
+            s.rollback()
+            return jsonify({"error": f"Failed to update time slot: {str(e)}"}), 500
+
+
+@bp.delete("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots/<uuid:time_slot_id>")
+def delete_time_slot(venue_id, court_id, time_slot_id):
+    """Delete a time slot"""
+    with SessionLocal() as s:
+        # Verify court exists and belongs to venue
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+        
+        # Get time slot
+        time_slot = s.get(TimeSlot, time_slot_id)
+        if not time_slot or time_slot.court_id != court_id:
+            return jsonify({"error": "Time slot not found"}), 404
+        
+        # Check if time slot has bookings
+        if time_slot.bookings:
+            return jsonify({"error": "Cannot delete time slot with existing bookings"}), 400
+        
+        try:
+            s.delete(time_slot)
+            s.commit()
+            
+            return jsonify({"message": "Time slot deleted successfully"}), 200
+            
+        except Exception as e:
+            s.rollback()
+            return jsonify({"error": f"Failed to delete time slot: {str(e)}"}), 500

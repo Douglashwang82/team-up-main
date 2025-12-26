@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@expo/metro-runtime':
+        specifier: ^6.1.2
+        version: 5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))
       '@expo/vector-icons':
         specifier: ^14.0.4
         version: 14.1.0(expo-font@13.3.2(expo@53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react@19.0.0))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -18,8 +21,11 @@ importers:
         specifier: ^8.5.0
         version: 8.5.0(expo@53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       expo:
-        specifier: ~53.0.23
+        specifier: ^54.0.0
         version: 53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      expo-linear-gradient:
+        specifier: ~15.0.8
+        version: 15.0.8(expo@53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       expo-location:
         specifier: ^18.1.6
         version: 18.1.6(expo@53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))
@@ -30,10 +36,10 @@ importers:
         specifier: ^2.2.3
         version: 2.2.3(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react:
-        specifier: 19.0.0
+        specifier: 19.1.0
         version: 19.0.0
       react-native:
-        specifier: 0.79.6
+        specifier: 0.81.5
         version: 0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)
       react-native-maps:
         specifier: 1.20.1
@@ -49,7 +55,7 @@ importers:
         specifier: ^7.25.2
         version: 7.28.3
       '@types/react':
-        specifier: ~19.0.10
+        specifier: ~19.2.7
         version: 19.0.14
       typescript:
         specifier: ~5.8.3
@@ -1637,6 +1643,13 @@ packages:
     peerDependencies:
       expo: '*'
       react: '*'
+
+  expo-linear-gradient@15.0.8:
+    resolution: {integrity: sha512-V2d8Wjn0VzhPHO+rrSBtcl+Fo+jUUccdlmQ6OoL9/XQB7Qk3d9lYrqKDJyccwDxmQT10JdST3Tmf2K52NLc3kw==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
 
   expo-linking@8.0.8:
     resolution: {integrity: sha512-MyeMcbFDKhXh4sDD1EHwd0uxFQNAc6VCrwBkNvvvufUsTYFq3glTA9Y8a+x78CPpjNqwNAamu74yIaIz7IEJyg==}
@@ -5077,6 +5090,12 @@ snapshots:
     dependencies:
       expo: 53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react: 19.0.0
+
+  expo-linear-gradient@15.0.8(expo@53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
+    dependencies:
+      expo: 53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react: 19.0.0
+      react-native: 0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)
 
   expo-linking@8.0.8(expo@53.0.23(@babel/core@7.28.3)(@expo/metro-runtime@5.0.5(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.6(@babel/core@7.28.3)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
     dependencies:

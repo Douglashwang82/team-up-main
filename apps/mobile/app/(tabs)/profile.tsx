@@ -55,17 +55,13 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-        </View>
-
         <View style={styles.content}>
           <Card style={styles.profileCard}>
             <View style={styles.avatar}>
               <Ionicons name="person" size={40} color={Colors.primary[600]} />
             </View>
             <Text style={styles.name}>
-              {user ? `${user.firstName} ${user.lastName}` : 'John Doe'}
+              {user ? `${user.display_name}` : 'John Doe'}
             </Text>
             <Text style={styles.email}>
               {user?.email || 'john.doe@example.com'}
@@ -123,7 +119,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.gray[900],
   },
   scrollContent: {
     flexGrow: 1,
@@ -132,21 +128,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.gray[900],
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[200],
+    borderBottomColor: Colors.gray[800],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.gray[900],
+    color: Colors.white,
   },
   content: {
     padding: 20,
   },
   profileCard: {
     alignItems: 'center',
+    backgroundColor: Colors.gray[800],
     marginBottom: 24,
+    borderColor: Colors.gray[700],
   },
   avatar: {
     width: 80,
@@ -160,12 +158,12 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: Colors.gray[900],
+    color: Colors.white,
     marginBottom: 4,
   },
   email: {
     fontSize: 14,
-    color: Colors.gray[600],
+    color: Colors.gray[400],
     marginBottom: 20,
   },
   stats: {
@@ -173,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: Colors.gray[200],
+    borderTopColor: Colors.gray[700],
     width: '100%',
   },
   stat: {
@@ -188,12 +186,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.gray[600],
+    color: Colors.gray[400],
   },
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.gray[200],
+    backgroundColor: Colors.gray[700],
   },
   section: {
     marginBottom: 24,
@@ -201,18 +199,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.gray[700],
+    color: Colors.gray[300],
     marginBottom: 12,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.gray[900],
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: Colors.gray[200],
+    borderColor: Colors.gray[700],
   },
   menuIcon: {
     marginRight: 16,
@@ -223,15 +221,16 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.gray[900],
+    color: Colors.white,
     marginBottom: 2,
   },
   menuSubtitle: {
     fontSize: 12,
-    color: Colors.gray[600],
+    color: Colors.gray[400],
   },
   logoutButton: {
     marginBottom: 16,
+    borderColor: Colors.error[500],
   },
   version: {
     fontSize: 12,

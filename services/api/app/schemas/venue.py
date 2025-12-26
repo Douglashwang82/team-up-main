@@ -12,6 +12,8 @@ class VenueOut(BaseModel):
     name: str
     address: str
     city: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     distance_meters: Optional[float] = None  # Only present when lat/lng provided
 
 class CourtOut(BaseModel):

@@ -59,6 +59,18 @@ def db():
     # Create a session
     session = SessionLocal()
 
+    # Insert system user
+    from app.core.constants import SYSTEM_USER_ID, SYSTEM_USER_EMAIL, SYSTEM_USER_DISPLAY_NAME, SYSTEM_USER_PASSWORD_HASH
+    
+    system_user = User(
+        id=SYSTEM_USER_ID,
+        email=SYSTEM_USER_EMAIL,
+        password_hash=SYSTEM_USER_PASSWORD_HASH,
+        display_name=SYSTEM_USER_DISPLAY_NAME
+    )
+    session.add(system_user)
+    session.commit()
+
     yield session
 
     # Cleanup
@@ -142,6 +154,15 @@ def venue(db):
     db.add(court)
     db.flush()
 
+    # Add a tennis court
+    tennis_court = Court(
+        venue_id=venue.id,
+        name="Tennis Court 1",
+        sport_type="tennis"
+    )
+    db.add(tennis_court)
+    db.flush()
+
     # Add time slots
     now = datetime.utcnow()
     tomorrow = now + timedelta(days=1)
@@ -150,6 +171,8 @@ def venue(db):
     for i in range(5):
         slot_start = start_time + timedelta(hours=i)
         slot_end = slot_start + timedelta(hours=1)
+        
+        # Basketball slots
         time_slot = TimeSlot(
             court_id=court.id,
             starts_at=slot_start,
@@ -159,6 +182,17 @@ def venue(db):
             is_bookable=True
         )
         db.add(time_slot)
+        
+        # Tennis slots
+        tennis_slot = TimeSlot(
+            court_id=tennis_court.id,
+            starts_at=slot_start,
+            ends_at=slot_end,
+            price_cents=3000,
+            currency="USD",
+            is_bookable=True
+        )
+        db.add(tennis_slot)
 
     db.commit()
     db.refresh(venue)

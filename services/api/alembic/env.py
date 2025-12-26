@@ -13,7 +13,7 @@ if BASE_DIR not in sys.path:
 # ---- 匯入 Base 與所有模型（確保 mapper 都被註冊到 Base.metadata）----
 from app.core.db import Base  # ← 你的 Base = declarative_base()
 # Import all models to register them with Base.metadata
-from app.models import user, venue, booking, teamup, teamup_join_request, teamup_participant  # noqa: F401
+from app.models import user, venue, booking, event, event_join_request, event_participant, ticket, notification  # noqa: F401
 
 # ---- Alembic 既有設定 ----
 config = context.config

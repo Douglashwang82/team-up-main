@@ -1,106 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
-import MapView, { Marker, Callout } from 'react-native-maps';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  ScrollView,
+  Platform
+} from 'react-native';
+import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { Colors } from '../../constants/Colors';
 
-// Mock field data interface
-interface Field {
+// Venue interface matching API response
+interface Venue {
   id: string;
   name: string;
   latitude: number;
   longitude: number;
-  sportType: string;
-  description: string;
+  address: string;
+  city?: string;
+  distance_meters?: number;
 }
 
-// Function to generate mock field locations near a given position
-const generateMockFields = (centerLat: number, centerLng: number): Field[] => {
-  const fields: Field[] = [
-    {
-      id: '1',
-      name: 'Central Park Basketball Court',
-      latitude: centerLat + 0.01,
-      longitude: centerLng + 0.01,
-      sportType: 'Basketball',
-      description: 'Outdoor basketball court with great facilities'
-    },
-    {
-      id: '2',
-      name: 'Riverside Soccer Field',
-      latitude: centerLat - 0.01,
-      longitude: centerLng + 0.015,
-      sportType: 'Soccer',
-      description: 'Full-size soccer field with night lighting'
-    },
-    {
-      id: '3',
-      name: 'Eastside Tennis Courts',
-      latitude: centerLat + 0.015,
-      longitude: centerLng - 0.01,
-      sportType: 'Tennis',
-      description: '4 tennis courts available for booking'
-    },
-    {
-      id: '4',
-      name: 'Valley Baseball Diamond',
-      latitude: centerLat - 0.015,
-      longitude: centerLng - 0.01,
-      sportType: 'Baseball',
-      description: 'Community baseball field with bleachers'
-    },
-    {
-      id: '5',
-      name: 'Mountain View Volleyball Court',
-      latitude: centerLat + 0.008,
-      longitude: centerLng + 0.018,
-      sportType: 'Volleyball',
-      description: 'Beach volleyball court with sand'
-    },
-    {
-      id: '6',
-      name: 'Downtown Gym Complex',
-      latitude: centerLat - 0.008,
-      longitude: centerLng - 0.018,
-      sportType: 'Multi-sport',
-      description: 'Indoor facility for various sports'
-    },
-    {
-      id: '7',
-      name: 'Lakefront Running Track',
-      latitude: centerLat + 0.012,
-      longitude: centerLng - 0.015,
-      sportType: 'Track & Field',
-      description: '400m running track with scenic views'
-    },
-    {
-      id: '8',
-      name: 'Oakwood Basketball Court',
-      latitude: centerLat - 0.012,
-      longitude: centerLng + 0.012,
-      sportType: 'Basketball',
-      description: 'Half-court basketball with recent upgrades'
-    },
-    {
-      id: '9',
-      name: 'Community Soccer Complex',
-      latitude: centerLat + 0.018,
-      longitude: centerLng + 0.008,
-      sportType: 'Soccer',
-      description: 'Multiple soccer fields for all skill levels'
-    },
-    {
-      id: '10',
-      name: 'West Park Fitness Area',
-      latitude: centerLat - 0.018,
-      longitude: centerLng - 0.008,
-      sportType: 'Fitness',
-      description: 'Outdoor fitness equipment and training area'
-    }
-  ];
+// Google Places Autocomplete prediction interface
+interface PlacePrediction {
+  description: string;
+  place_id: string;
+}
 
-  return fields;
-};
+import { apis } from '../../lib/api';
 
 // Sport type options
 const SPORT_TYPES = [
@@ -115,23 +47,7 @@ const SPORT_TYPES = [
   'Fitness'
 ];
 
-// Function to get marker color based on sport type
-const getSportTypeColor = (sportType: string): string => {
-  const colorMap: { [key: string]: string } = {
-    'Basketball': 'orange',
-    'Soccer': 'green',
-    'Tennis': 'yellow',
-    'Baseball': 'purple',
-    'Volleyball': 'cyan',
-    'Multi-sport': 'violet',
-    'Track & Field': 'blue',
-    'Fitness': 'tomato'
-  };
-
-  return colorMap[sportType] || 'green';
-};
-
-// Function to get emoji icon based on sport type
+// Function to get sport type icon emoji
 const getSportTypeIcon = (sportType: string): string => {
   const iconMap: { [key: string]: string } = {
     'Basketball': '🏀',
@@ -147,35 +63,129 @@ const getSportTypeIcon = (sportType: string): string => {
   return iconMap[sportType] || '📍';
 };
 
-// Common locations for autocomplete fallback
-const COMMON_LOCATIONS = [
-  'Times Square, New York, NY',
-  'Central Park, New York, NY',
-  'Golden Gate Bridge, San Francisco, CA',
-  'Hollywood Sign, Los Angeles, CA',
-  'Navy Pier, Chicago, IL',
-  'Space Needle, Seattle, WA',
-  'Freedom Tower, New York, NY',
-  'Lincoln Memorial, Washington, DC',
-  'Statue of Liberty, New York, NY',
-  'Empire State Building, New York, NY',
-  'Fenway Park, Boston, MA',
-  'Pike Place Market, Seattle, WA',
-  'Union Square, San Francisco, CA',
-  'Miami Beach, Miami, FL',
-  'Las Vegas Strip, Las Vegas, NV'
-];
+// IMPORTANT: Replace with your actual Google Maps API Key
+// Get it from: https://console.cloud.google.com/google/maps-apis
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCQpRkPBlpr47iTciS2-3IEjzRD57XCA8I';
 
-// Autocomplete suggestion interface
-interface AutocompleteSuggestion {
-  address: string;
-  latitude: number;
-  longitude: number;
-}
+const DEFAULT_LAT = 25.013958087753082;
+const DEFAULT_LNG = 121.53783024593216;
+
+// Dark mode map style
+const darkMapStyle = [
+  {
+    "elementType": "geometry",
+    "stylers": [{ "color": "#212121" }]
+  },
+  {
+    "elementType": "labels.icon",
+    "stylers": [{ "visibility": "off" }]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#757575" }]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [{ "color": "#212121" }]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#757575" }]
+  },
+  {
+    "featureType": "administrative.country",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#9e9e9e" }]
+  },
+  {
+    "featureType": "administrative.locality",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#bdbdbd" }]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#757575" }]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#181818" }]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#616161" }]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.stroke",
+    "stylers": [{ "color": "#1b1b1b" }]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry.fill",
+    "stylers": [{ "color": "#2c2c2c" }]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#8a8a8a" }]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#373737" }]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#3c3c3c" }]
+  },
+  {
+    "featureType": "road.highway.controlled_access",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#4e4e4e" }]
+  },
+  {
+    "featureType": "road.local",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#616161" }]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#757575" }]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#000000" }]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#3d3d3d" }]
+  }
+];
 
 export default function MapScreen() {
   const router = useRouter();
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const mapRef = useRef<MapView>(null);
+
+  const [location, setLocation] = useState<Location.LocationObject | null>({
+    coords: {
+      latitude: DEFAULT_LAT,
+      longitude: DEFAULT_LNG,
+      altitude: null,
+      accuracy: null,
+      altitudeAccuracy: null,
+      heading: null,
+      speed: null,
+    },
+    timestamp: Date.now(),
+  });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [searchAddress, setSearchAddress] = useState<string>('');
   const [searchResult, setSearchResult] = useState<{
@@ -183,190 +193,196 @@ export default function MapScreen() {
     longitude: number;
     address: string;
   } | null>(null);
-  const [mockFields, setMockFields] = useState<Field[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [selectedSportType, setSelectedSportType] = useState<string>('All');
   const [showSportTypeModal, setShowSportTypeModal] = useState<boolean>(false);
-  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [placePredictions, setPlacePredictions] = useState<PlacePrediction[]>([]);
   const [showAutocomplete, setShowAutocomplete] = useState<boolean>(false);
 
+  // Fetch venues when location changes or on mount
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const lat = location?.coords.latitude || DEFAULT_LAT;
+        const lng = location?.coords.longitude || DEFAULT_LNG;
+
+        const response = await apis.venues.searchVenues({
+          lat: lat,
+          lng: lng,
+          distance: 10000, // 10km radius
+          sportType: selectedSportType === 'All' ? undefined : selectedSportType
+        });
+
+        // Map API response to Venue interface
+        // Note: The API response structure depends on the backend. 
+        // Based on routes/venues.py, it returns a list of objects with "venue" and "time_slots" keys
+        // or just a list of venues if we update the client.
+        // Let's assume the generated client returns what the backend sends.
+
+        // @ts-ignore - The generated client types might not be fully up to date with our backend changes yet
+        const mappedVenues = response.map((item: any) => {
+          // Handle both structure with distance (from search) and direct list
+          const v = item.venue || item;
+          return {
+            id: v.id,
+            name: v.name,
+            latitude: v.latitude || lat, // Fallback to center if missing (shouldn't happen with our backend fix)
+            longitude: v.longitude || lng,
+            address: v.address,
+            city: v.city,
+            distance_meters: item.distance_meters
+          };
+        }).filter((v: Venue) => v.latitude && v.longitude);
+
+        setVenues(mappedVenues);
+      } catch (error) {
+        console.error('Error fetching venues:', error);
+      }
+    };
+
+    fetchVenues();
+  }, [location, selectedSportType]);
+
+  // Initialize location on mount
   useEffect(() => {
     (async () => {
-      // Request location permissions (still needed for showsUserLocation on map)
+      // Request location permissions
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
+        return;
       }
 
-      // Set default address to 台北市台灣大學 (National Taiwan University)
-      const defaultAddress = '台北市台灣大學';
       try {
-        const geocoded = await Location.geocodeAsync(defaultAddress);
-        if (geocoded.length > 0) {
-          const defaultLocation = geocoded[0];
-          
-          // Create a mock location object to replace getCurrentPositionAsync
-          const mockLocation: Location.LocationObject = {
-            coords: {
-              latitude: defaultLocation.latitude,
-              longitude: defaultLocation.longitude,
-              altitude: null,
-              accuracy: null,
-              altitudeAccuracy: null,
-              heading: null,
-              speed: null,
-            },
-            timestamp: Date.now(),
-          };
-          
-          setLocation(mockLocation);
-          
-          setSearchResult({
-            latitude: defaultLocation.latitude,
-            longitude: defaultLocation.longitude,
-            address: defaultAddress,
-          });
-          setSearchAddress(defaultAddress);
-          
-          // Generate mock fields near the default location
-          const fields = generateMockFields(
-            defaultLocation.latitude,
-            defaultLocation.longitude
-          );
-          setMockFields(fields);
-        }
+        // Get current location
+        const currentLocation = await Location.getCurrentPositionAsync({});
+        setLocation(currentLocation);
       } catch (error) {
-        console.error('Error geocoding default address:', error);
-        setErrorMsg('Failed to set default location');
+        console.error('Error getting location:', error);
+        // Fallback to default location is already set in initial state
+        // But we can reset it here if needed, or just log the error
+
+        // We don't need to do anything here since we initialized with default values
+        // But if we want to be explicit:
+        const mockLocation: Location.LocationObject = {
+          coords: {
+            latitude: DEFAULT_LAT,
+            longitude: DEFAULT_LNG,
+            altitude: null,
+            accuracy: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now(),
+        };
+
+        setLocation(mockLocation);
       }
     })();
   }, []);
 
-  // Autocomplete effect with debouncing
+  // Google Places Autocomplete with debouncing
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchAddress.trim() && searchAddress.length > 2) {
-        // First, filter common locations based on search input
-        const searchLower = searchAddress.toLowerCase();
-        const filteredLocations = COMMON_LOCATIONS.filter(location =>
-          location.toLowerCase().includes(searchLower)
-        ).slice(0, 5);
+        try {
+          // Call Google Places Autocomplete API
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+              searchAddress
+            )}&key=${GOOGLE_MAPS_API_KEY}`
+          );
 
-        if (filteredLocations.length > 0) {
-          // Show filtered common locations immediately
-          const suggestions: AutocompleteSuggestion[] = [];
+          const data = await response.json();
 
-          for (const location of filteredLocations) {
-            try {
-              const geocoded = await Location.geocodeAsync(location);
-              if (geocoded.length > 0) {
-                suggestions.push({
-                  address: location,
-                  latitude: geocoded[0].latitude,
-                  longitude: geocoded[0].longitude,
-                });
-              }
-            } catch (error) {
-              console.error('Error geocoding common location:', error);
-            }
-          }
-
-          if (suggestions.length > 0) {
-            setAutocompleteSuggestions(suggestions);
+          if (data.status === 'OK' && data.predictions) {
+            setPlacePredictions(data.predictions);
             setShowAutocomplete(true);
+          } else if (data.status === 'REQUEST_DENIED') {
+            console.error('Google Places API error:', data.error_message);
+            Alert.alert('API Error', 'Please configure your Google Maps API key');
+            setPlacePredictions([]);
+            setShowAutocomplete(false);
           } else {
-            setAutocompleteSuggestions([]);
+            setPlacePredictions([]);
             setShowAutocomplete(false);
           }
-        } else {
-          // Fallback: try geocoding the user's input
-          try {
-            const geocoded = await Location.geocodeAsync(searchAddress);
-
-            if (geocoded.length > 0) {
-              const suggestions: AutocompleteSuggestion[] = [];
-
-              for (let i = 0; i < Math.min(3, geocoded.length); i++) {
-                const result = geocoded[i];
-                try {
-                  const reverseGeocode = await Location.reverseGeocodeAsync({
-                    latitude: result.latitude,
-                    longitude: result.longitude,
-                  });
-
-                  if (reverseGeocode.length > 0) {
-                    const location = reverseGeocode[0];
-                    const addressParts = [
-                      location.name,
-                      location.street,
-                      location.city,
-                      location.region,
-                      location.country,
-                    ].filter(Boolean);
-
-                    const formattedAddress = addressParts.join(', ') || searchAddress;
-
-                    suggestions.push({
-                      address: formattedAddress,
-                      latitude: result.latitude,
-                      longitude: result.longitude,
-                    });
-                  }
-                } catch (reverseError) {
-                  console.error('Reverse geocoding error:', reverseError);
-                  suggestions.push({
-                    address: `${searchAddress} (Result ${i + 1})`,
-                    latitude: result.latitude,
-                    longitude: result.longitude,
-                  });
-                }
-              }
-
-              if (suggestions.length > 0) {
-                setAutocompleteSuggestions(suggestions);
-                setShowAutocomplete(true);
-              } else {
-                setAutocompleteSuggestions([]);
-                setShowAutocomplete(false);
-              }
-            } else {
-              setAutocompleteSuggestions([]);
-              setShowAutocomplete(false);
-            }
-          } catch (error) {
-            console.error('Autocomplete error:', error);
-            setAutocompleteSuggestions([]);
-            setShowAutocomplete(false);
-          }
+        } catch (error) {
+          console.error('Autocomplete error:', error);
+          setPlacePredictions([]);
+          setShowAutocomplete(false);
         }
       } else {
-        setAutocompleteSuggestions([]);
+        setPlacePredictions([]);
         setShowAutocomplete(false);
       }
-    }, 300); // 300ms debounce for faster response
+    }, 300); // 300ms debounce
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchAddress]);
 
-  // Handler for selecting an autocomplete suggestion
-  const handleSelectSuggestion = (suggestion: AutocompleteSuggestion) => {
-    setSearchAddress(suggestion.address);
-    setSearchResult({
-      latitude: suggestion.latitude,
-      longitude: suggestion.longitude,
-      address: suggestion.address,
-    });
-    setShowAutocomplete(false);
-    setAutocompleteSuggestions([]);
+  // Get place details from place_id using Google Places Details API
+  const getPlaceDetails = async (placeId: string, description: string) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${GOOGLE_MAPS_API_KEY}`
+      );
 
-    // Generate mock fields around the new location
-    const fields = generateMockFields(
-      suggestion.latitude,
-      suggestion.longitude
-    );
-    setMockFields(fields);
+      const data = await response.json();
+
+      if (data.status === 'OK' && data.result?.geometry?.location) {
+        const { lat, lng } = data.result.geometry.location;
+
+        setSearchResult({
+          latitude: lat,
+          longitude: lng,
+          address: description,
+        });
+
+        setSearchAddress(description);
+        setShowAutocomplete(false);
+        setPlacePredictions([]);
+
+        // Animate map to new location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude: lat,
+            longitude: lng,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }, 1000);
+        }
+
+        // Update location to trigger venue fetch
+        setLocation({
+          coords: {
+            latitude: lat,
+            longitude: lng,
+            altitude: null,
+            accuracy: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now()
+        });
+
+      } else {
+        Alert.alert('Error', 'Could not get location details');
+      }
+    } catch (error) {
+      console.error('Place details error:', error);
+      Alert.alert('Error', 'Failed to get place details');
+    }
   };
 
-  // Function to search for address and convert to coordinates
+  // Handler for selecting an autocomplete suggestion
+  const handleSelectSuggestion = (prediction: PlacePrediction) => {
+    getPlaceDetails(prediction.place_id, prediction.description);
+  };
+
+  // Function to search for address using Google Geocoding API
   const searchLocation = async () => {
     if (!searchAddress.trim()) {
       Alert.alert('Error', 'Please enter an address to search');
@@ -374,28 +390,51 @@ export default function MapScreen() {
     }
 
     try {
-      // Use Expo Location geocoding to convert address to coordinates
-      const geocoded = await Location.geocodeAsync(searchAddress);
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          searchAddress
+        )}&key=${GOOGLE_MAPS_API_KEY}`
+      );
 
-      if (geocoded.length > 0) {
-        const result = geocoded[0];
+      const data = await response.json();
+
+      if (data.status === 'OK' && data.results.length > 0) {
+        const result = data.results[0];
+        const { lat, lng } = result.geometry.location;
+
         const newSearchResult = {
-          latitude: result.latitude,
-          longitude: result.longitude,
-          address: searchAddress,
+          latitude: lat,
+          longitude: lng,
+          address: result.formatted_address,
         };
 
         setSearchResult(newSearchResult);
+        setSearchAddress(result.formatted_address);
 
-        // Generate mock fields around the new location
-        const fields = generateMockFields(
-          result.latitude,
-          result.longitude
-        );
-        setMockFields(fields);
+        // Animate map to new location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude: lat,
+            longitude: lng,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }, 1000);
+        }
 
-        // Optional: Clear the search input after successful search
-        // setSearchAddress('');
+        // Update location to trigger venue fetch
+        setLocation({
+          coords: {
+            latitude: lat,
+            longitude: lng,
+            altitude: null,
+            accuracy: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now()
+        });
+
       } else {
         Alert.alert('Not Found', 'Could not find the specified address');
       }
@@ -405,35 +444,19 @@ export default function MapScreen() {
     }
   };
 
-  // Default initial region (National Taiwan University)
+  // Default initial region
   const initialRegion = {
-    latitude: location?.coords.latitude || 25.0174,
-    longitude: location?.coords.longitude || 121.5397,
+    latitude: location?.coords.latitude || DEFAULT_LAT,
+    longitude: location?.coords.longitude || DEFAULT_LNG,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   };
 
-  // Current region to show (prioritize search result, then current location, then default)
-  const currentRegion = searchResult
-    ? {
-        latitude: searchResult.latitude,
-        longitude: searchResult.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      }
-    : location
-    ? {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      }
-    : initialRegion;
-
   // Filter fields based on selected sport type
-  const filteredFields = selectedSportType === 'All'
-    ? mockFields
-    : mockFields.filter(field => field.sportType === selectedSportType);
+  // We are now doing server-side filtering, so this client-side filter might be redundant 
+  // or we can keep it for immediate feedback if we don't want to refetch on every filter change.
+  // But the useEffect above refetches on sportType change, so 'venues' should already be filtered.
+  const filteredFields = venues;
 
   if (errorMsg) {
     return (
@@ -446,13 +469,15 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={initialRegion}
-        region={currentRegion}
         showsUserLocation={true}
         showsMyLocationButton={true}
         showsCompass={true}
         showsScale={true}
+        customMapStyle={darkMapStyle}
       >
         {/* Current location marker */}
         {location && (
@@ -490,7 +515,9 @@ export default function MapScreen() {
             }}
           >
             <View style={styles.customMarker}>
-              <Text style={styles.markerIcon}>{getSportTypeIcon(field.sportType)}</Text>
+              <View style={styles.customMarker}>
+                <Text style={styles.markerIcon}>📍</Text>
+              </View>
             </View>
             <Callout
               onPress={() => router.push(`/field/${field.id}`)}
@@ -498,9 +525,9 @@ export default function MapScreen() {
             >
               <View style={styles.calloutContainer}>
                 <Text style={styles.calloutTitle}>{field.name}</Text>
-                <Text style={styles.calloutSportType}>{field.sportType}</Text>
+                {/* <Text style={styles.calloutSportType}>{field.sportType}</Text> */}
                 <Text style={styles.calloutDescription} numberOfLines={2}>
-                  {field.description}
+                  {field.address}
                 </Text>
                 <View style={styles.calloutFooter}>
                   <Text style={styles.calloutLink}>Tap for details</Text>
@@ -515,7 +542,7 @@ export default function MapScreen() {
       {/* Search input overlay */}
       <View style={styles.searchContainer}>
         <TextInput
-          placeholder="Search address (e.g., Times Square, New York)"
+          placeholder="Search for a place..."
           style={styles.searchInput}
           value={searchAddress}
           onChangeText={setSearchAddress}
@@ -527,24 +554,24 @@ export default function MapScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Autocomplete dropdown */}
-      {/* {showAutocomplete && autocompleteSuggestions.length > 0 && (
+      {/* Google Places Autocomplete dropdown */}
+      {showAutocomplete && placePredictions.length > 0 && (
         <View style={styles.autocompleteContainer}>
           <ScrollView style={styles.autocompleteScrollView}>
-            {autocompleteSuggestions.map((suggestion, index) => (
+            {placePredictions.map((prediction, index) => (
               <TouchableOpacity
-                key={index}
+                key={prediction.place_id}
                 style={styles.autocompleteSuggestion}
-                onPress={() => handleSelectSuggestion(suggestion)}
+                onPress={() => handleSelectSuggestion(prediction)}
               >
                 <Text style={styles.autocompleteSuggestionText}>
-                  {suggestion.address}
+                  {prediction.description}
                 </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
-      )} */}
+      )}
 
       {/* Sport type filter dropdown */}
       <View style={styles.filterContainer}>
@@ -608,7 +635,7 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.gray[900],
   },
   map: {
     width: '100%',
@@ -616,7 +643,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     position: 'absolute',
-    top: 50,
+    top: 10,
     left: 10,
     right: 10,
     flexDirection: 'row',
@@ -625,7 +652,8 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    backgroundColor: 'white',
+    backgroundColor: Colors.gray[800],
+    color: Colors.white,
     borderRadius: 5,
     paddingHorizontal: 10,
     marginRight: 10,
@@ -636,7 +664,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   searchButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.primary[600],
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 5,
@@ -647,7 +675,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   searchButtonText: {
-    color: 'white',
+    color: Colors.white,
     fontWeight: 'bold',
   },
   autocompleteContainer: {
@@ -655,7 +683,7 @@ const styles = StyleSheet.create({
     top: 95,
     left: 10,
     right: 10,
-    backgroundColor: 'white',
+    backgroundColor: Colors.gray[800],
     borderRadius: 5,
     maxHeight: 200,
     shadowColor: '#000',
@@ -672,28 +700,28 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: Colors.gray[700],
   },
   autocompleteSuggestionText: {
     fontSize: 14,
-    color: '#333',
+    color: Colors.gray[200],
   },
   errorText: {
     flex: 1,
     textAlign: 'center',
     textAlignVertical: 'center',
     fontSize: 16,
-    color: 'red',
+    color: Colors.error[500],
     padding: 20,
   },
   filterContainer: {
     position: 'absolute',
-    top: 100,
+    top: 60,
     left: 10,
     right: 10,
   },
   filterButton: {
-    backgroundColor: 'white',
+    backgroundColor: Colors.gray[800],
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderRadius: 5,
@@ -708,21 +736,21 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     fontSize: 16,
-    color: '#333',
+    color: Colors.gray[200],
     fontWeight: '500',
   },
   filterButtonIcon: {
     fontSize: 12,
-    color: '#666',
+    color: Colors.gray[400],
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: Colors.gray[900],
     borderRadius: 10,
     padding: 20,
     width: '80%',
@@ -738,7 +766,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
-    color: '#333',
+    color: Colors.white,
   },
   modalScrollView: {
     maxHeight: 400,
@@ -747,25 +775,25 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: Colors.gray[800],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   sportTypeOptionSelected: {
-    backgroundColor: '#e6f2ff',
+    backgroundColor: Colors.primary[900],
   },
   sportTypeOptionText: {
     fontSize: 16,
-    color: '#333',
+    color: Colors.gray[200],
   },
   sportTypeOptionTextSelected: {
-    color: '#007AFF',
+    color: Colors.primary[400],
     fontWeight: 'bold',
   },
   checkmark: {
     fontSize: 18,
-    color: '#007AFF',
+    color: Colors.primary[400],
     fontWeight: 'bold',
   },
   customMarker: {

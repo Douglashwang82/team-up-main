@@ -12,7 +12,7 @@ from pathlib import Path
 import bcrypt
 
 # Add the project root to the path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash
@@ -25,7 +25,15 @@ from app.models.event import Event
 from app.models.event_participant import EventParticipant
 from app.models.event_join_request import EventJoinRequest
 from app.models.booking import Booking
+from app.models.ticket import Ticket
+from app.models.notification import Notification
 from app.core.types import Visibility, BookingStatus, PaymentStatus, joinRequestStatus
+from app.core.constants import (
+    SYSTEM_USER_ID,
+    SYSTEM_USER_EMAIL,
+    SYSTEM_USER_DISPLAY_NAME,
+    SYSTEM_USER_PASSWORD_HASH,
+)
 
 
 def clear_all_data(session: Session):
@@ -33,6 +41,8 @@ def clear_all_data(session: Session):
     print("🗑️  Clearing existing data...")
 
     # Delete in reverse order of dependencies
+    session.query(Notification).delete()
+    session.query(Ticket).delete()
     session.query(EventParticipant).delete()
     session.query(EventJoinRequest).delete()
     session.query(Booking).delete()
@@ -100,8 +110,19 @@ def create_users(session: Session) -> list[User]:
         session.add(user)
         users.append(user)
 
+    # Create System User
+    system_user = User(
+        id=SYSTEM_USER_ID,
+        email=SYSTEM_USER_EMAIL,
+        display_name=SYSTEM_USER_DISPLAY_NAME,
+        password_hash=SYSTEM_USER_PASSWORD_HASH,
+        phone=None
+    )
+    session.add(system_user)
+    print(f"✅ Created System User: {SYSTEM_USER_DISPLAY_NAME} ({SYSTEM_USER_ID})")
+
     session.commit()
-    print(f"✅ Created {len(users)} users")
+    print(f"✅ Created {len(users)} sample users + 1 system user")
     return users
 
 
@@ -195,6 +216,8 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             address=venue_data["address"],
             city=venue_data["city"],
             geo_point=point,
+            latitude=venue_data["lat"],
+            longitude=venue_data["lng"],
             contact_phone=venue_data["contact_phone"],
             partner_code=venue_data.get("partner_code")
         )

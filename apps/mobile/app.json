@@ -16,6 +16,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.teamup.mobile",
+      "config": {
+        "googleMapsApiKey": "AIzaSyCQpRkPBlpr47iTciS2-3IEjzRD57XCA8I"
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "TeamUp needs your location to find nearby sports activities and show them on the map."
       }
@@ -24,6 +27,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCQpRkPBlpr47iTciS2-3IEjzRD57XCA8I"
+        }
       },
       "edgeToEdgeEnabled": true,
       "package": "com.teamup.mobile",

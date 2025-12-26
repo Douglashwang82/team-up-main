@@ -1,6 +1,7 @@
 import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_, or_
+import sqlalchemy as sa
 from datetime import datetime
 
 from app.models.ticket import Ticket
@@ -9,6 +10,7 @@ from app.models.notification import Notification
 from app.models.user import User
 from app.models.venue import Venue, Court, TimeSlot
 from app.models.booking import Booking
+from app.core.constants import SYSTEM_USER_ID
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,7 @@ def process_ticket(db: Session, ticket: Ticket):
     # 1. Search for existing Open Events
     matched_events = find_existing_events(db, ticket)
     if matched_events:
+        print("Found existing events for ticket", ticket.id)
         match_with_events(db, ticket, matched_events)
         return
 
@@ -115,71 +118,171 @@ def match_with_events(db: Session, ticket: Ticket, events: list[Event]):
 
 def match_with_other_tickets(db: Session, ticket: Ticket):
     """
-    Find other open tickets to form a new TeamUp.
+    Find other open tickets to form a new Event.
+    Requires sport-specific minimum players and available timeslots.
     """
-    # Criteria: Same Date, Similar Time, Same Sport, Same Intensity, Price overlap
+    # Define minimum players required per sport
+    MIN_PLAYERS = {
+        'basketball': 5,
+        'tennis': 2,
+        'badminton': 2,
+        'soccer': 5,
+        'volleyball': 4,
+    }
     
+    # Get minimum required for this sport (default to 2)
+    min_required = MIN_PLAYERS.get(ticket.sport_type.lower(), 2)
+    
+    # Criteria: Same Date, Similar Time, Same Sport, Same Intensity
     query = select(Ticket).where(
         Ticket.id != ticket.id,
         Ticket.status == 'open',
         Ticket.date == ticket.date,
         Ticket.sport_type == ticket.sport_type,
         Ticket.intensity == ticket.intensity,
-        # Price overlap logic could be added here
     )
     
     candidates = db.scalars(query).all()
     
     matches = []
     for candidate in candidates:
-        # Check time overlap/proximity
+        # Check time overlap/proximity (within 1 hour)
         time_diff = (candidate.start_time.hour * 60 + candidate.start_time.minute) - \
                     (ticket.start_time.hour * 60 + ticket.start_time.minute)
         
-        if abs(time_diff) <= 60: # Within 1 hour
-            matches.append(candidate)
+        if abs(time_diff) > 60:
+            continue
+        
+        # Check venue_id overlap (both tickets now have venue preferences)
+        common_venues = set(ticket.venue_ids) & set(candidate.venue_ids)
+        if not common_venues:
+            # No common venue preferences - skip this candidate
+            continue
+        
+        matches.append(candidate)
     
-    # Logic: If we have enough people? 
-    # Requirement: "If results meet conditions, system automatically generates Event"
-    # What is "meet conditions"? Usually min players.
-    # Let's assume min 2 for now for MVP (e.g. Tennis, Badminton).
+    # Check if we have enough players (including the primary ticket)
+    total_players = len(matches) + 1
     
-    if len(matches) >= 1: # Found at least 1 other person (total 2)
-        create_event_from_tickets(db, ticket, matches)
+    if total_players < min_required:
+        logger.info(f"Not enough players for {ticket.sport_type}: {total_players}/{min_required}")
+        return
+    
+    # Check if there's an available timeslot
+    available_timeslot = find_available_timeslot(db, ticket)
+    
+    if not available_timeslot:
+        logger.warning(f"No available timeslot found for matched tickets (sport: {ticket.sport_type})")
+        return
+    
+    # We have enough players and a timeslot - create the event!
+    logger.info(f"Creating event for {total_players} players ({ticket.sport_type})")
+    create_event_from_tickets(db, ticket, matches)
 
 def create_event_from_tickets(db: Session, primary_ticket: Ticket, other_tickets: list[Ticket]):
     """
-    Create a new Event from a group of tickets.
+    Create a new Event from a group of tickets and automatically book a timeslot.
     """
     logger.info(f"Creating event for tickets {primary_ticket.id} and {[t.id for t in other_tickets]}")
     
-    # 1. Create Event
-    # We need a venue. Use the primary ticket's preferred venue or a default?
-    # For now, we won't actually book a venue (that's complex), just create the Event intent.
-    # Or we need to pick a venue from the intersection of venue_ids.
+    # 1. Find an available timeslot that matches the ticket criteria
+    available_timeslot = find_available_timeslot(db, primary_ticket)
     
+    if not available_timeslot:
+        logger.warning(f"No available timeslot found for ticket {primary_ticket.id}")
+        # Still create the event but without a booking
+        # The owner can manually book later
+    
+    # 2. Create Event (owned by system user - all participants are equal)
     event = Event(
-        title=f"{primary_ticket.sport_type} Match",
-        description=f"Auto-generated match for {primary_ticket.sport_type}",
-        owner_user_id=primary_ticket.user_id, # Assign primary as owner
-        max_participants=len(other_tickets) + 1 + 2, # Add some buffer
+        title=f"🤖 {primary_ticket.sport_type.title()} Match",
+        description=f"Auto-generated match for {primary_ticket.sport_type}. Created by Team-Up matching service.",
+        owner_user_id=SYSTEM_USER_ID,  # System user owns auto-generated events
+        max_participants=len(other_tickets) + 1 + 2,  # Add some buffer
         visibility='public',
         status='open'
     )
     db.add(event)
     db.flush() # Get ID
     
-    # 2. Notify all users
+    # 3. Create booking if timeslot was found (owned by system user)
+    if available_timeslot:
+        booking = Booking(
+            owner_user_id=SYSTEM_USER_ID,  # System user owns the booking
+            time_slot_id=available_timeslot.id,
+            event_id=event.id,
+            status='confirmed',
+            payment_status='none'
+        )
+        db.add(booking)
+        logger.info(f"Created booking {booking.id} for event {event.id} at timeslot {available_timeslot.id}")
+    
+    # 4. Notify all users
     all_tickets = [primary_ticket] + other_tickets
     for t in all_tickets:
         t.status = 'matched'
         
+        message = f"Match found! A new event has been created: {event.title}"
+        if available_timeslot:
+            message += f" at {available_timeslot.starts_at.strftime('%Y-%m-%d %H:%M')}"
+        
         notification = Notification(
             user_id=t.user_id,
-            message=f"Match found! A new event has been created: {event.title}",
+            message=message,
             type="event_created",
             related_event_ids=[event.id]
         )
         db.add(notification)
         
     db.commit()
+    logger.info(f"Event {event.id} created successfully with {len(all_tickets)} participants")
+
+
+def find_available_timeslot(db: Session, ticket: Ticket) -> TimeSlot | None:
+    """
+    Find an available timeslot that matches the ticket's preferences.
+    Returns the first available timeslot or None if no match found.
+    """
+    ticket_start_dt = datetime.combine(ticket.date, ticket.start_time)
+    
+    # Build query for available timeslots
+    stmt = (
+        select(TimeSlot)
+        .join(Court, TimeSlot.court)
+        .outerjoin(Booking, TimeSlot.bookings)
+        .where(
+            # Match sport type
+            Court.sport_type == ticket.sport_type,
+            # Match date
+            sa.func.date(TimeSlot.starts_at) == ticket.date,
+            # Match time (within 1 hour)
+            sa.func.abs(
+                sa.func.extract('epoch', TimeSlot.starts_at - ticket_start_dt)
+            ) <= 3600,
+            # Is bookable
+            TimeSlot.is_bookable == True,
+            # No existing booking (available)
+            Booking.id == None
+        )
+    )
+    
+    # Filter by venue preferences (now required)
+    stmt = stmt.join(Venue, Court.venue).where(
+        Venue.id.in_(ticket.venue_ids)
+    )
+    
+    # Filter by price range if specified
+    if ticket.price_min is not None:
+        stmt = stmt.where(TimeSlot.price_cents >= ticket.price_min)
+    if ticket.price_max is not None:
+        stmt = stmt.where(TimeSlot.price_cents <= ticket.price_max)
+    
+    # Get first available timeslot
+    result = db.execute(stmt).first()
+    
+    if result:
+        logger.info(f"Found available timeslot {result[0].id} for ticket {ticket.id}")
+        return result[0]
+    
+    logger.info(f"No available timeslot found for ticket {ticket.id}")
+    return None

@@ -34,11 +34,12 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      await signup(email, password, firstName, lastName);
+      const displayName = `${firstName} ${lastName}`;
+      await signup(email, password, displayName);
       // Navigation will be handled automatically by the root layout
     } catch (error) {
       setLoading(false);
-      setErrors({ email: 'Signup failed. Please try again.' });
+      setErrors({ email: error instanceof Error ? error.message : 'Signup failed. Please try again.' });
     }
   };
 

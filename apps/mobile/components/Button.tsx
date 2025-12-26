@@ -49,7 +49,7 @@ export default function Button({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? Colors.primary[600] : Colors.white} />
+        <ActivityIndicator color={variant === 'outline' ? Colors.error[500] : Colors.white} />
       ) : (
         <Text style={textStyles}>{title}</Text>
       )}
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: Colors.gray[300],
+    borderColor: Colors.error[500],
   },
   small: {
     paddingVertical: 8,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   outlineText: {
-    color: Colors.gray[700],
+    color: Colors.error[500],
   },
   smallText: {
     fontSize: 14,

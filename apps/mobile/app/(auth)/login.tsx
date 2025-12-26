@@ -44,8 +44,7 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue to TeamUp</Text>
+            <Text style={styles.title}>WETEAM</Text>
           </View>
 
           <View style={styles.form}>
@@ -97,7 +96,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.gray[900],
   },
   keyboardView: {
     flex: 1,
@@ -113,12 +112,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: Colors.gray[900],
+    color: Colors.white,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.gray[600],
+    color: Colors.gray[400],
   },
   form: {
     width: '100%',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   forgotPasswordText: {
-    color: Colors.primary[600],
+    color: Colors.primary[400],
     fontSize: 14,
     fontWeight: '600',
   },
@@ -141,11 +141,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signupText: {
-    color: Colors.gray[600],
+    color: Colors.gray[400],
     fontSize: 14,
   },
   signupLink: {
-    color: Colors.primary[600],
+    color: Colors.primary[400],
     fontSize: 14,
     fontWeight: '600',
   },

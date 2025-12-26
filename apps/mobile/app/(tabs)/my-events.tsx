@@ -1,38 +1,63 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import TeamUpCard from '../../components/TeamUpCard';
+import { EventOut } from '@team-up-main/api-client';
+import EventCard from '../../components/EventCard';
 import { Colors } from '../../constants/Colors';
+import { apis } from '../../lib/api';
 
-// Mock data for now
-const mockMyTeamUps = [
-  {
-    id: '1',
-    title: 'My Basketball Game',
-    description: 'Weekly basketball game I organized',
-    status: 'open',
-    visibility: 'public',
-    currentParticipants: 8,
-    maxParticipants: 10,
-    createdAt: new Date().toISOString(),
-  },
-];
-
-export default function MyTeamUpsScreen() {
+export default function MyEventsScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [teamups, setTeamups] = useState(mockMyTeamUps);
+  const [createdEvents, setCreatedEvents] = useState<EventOut[]>([]);
+  const [joinedEvents, setJoinedEvents] = useState<EventOut[]>([]);
+  const [pendingEvents, setPendingEvents] = useState<EventOut[]>([]);
   const [activeTab, setActiveTab] = useState<'created' | 'joined'>('created');
+
+  // Fetch created events
+  const fetchCreatedEvents = async () => {
+    try {
+      const data = await apis.events.getMyCreatedEvents();
+      setCreatedEvents(data);
+    } catch (error) {
+      console.error('Failed to fetch created events:', error);
+    }
+  };
+
+  // Fetch joined events and pending requests
+  const fetchJoinedEvents = async () => {
+    try {
+      const [joined, pending] = await Promise.all([
+        apis.events.getMyJoinedEvents(),
+        apis.events.getMyPendingEvents(),
+      ]);
+      setJoinedEvents(joined);
+      setPendingEvents(pending);
+    } catch (error) {
+      console.error('Failed to fetch joined events:', error);
+    }
+  };
+
+  // Load data when tab changes
+  useEffect(() => {
+    setIsLoading(true);
+
+    if (activeTab === 'created') {
+      fetchCreatedEvents().finally(() => setIsLoading(false));
+    } else {
+      fetchJoinedEvents().finally(() => setIsLoading(false));
+    }
+  }, [activeTab]);
+
+  // Get events to display based on active tab
+  const displayEvents = activeTab === 'created'
+    ? createdEvents
+    : [...joinedEvents, ...pendingEvents];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My TeamUps</Text>
-        <Text style={styles.subtitle}>Manage your activities</Text>
-      </View>
-
       <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'created' && styles.tabActive]}
@@ -55,22 +80,22 @@ export default function MyTeamUpsScreen() {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary[600]} />
-          <Text style={styles.loadingText}>Loading your TeamUps...</Text>
+          <Text style={styles.loadingText}>Loading your Events...</Text>
         </View>
-      ) : teamups.length === 0 ? (
+      ) : displayEvents.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="calendar-outline" size={80} color={Colors.gray[400]} />
-          <Text style={styles.emptyTitle}>No TeamUps Yet</Text>
+          <Text style={styles.emptyTitle}>No Events Yet</Text>
           <Text style={styles.emptySubtitle}>
             {activeTab === 'created'
-              ? 'Create your first TeamUp to get started!'
-              : 'Join a TeamUp to see it here!'}
+              ? 'Create your first Event to get started!'
+              : 'Join an Event to see it here!'}
           </Text>
         </View>
       ) : (
         <FlatList
-          data={teamups}
-          renderItem={({ item }) => <TeamUpCard teamup={item} />}
+          data={displayEvents}
+          renderItem={({ item }) => <EventCard event={item} />}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -83,31 +108,31 @@ export default function MyTeamUpsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.gray[900],
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.gray[900],
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[200],
+    borderBottomColor: Colors.gray[800],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.gray[900],
+    color: Colors.white,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.gray[600],
+    color: Colors.gray[400],
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.gray[900],
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[200],
+    borderBottomColor: Colors.gray[800],
   },
   tab: {
     flex: 1,
@@ -122,10 +147,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.gray[500],
+    color: Colors.gray[400],
   },
   tabTextActive: {
-    color: Colors.primary[600],
+    color: Colors.primary[400],
   },
   list: {
     padding: 20,
@@ -138,7 +163,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: Colors.gray[600],
+    color: Colors.gray[400],
   },
   emptyContainer: {
     flex: 1,
@@ -149,13 +174,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.gray[900],
+    color: Colors.white,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: Colors.gray[600],
+    color: Colors.gray[400],
     textAlign: 'center',
   },
 });

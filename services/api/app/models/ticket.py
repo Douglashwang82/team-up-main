@@ -20,8 +20,8 @@ class Ticket(Base):
     sport_type: Mapped[str] = mapped_column(sa.Text, nullable=False)
     intensity: Mapped[str] = mapped_column(sa.Text, nullable=False) # Low, Medium, High
     
-    # Venue preferences (can be multiple)
-    venue_ids: Mapped[list[uuid.UUID] | None] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=True)
+    # Venue preferences (required - at least one venue)
+    venue_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False)
 
     # Price range
     price_min: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)

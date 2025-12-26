@@ -5,6 +5,7 @@ import { TicketOut } from '@team-up-main/api-client';
 import { apis } from '../../lib/api';
 import { useAuth } from '../../lib/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../../constants/Colors';
 
 export default function TicketsScreen() {
     const router = useRouter();
@@ -37,39 +38,44 @@ export default function TicketsScreen() {
     };
 
     const renderItem = ({ item }: { item: TicketOut }) => (
-        <View style={styles.card}>
-            <View style={styles.header}>
-                <Text style={styles.sportType}>{item.sportType}</Text>
-                <View style={[
-                    styles.statusBadge,
-                    item.status === 'matched' ? styles.statusMatched :
-                        item.status === 'expired' ? styles.statusExpired : styles.statusOpen
-                ]}>
-                    <Text style={[
-                        styles.statusText,
-                        item.status === 'matched' ? styles.textMatched :
-                            item.status === 'expired' ? styles.textExpired : styles.textOpen
+        <TouchableOpacity
+            onPress={() => router.push(`/ticket/${item.id}`)}
+            activeOpacity={0.7}
+        >
+            <View style={styles.card}>
+                <View style={styles.header}>
+                    <Text style={styles.sportType}>{item.sportType}</Text>
+                    <View style={[
+                        styles.statusBadge,
+                        item.status === 'matched' ? styles.statusMatched :
+                            item.status === 'expired' ? styles.statusExpired : styles.statusOpen
                     ]}>
-                        {item.status.toUpperCase()}
-                    </Text>
+                        <Text style={[
+                            styles.statusText,
+                            item.status === 'matched' ? styles.textMatched :
+                                item.status === 'expired' ? styles.textExpired : styles.textOpen
+                        ]}>
+                            {item.status.toUpperCase()}
+                        </Text>
+                    </View>
                 </View>
-            </View>
 
-            <View style={styles.details}>
-                <View style={styles.detailRow}>
-                    <Ionicons name="calendar-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>{item.date.toLocaleDateString()}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <Ionicons name="time-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>{item.startTime}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <Ionicons name="fitness-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>{item.intensity}</Text>
+                <View style={styles.details}>
+                    <View style={styles.detailRow}>
+                        <Ionicons name="calendar-outline" size={16} color={Colors.gray[400]} />
+                        <Text style={styles.detailText}>{item.date.toLocaleDateString()}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Ionicons name="time-outline" size={16} color={Colors.gray[400]} />
+                        <Text style={styles.detailText}>{item.startTime}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Ionicons name="fitness-outline" size={16} color={Colors.gray[400]} />
+                        <Text style={styles.detailText}>{item.intensity}</Text>
+                    </View>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 
     return (
@@ -86,7 +92,7 @@ export default function TicketsScreen() {
 
             {loading ? (
                 <View style={styles.center}>
-                    <Text>Loading...</Text>
+                    <Text style={styles.loadingText}>Loading...</Text>
                 </View>
             ) : tickets.length === 0 ? (
                 <View style={styles.center}>
@@ -100,7 +106,12 @@ export default function TicketsScreen() {
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.list}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={Colors.primary[600]}
+                            colors={[Colors.primary[600]]}
+                        />
                     }
                 />
             )}
@@ -111,24 +122,24 @@ export default function TicketsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: Colors.gray[900],
     },
     topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: 'white',
+        backgroundColor: Colors.gray[900],
         borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
+        borderBottomColor: Colors.gray[800],
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
+        color: Colors.white,
     },
     createButton: {
-        backgroundColor: '#2563eb',
+        backgroundColor: Colors.primary[600],
         width: 40,
         height: 40,
         borderRadius: 20,
@@ -139,7 +150,7 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     card: {
-        backgroundColor: 'white',
+        backgroundColor: Colors.gray[900],
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
@@ -148,6 +159,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+        borderWidth: 1,
+        borderColor: Colors.gray[800],
     },
     header: {
         flexDirection: 'row',
@@ -158,7 +171,7 @@ const styles = StyleSheet.create({
     sportType: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1f2937',
+        color: Colors.white,
         textTransform: 'capitalize',
     },
     statusBadge: {
@@ -167,26 +180,26 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     statusOpen: {
-        backgroundColor: '#dbeafe',
+        backgroundColor: Colors.primary[900],
     },
     statusMatched: {
-        backgroundColor: '#dcfce7',
+        backgroundColor: Colors.success[700],
     },
     statusExpired: {
-        backgroundColor: '#f3f4f6',
+        backgroundColor: Colors.gray[800],
     },
     statusText: {
         fontSize: 12,
         fontWeight: 'bold',
     },
     textOpen: {
-        color: '#1e40af',
+        color: Colors.primary[400],
     },
     textMatched: {
-        color: '#166534',
+        color: Colors.success[500],
     },
     textExpired: {
-        color: '#374151',
+        color: Colors.gray[400],
     },
     details: {
         flexDirection: 'row',
@@ -198,7 +211,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         marginLeft: 4,
-        color: '#666',
+        color: Colors.gray[400],
         fontSize: 14,
     },
     center: {
@@ -206,13 +219,17 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    loadingText: {
+        fontSize: 16,
+        color: Colors.gray[400],
+    },
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#333',
+        color: Colors.white,
     },
     emptySubText: {
         marginTop: 8,
-        color: '#666',
+        color: Colors.gray[400],
     },
 });

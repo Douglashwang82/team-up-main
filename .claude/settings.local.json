@@ -35,7 +35,10 @@
       "Bash(pip install:*)",
       "Bash(pytest:*)",
       "Bash(docker-compose up:*)",
-      "Bash(DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5433/team_up pytest:*)"
+      "Bash(DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5433/team_up pytest:*)",
+      "Bash(npx expo start:*)",
+      "Bash(watchman watch-del-all:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

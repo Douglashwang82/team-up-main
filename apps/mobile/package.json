@@ -15,6 +15,8 @@
     "@react-native-community/datetimepicker": "8.4.4",
     "@team-up-main/api-client": "workspace:*",
     "expo": "^54.0.0",
+    "expo-blur": "^15.0.7",
+    "expo-linear-gradient": "~15.0.8",
     "expo-linking": "^8.0.9",
     "expo-location": "~19.0.7",
     "expo-router": "^6.0.14",
@@ -28,8 +30,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.2.7",
-    "@types/react-dom": "^19.0.0",
+    "@types/react": "~19.1.10",
+    "@types/react-dom": "~19.1.7",
     "typescript": "~5.9.2"
   },
   "private": true

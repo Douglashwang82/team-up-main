@@ -13,11 +13,11 @@ export default function Card({ children, style }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.gray[900],
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.gray[200],
+    borderColor: Colors.gray[800],
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,

@@ -666,6 +666,67 @@ paths:
         '404':
           description: Event or request not found
 
+  /events/my/created:
+    get:
+      tags: [Events]
+      summary: Get events created by the authenticated user
+      description: Returns all events owned by the authenticated user
+      operationId: getMyCreatedEvents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of created events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventOut'
+        '401':
+          description: Unauthorized
+
+  /events/my/joined:
+    get:
+      tags: [Events]
+      summary: Get events joined by the authenticated user
+      description: Returns all events where the authenticated user is a participant (member role)
+      operationId: getMyJoinedEvents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of joined events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventOut'
+        '401':
+          description: Unauthorized
+
+  /events/my/pending:
+    get:
+      tags: [Events]
+      summary: Get events with pending join requests
+      description: Returns all events where the authenticated user has submitted join requests
+      operationId: getMyPendingEvents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of events with pending join requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventOut'
+        '401':
+          description: Unauthorized
+
+
   # ============================================================================
   # TICKET ROUTES
   # ============================================================================
@@ -711,6 +772,34 @@ paths:
                   $ref: '#/components/schemas/TicketOut'
         '401':
           description: Unauthorized
+
+  /tickets/{ticket_id}:
+    get:
+      tags: [Tickets]
+      summary: Get ticket details with matched events
+      operationId: getTicket
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket details with matched events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetailOut'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not the ticket owner
+        '404':
+          description: Ticket not found
 
   # ============================================================================
   # NOTIFICATION ROUTES
@@ -862,6 +951,14 @@ components:
         city:
           type: string
           nullable: true
+        latitude:
+          type: number
+          format: float
+          nullable: true
+        longitude:
+          type: number
+          format: float
+          nullable: true
         distance_meters:
           type: number
           format: float
@@ -881,6 +978,14 @@ components:
           type: string
         city:
           type: string
+          nullable: true
+        latitude:
+          type: number
+          format: float
+          nullable: true
+        longitude:
+          type: number
+          format: float
           nullable: true
         contact_phone:
           type: string
@@ -1311,7 +1416,7 @@ components:
     # ========================================================================
     TicketCreateIn:
       type: object
-      required: [date, start_time, duration_minutes, sport_type, intensity]
+      required: [date, start_time, duration_minutes, sport_type, intensity, venue_ids]
       properties:
         date:
           type: string
@@ -1335,7 +1440,8 @@ components:
           items:
             type: string
             format: uuid
-          nullable: true
+          minItems: 1
+          description: At least one venue ID is required
         price_min:
           type: integer
           nullable: true
@@ -1370,6 +1476,71 @@ components:
           format: date-time
         message:
           type: string
+          nullable: true
+
+    TicketDetailOut:
+      type: object
+      required: [id, date, start_time, duration_minutes, sport_type, intensity, status, created_at, matched_events]
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+        duration_minutes:
+          type: integer
+        sport_type:
+          type: string
+        intensity:
+          type: string
+        venue_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+        price_min:
+          type: integer
+          nullable: true
+        price_max:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [open, matched, expired]
+        created_at:
+          type: string
+          format: date-time
+        matched_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedEventSummary'
+
+    MatchedEventSummary:
+      type: object
+      required: [id, title, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        sport_type:
+          type: string
+        status:
+          type: string
+          enum: [open, closed]
+        start_time:
+          type: string
+          format: date-time
           nullable: true
 
     # ========================================================================

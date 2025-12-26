@@ -423,6 +423,131 @@ def get_event(event_id):
             "updated_at": event.updated_at.isoformat(),
         })
 
+# ===[ Get Events Created by User ]===
+@bp.get("/my/created")
+@require_auth
+def get_my_created_events():
+    """Get Events created/owned by the authenticated user"""
+    with SessionLocal() as s:
+        events = s.execute(
+            select(Event)
+            .where(Event.owner_user_id == g.user_id)
+            .order_by(desc(Event.created_at))
+        ).scalars().all()
+        
+        event_list = []
+        for event in events:
+            # Calculate participant count
+            participant_count = s.scalar(
+                select(func.count()).select_from(EventParticipant)
+                .where(EventParticipant.event_id == event.id)
+            ) or 0
+            
+            event_list.append({
+                "id": str(event.id),
+                "title": event.title,
+                "description": event.description,
+                "status": event.status,
+                "max_participants": event.max_participants,
+                "current_participants": participant_count,
+                "owner_user_id": str(event.owner_user_id),
+                "visibility": event.visibility,
+                "duration_type": event.duration_type,
+                "created_at": event.created_at.isoformat(),
+                "updated_at": event.updated_at.isoformat(),
+            })
+        
+        return jsonify(event_list)
+
+# ===[ Get Events User Has Joined ]===
+@bp.get("/my/joined")
+@require_auth
+def get_my_joined_events():
+    """Get Events where the authenticated user is a participant (excluding owned events)"""
+    with SessionLocal() as s:
+        # Get events where user is a participant but not the owner
+        participants = s.execute(
+            select(EventParticipant, Event).join(
+                Event, EventParticipant.event_id == Event.id
+            ).where(
+                and_(
+                    EventParticipant.user_id == g.user_id,
+                    EventParticipant.role == "member"  # Exclude owner role
+                )
+            ).order_by(desc(EventParticipant.created_at))
+        ).all()
+        
+        event_list = []
+        for participant, event in participants:
+            # Calculate participant count
+            participant_count = s.scalar(
+                select(func.count()).select_from(EventParticipant)
+                .where(EventParticipant.event_id == event.id)
+            ) or 0
+            
+            event_list.append({
+                "id": str(event.id),
+                "title": event.title,
+                "description": event.description,
+                "status": event.status,
+                "max_participants": event.max_participants,
+                "current_participants": participant_count,
+                "owner_user_id": str(event.owner_user_id),
+                "visibility": event.visibility,
+                "duration_type": event.duration_type,
+                "created_at": event.created_at.isoformat(),
+                "updated_at": event.updated_at.isoformat(),
+                "joined_at": participant.created_at.isoformat(),
+            })
+        
+        return jsonify(event_list)
+
+# ===[ Get Events with Pending Join Requests ]===
+@bp.get("/my/pending")
+@require_auth
+def get_my_pending_events():
+    """Get Events where the authenticated user has submitted join requests"""
+    with SessionLocal() as s:
+        # Get events where user has pending join requests
+        join_requests = s.execute(
+            select(JoinRequest, Event).join(
+                Event, JoinRequest.event_id == Event.id
+            ).where(
+                and_(
+                    JoinRequest.applicant_user_id == g.user_id,
+                    JoinRequest.status == "submitted"
+                )
+            ).order_by(desc(JoinRequest.created_at))
+        ).all()
+        
+        event_list = []
+        for join_request, event in join_requests:
+            # Calculate participant count
+            participant_count = s.scalar(
+                select(func.count()).select_from(EventParticipant)
+                .where(EventParticipant.event_id == event.id)
+            ) or 0
+            
+            event_list.append({
+                "id": str(event.id),
+                "title": event.title,
+                "description": event.description,
+                "status": event.status,
+                "max_participants": event.max_participants,
+                "current_participants": participant_count,
+                "owner_user_id": str(event.owner_user_id),
+                "visibility": event.visibility,
+                "duration_type": event.duration_type,
+                "created_at": event.created_at.isoformat(),
+                "updated_at": event.updated_at.isoformat(),
+                "join_request_id": str(join_request.id),
+                "join_request_status": join_request.status,
+                "join_request_created_at": join_request.created_at.isoformat(),
+            })
+        
+        return jsonify(event_list)
+
+
 # ===[ Join Event ]===
 @bp.post("/<uuid:event_id>/join")
 @optional_auth

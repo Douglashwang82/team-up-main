@@ -37,9 +37,7 @@ def signup():
 
 @bp.post("/login")
 def login():
-    print("Login endpoint called", request.get_json())
     data = LoginIn(**request.get_json())
-    print(data.email, data.password)
     with SessionLocal() as s:
         u = s.scalar(select(User).where(User.email == data.email))
         if not u or not bcrypt.verify(data.password, u.password_hash):
@@ -92,5 +90,4 @@ def update_me():
     except Exception as e:
         s.rollback()
         return jsonify({"error": "update_failed", "details": str(e)}), 500
-    print('successfully updated user profile:', {"id": str(u.id), "email": u.email, "display_name": u.display_name})
     return jsonify({"id": str(u.id), "email": u.email, "display_name": u.display_name})

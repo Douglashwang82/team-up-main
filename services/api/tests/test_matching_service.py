@@ -2,32 +2,35 @@ import pytest
 from datetime import date, time, datetime, timedelta
 from app.models import Ticket, Event, User, Venue, Notification
 from app.services.matching_service import process_ticket
+from app.core.constants import SYSTEM_USER_ID
 
 # Note: db, user, and user2 fixtures are provided by conftest.py
 
-def test_create_ticket(db, user):
+def test_create_ticket(db, user, venue):
     ticket = Ticket(
         user_id=user.id,
-        date=date(2025, 11, 20),
-        start_time=time(18, 0),
+        date=date.today() + timedelta(days=1),
+        start_time=time(10, 0),
         duration_minutes=60,
         sport_type="basketball",
-        intensity="Medium"
+        intensity="Medium",
+        venue_ids=[venue.id]
     )
     db.add(ticket)
     db.commit()
     assert ticket.id is not None
     assert ticket.status == "open"
 
-def test_matching_service_create_event(db, user, user2):
+def test_matching_service_create_event(db, user, user2, venue):
     # Create and process first ticket (should remain open - no matches)
     ticket1 = Ticket(
         user_id=user.id,
-        date=date(2025, 11, 21),
-        start_time=time(19, 0),
+        date=date.today() + timedelta(days=1),
+        start_time=time(10, 0),
         duration_minutes=60,
         sport_type="tennis",
-        intensity="Medium"
+        intensity="Medium",
+        venue_ids=[venue.id]
     )
     db.add(ticket1)
     db.commit()
@@ -41,11 +44,12 @@ def test_matching_service_create_event(db, user, user2):
     # Create second matching ticket
     ticket2 = Ticket(
         user_id=user2.id,
-        date=date(2025, 11, 21),
-        start_time=time(19, 0),
+        date=date.today() + timedelta(days=1),
+        start_time=time(10, 0),
         duration_minutes=60,
         sport_type="tennis",
-        intensity="Medium"
+        intensity="Medium",
+        venue_ids=[venue.id]
     )
     db.add(ticket2)
     db.commit()
@@ -61,9 +65,10 @@ def test_matching_service_create_event(db, user, user2):
     assert ticket2.status == "matched"
     
     # Check if event was created
-    event = db.query(Event).filter(Event.title.like("tennis Match%")).first()
+    event = db.query(Event).filter(Event.title.like("%Match%")).first()
     assert event is not None
     assert event.status == "open"
+    assert event.owner_user_id == SYSTEM_USER_ID
     
     # Check notifications
     notif1 = db.query(Notification).filter(Notification.user_id == user.id).first()

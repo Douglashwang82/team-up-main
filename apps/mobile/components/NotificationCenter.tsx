@@ -53,15 +53,15 @@ export default function NotificationCenter() {
                         text: "Join",
                         onPress: async () => {
                             try {
-                                await apis.teamups.joinTeamup({
-                                    teamupId: notification.relatedEntityId!,
+                                await apis.events.joinEvent({
+                                    eventId: notification.relatedEntityId!,
                                     joinRequestCreateIn: { message: "Joined via match notification" }
                                 });
                                 Alert.alert("Success", "You have joined the event!");
                                 markAsRead(notification.id);
                                 setModalVisible(false);
                             } catch (error) {
-                                console.error('Failed to join teamup', error);
+                                console.error('Failed to join event', error);
                                 Alert.alert("Error", "Failed to join event. It might be full or you already joined.");
                             }
                         }

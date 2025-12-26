@@ -40,6 +40,9 @@ class Venue(Base):
         Geography(geometry_type="POINT", srid=4326)
     )
 
+    latitude: Mapped[float] = mapped_column(sa.Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(sa.Float, nullable=False)
+
     contact_phone: Mapped[str | None] = mapped_column(sa.Text)
     # 對接第三方夥伴的代碼，若需要獨一可加 unique=True
     partner_code: Mapped[str | None] = mapped_column(sa.Text)
@@ -123,6 +126,7 @@ class TimeSlot(Base):
         primary_key=True,
         server_default=sa.text("gen_random_uuid()"),
     )
+
     court_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         sa.ForeignKey("courts.id", ondelete="CASCADE"),
@@ -153,6 +157,8 @@ class TimeSlot(Base):
         onupdate=sa.func.now(),
         nullable=False,
     )
+
+
 
     court: Mapped[Court] = relationship(back_populates="time_slots")
 

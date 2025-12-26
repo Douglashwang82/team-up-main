@@ -28,18 +28,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.gray[700],
+    color: Colors.white,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.gray[300],
+    borderColor: Colors.gray[700],
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: Colors.gray[900],
-    backgroundColor: Colors.white,
+    color: Colors.white,
+    backgroundColor: Colors.gray[800],
   },
   inputError: {
     borderColor: Colors.error[500],
