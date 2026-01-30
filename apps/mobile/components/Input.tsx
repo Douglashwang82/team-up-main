@@ -1,6 +1,12 @@
-import React from 'react';
-import { View, TextInput, Text, StyleSheet, TextInputProps } from 'react-native';
-import { Colors } from '../constants/Colors';
+import React from "react";
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  TextInputProps,
+} from "react-native";
+import { Colors } from "../constants/Colors";
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -27,19 +33,19 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: Colors.white,
+    fontWeight: "600",
+    color: Colors.gray[900],
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.gray[700],
+    borderColor: Colors.gray[300],
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: Colors.white,
-    backgroundColor: Colors.gray[800],
+    color: Colors.gray[900],
+    backgroundColor: Colors.gray[100],
   },
   inputError: {
     borderColor: Colors.error[500],

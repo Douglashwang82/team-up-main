@@ -1,12 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Card from '../../components/Card';
-import Button from '../../components/Button';
-import { Colors } from '../../constants/Colors';
-import { useAuth } from '../../lib/AuthContext';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import Card from "../../components/Card";
+import Button from "../../components/Button";
+import { Colors } from "../../constants/Colors";
+import { useAuth } from "../../lib/AuthContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -14,33 +20,33 @@ export default function ProfileScreen() {
 
   const menuItems = [
     {
-      icon: 'person-outline',
-      title: 'Edit Profile',
-      subtitle: 'Update your personal information',
+      icon: "person-outline",
+      title: "編輯個人資料",
+      subtitle: "更新您的個人資訊",
       onPress: () => {
         // TODO: Navigate to edit profile
       },
     },
     {
-      icon: 'notifications-outline',
-      title: 'Notifications',
-      subtitle: 'Manage notification preferences',
+      icon: "notifications-outline",
+      title: "通知設定",
+      subtitle: "管理通知偏好",
       onPress: () => {
         // TODO: Navigate to notifications settings
       },
     },
     {
-      icon: 'shield-checkmark-outline',
-      title: 'Privacy & Security',
-      subtitle: 'Control your privacy settings',
+      icon: "shield-checkmark-outline",
+      title: "隱私與安全",
+      subtitle: "控制您的隱私設定",
       onPress: () => {
         // TODO: Navigate to privacy settings
       },
     },
     {
-      icon: 'help-circle-outline',
-      title: 'Help & Support',
-      subtitle: 'Get help or contact support',
+      icon: "help-circle-outline",
+      title: "幫助與支援",
+      subtitle: "取得幫助或聯繫客服",
       onPress: () => {
         // TODO: Navigate to help
       },
@@ -53,35 +59,35 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Card style={styles.profileCard}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={40} color={Colors.primary[600]} />
+              <Ionicons name="person" size={40} color={Colors.primary} />
             </View>
             <Text style={styles.name}>
-              {user ? `${user.display_name}` : 'John Doe'}
+              {user ? `${user.display_name}` : "John Doe"}
             </Text>
             <Text style={styles.email}>
-              {user?.email || 'john.doe@example.com'}
+              {user?.email || "john.doe@example.com"}
             </Text>
 
             <View style={styles.stats}>
               <View style={styles.stat}>
                 <Text style={styles.statValue}>5</Text>
-                <Text style={styles.statLabel}>Created</Text>
+                <Text style={styles.statLabel}>已建立</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.stat}>
                 <Text style={styles.statValue}>12</Text>
-                <Text style={styles.statLabel}>Joined</Text>
+                <Text style={styles.statLabel}>已加入</Text>
               </View>
             </View>
           </Card>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Settings</Text>
+            <Text style={styles.sectionTitle}>設定</Text>
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
@@ -90,26 +96,34 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.menuIcon}>
-                  <Ionicons name={item.icon as any} size={24} color={Colors.gray[700]} />
+                  <Ionicons
+                    name={item.icon as any}
+                    size={24}
+                    color={Colors.gray[700]}
+                  />
                 </View>
                 <View style={styles.menuContent}>
                   <Text style={styles.menuTitle}>{item.title}</Text>
                   <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Colors.gray[400]} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={Colors.gray[400]}
+                />
               </TouchableOpacity>
             ))}
           </View>
 
           <Button
-            title="Log Out"
+            title="登出"
             onPress={handleLogout}
             variant="outline"
             fullWidth
             style={styles.logoutButton}
           />
 
-          <Text style={styles.version}>Version 1.0.0</Text>
+          <Text style={styles.version}>版本 1.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -119,7 +133,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[900],
+    backgroundColor: Colors.base,
   },
   scrollContent: {
     flexGrow: 1,
@@ -128,89 +142,87 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
-    backgroundColor: Colors.gray[900],
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[800],
+    backgroundColor: Colors.base,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.white,
+    fontWeight: "bold",
+    color: Colors.gray[900],
   },
   content: {
     padding: 20,
   },
   profileCard: {
-    alignItems: 'center',
-    backgroundColor: Colors.gray[800],
+    alignItems: "center",
+    backgroundColor: Colors.white,
     marginBottom: 24,
-    borderColor: Colors.gray[700],
+    borderColor: Colors.gray[200],
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.primary[100],
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: Colors.tertiary,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   name: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.white,
+    fontWeight: "bold",
+    color: Colors.gray[900],
     marginBottom: 4,
   },
   email: {
     fontSize: 14,
-    color: Colors.gray[400],
+    color: Colors.gray[600],
     marginBottom: 20,
   },
   stats: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: Colors.gray[700],
-    width: '100%',
+    borderTopColor: Colors.gray[200],
+    width: "100%",
   },
   stat: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.primary[600],
+    fontWeight: "bold",
+    color: Colors.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.gray[400],
+    color: Colors.gray[600],
   },
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.gray[700],
+    backgroundColor: Colors.gray[200],
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: Colors.gray[300],
+    fontWeight: "600",
+    color: Colors.gray[800],
     marginBottom: 12,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.gray[900],
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: Colors.gray[700],
+    borderColor: Colors.gray[200],
   },
   menuIcon: {
     marginRight: 16,
@@ -220,13 +232,13 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: Colors.white,
+    fontWeight: "600",
+    color: Colors.gray[900],
     marginBottom: 2,
   },
   menuSubtitle: {
     fontSize: 12,
-    color: Colors.gray[400],
+    color: Colors.gray[600],
   },
   logoutButton: {
     marginBottom: 16,
@@ -235,6 +247,6 @@ const styles = StyleSheet.create({
   version: {
     fontSize: 12,
     color: Colors.gray[500],
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

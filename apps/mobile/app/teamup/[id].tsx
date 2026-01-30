@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Card from '../../components/Card';
-import Button from '../../components/Button';
-import { Colors } from '../../constants/Colors';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import Card from "../../components/Card";
+import Button from "../../components/Button";
+import { Colors } from "../../constants/Colors";
 
 export default function TeamUpDetailScreen() {
   const router = useRouter();
@@ -15,20 +21,21 @@ export default function TeamUpDetailScreen() {
   // Mock data - would come from API in real implementation
   const teamup = {
     id: id as string,
-    title: 'Basketball Game - Morning Session',
-    description: 'Join us for a friendly basketball game at the community court. All skill levels welcome! We play every Saturday morning and focus on having fun while getting some exercise.',
-    status: 'open',
-    visibility: 'public',
+    title: "Basketball Game - Morning Session",
+    description:
+      "Join us for a friendly basketball game at the community court. All skill levels welcome! We play every Saturday morning and focus on having fun while getting some exercise.",
+    status: "open",
+    visibility: "public",
     currentParticipants: 8,
     maxParticipants: 10,
     createdAt: new Date().toISOString(),
     organizer: {
-      name: 'John Doe',
-      email: 'john.doe@example.com',
+      name: "John Doe",
+      email: "john.doe@example.com",
     },
     venue: {
-      name: 'Community Sports Center',
-      address: '123 Main St, City, State',
+      name: "Community Sports Center",
+      address: "123 Main St, City, State",
     },
     startTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
     endTime: new Date(Date.now() + 90000000).toISOString(),
@@ -36,9 +43,9 @@ export default function TeamUpDetailScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open':
+      case "open":
         return { bg: Colors.success[100], text: Colors.success[700] };
-      case 'closed':
+      case "closed":
         return { bg: Colors.primary[100], text: Colors.primary[700] };
       default:
         return { bg: Colors.gray[100], text: Colors.gray[700] };
@@ -54,16 +61,22 @@ export default function TeamUpDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Ionicons name="arrow-back" size={24} color={Colors.gray[900]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>TeamUp Details</Text>
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+      >
         <Card style={styles.mainCard}>
           <View style={styles.badges}>
             <View style={[styles.badge, { backgroundColor: statusColor.bg }]}>
@@ -71,9 +84,13 @@ export default function TeamUpDetailScreen() {
                 {teamup.status.toUpperCase()}
               </Text>
             </View>
-            {teamup.visibility === 'private' && (
-              <View style={[styles.badge, { backgroundColor: Colors.gray[100] }]}>
-                <Text style={[styles.badgeText, { color: Colors.gray[700] }]}>PRIVATE</Text>
+            {teamup.visibility === "private" && (
+              <View
+                style={[styles.badge, { backgroundColor: Colors.gray[100] }]}
+              >
+                <Text style={[styles.badgeText, { color: Colors.gray[700] }]}>
+                  PRIVATE
+                </Text>
               </View>
             )}
           </View>
@@ -86,18 +103,29 @@ export default function TeamUpDetailScreen() {
           <Text style={styles.sectionTitle}>Details</Text>
 
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color={Colors.gray[600]} />
+            <Ionicons
+              name="calendar-outline"
+              size={20}
+              color={Colors.gray[600]}
+            />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Date & Time</Text>
               <Text style={styles.infoValue}>
-                {new Date(teamup.startTime).toLocaleDateString()} at{' '}
-                {new Date(teamup.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(teamup.startTime).toLocaleDateString()} at{" "}
+                {new Date(teamup.startTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Text>
             </View>
           </View>
 
           <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={20} color={Colors.gray[600]} />
+            <Ionicons
+              name="location-outline"
+              size={20}
+              color={Colors.gray[600]}
+            />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Venue</Text>
               <Text style={styles.infoValue}>{teamup.venue.name}</Text>
@@ -106,7 +134,11 @@ export default function TeamUpDetailScreen() {
           </View>
 
           <View style={styles.infoRow}>
-            <Ionicons name="person-outline" size={20} color={Colors.gray[600]} />
+            <Ionicons
+              name="person-outline"
+              size={20}
+              color={Colors.gray[600]}
+            />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Organizer</Text>
               <Text style={styles.infoValue}>{teamup.organizer.name}</Text>
@@ -120,7 +152,9 @@ export default function TeamUpDetailScreen() {
             <Text style={styles.participantsCount}>
               {teamup.currentParticipants} / {teamup.maxParticipants} joined
             </Text>
-            <Text style={styles.participantsPercentage}>{Math.round(progress)}%</Text>
+            <Text style={styles.participantsPercentage}>
+              {Math.round(progress)}%
+            </Text>
           </View>
           <View style={styles.progressBar}>
             <View
@@ -128,7 +162,8 @@ export default function TeamUpDetailScreen() {
                 styles.progressFill,
                 {
                   width: `${progress}%`,
-                  backgroundColor: progress >= 90 ? Colors.error[500] : Colors.primary[600],
+                  backgroundColor:
+                    progress >= 90 ? Colors.error[500] : Colors.primary[600],
                 },
               ]}
             />
@@ -137,13 +172,13 @@ export default function TeamUpDetailScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {teamup.status === 'open' && (
+        {teamup.status === "open" && (
           <Button
-            title={hasJoined ? 'Leave TeamUp' : 'Join TeamUp'}
+            title={hasJoined ? "Leave TeamUp" : "Join TeamUp"}
             onPress={handleJoin}
             fullWidth
             size="large"
-            variant={hasJoined ? 'outline' : 'primary'}
+            variant={hasJoined ? "outline" : "primary"}
           />
         )}
       </View>
@@ -154,12 +189,12 @@ export default function TeamUpDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.base,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: Colors.white,
@@ -171,7 +206,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.gray[900],
   },
   headerRight: {
@@ -187,7 +222,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   badges: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginBottom: 16,
   },
@@ -198,11 +233,11 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.gray[900],
     marginBottom: 12,
   },
@@ -216,12 +251,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.gray[900],
     marginBottom: 16,
   },
   infoRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
   },
   infoContent: {
@@ -236,7 +271,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: Colors.gray[900],
-    fontWeight: '500',
+    fontWeight: "500",
   },
   infoSubValue: {
     fontSize: 14,
@@ -247,14 +282,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   participantsInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   participantsCount: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.gray[700],
   },
   participantsPercentage: {
@@ -265,10 +300,10 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: Colors.gray[200],
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 4,
   },
   footer: {

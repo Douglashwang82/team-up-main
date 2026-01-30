@@ -15,6 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "deploymentTarget": "26.0",
       "bundleIdentifier": "com.teamup.mobile",
       "config": {
         "googleMapsApiKey": "AIzaSyCQpRkPBlpr47iTciS2-3IEjzRD57XCA8I"

@@ -1,11 +1,49 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { EventOut } from '@team-up-main/api-client';
-import { Colors } from '../constants/Colors';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Image,
+  Dimensions,
+} from "react-native";
+
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { GlassView } from "expo-glass-effect";
+
+import { EventOut } from "@team-up-main/api-client";
+import { Colors } from "../constants/Colors";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_WIDTH = SCREEN_WIDTH - 24;
+const CARD_HEIGHT = 220; // Taller for immersive image
+const CARD_RADIUS = 24;
+
+const MOCK_IMAGES: Record<string, any> = {
+  "mock-1.png": require("../assets/mock-images/mock-1.png"),
+  "mock-2.png": require("../assets/mock-images/mock-2.png"),
+  "mock-3.png": require("../assets/mock-images/mock-3.png"),
+  "mock-4.png": require("../assets/mock-images/mock-4.png"),
+  "mock-ava-1.png": require("../assets/mock-images/mock-ava-1.png"),
+  "mock-ava-2.png": require("../assets/mock-images/mock-ava-2.png"),
+};
+
+// Simulated extracted colors for mock images to bypass native module requirement
+const MOCK_IMAGE_COLORS: Record<string, string> = {
+  "mock-1.png": "#f97316", // Orange (Basketball)
+  "mock-2.png": "#3b82f6", // Blue (Football)
+  "mock-3.png": "#22c55e", // Green (Running)
+  "mock-4.png": "#a855f7", // Purple (Yoga)
+};
+
+// Mock avatars for attendees
+const MOCK_AVATARS = [
+  require("../assets/mock-images/mock-ava-1.png"),
+  require("../assets/mock-images/mock-ava-2.png"),
+];
 
 interface EventCardProps {
   event: EventOut;
@@ -13,320 +51,349 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
   const router = useRouter();
+  const [extractedColor, setExtractedColor] = React.useState<string | null>(null);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return { bg: Colors.success[700], text: Colors.success[100], border: Colors.success[500] };
-      case 'closed':
-        return { bg: Colors.primary[700], text: Colors.primary[100], border: Colors.primary[500] };
-      default:
-        return { bg: Colors.gray[800], text: Colors.gray[400], border: Colors.gray[500] };
+  React.useEffect(() => {
+    // Simulate color extraction
+    const imageName = (event as any).image;
+    if (imageName && MOCK_IMAGE_COLORS[imageName]) {
+      setExtractedColor(MOCK_IMAGE_COLORS[imageName]);
+    } else {
+      setExtractedColor(null);
     }
+  }, [event]);
+
+  // Helper to get category label
+  const getCategoryLabel = (): string => {
+    const title = event.title?.toLowerCase() || "";
+    if (title.includes("籃球") || title.includes("basketball")) return "籃球";
+    if (title.includes("跑步") || title.includes("run") || title.includes("慢跑")) return "跑步";
+    if (title.includes("足球") || title.includes("soccer") || title.includes("football")) return "足球";
+    if (title.includes("游泳") || title.includes("swim")) return "游泳";
+    if (title.includes("登山") || title.includes("hiking") || title.includes("爬山")) return "登山";
+    if (title.includes("yoga") || title.includes("瑜珈")) return "瑜珈";
+    if (title.includes("健身") || title.includes("fitness")) return "健身";
+    if (title.includes("羽球") || title.includes("badminton")) return "羽球";
+    if (title.includes("網球") || title.includes("tennis")) return "網球";
+    if (title.includes("桌球") || title.includes("ping pong")) return "桌球";
+    return "活動";
   };
 
-  const getProgressPercentage = () => {
-    return Math.min((event.currentParticipants / event.maxParticipants) * 100, 100);
+  // Get category-specific colors for badge
+  const getCategoryColors = (): { bg: string; text: string } => {
+    // 1. Try dynamic color first
+    if (extractedColor) {
+      return { bg: extractedColor, text: "#FFF" };
+    }
+
+    // 2. Fallback to static mapping
+    const title = event.title?.toLowerCase() || "";
+    // Basketball - Orange
+    if (title.includes("籃球") || title.includes("basketball"))
+      return { bg: "rgba(249, 115, 22, 0.8)", text: "#FFF" };
+    // Running - Green
+    if (title.includes("跑步") || title.includes("run") || title.includes("慢跑"))
+      return { bg: "rgba(34, 197, 94, 0.8)", text: "#FFF" };
+    // Football/Soccer - Blue
+    if (title.includes("足球") || title.includes("soccer") || title.includes("football"))
+      return { bg: "rgba(59, 130, 246, 0.8)", text: "#FFF" };
+    // Swimming - Cyan
+    if (title.includes("游泳") || title.includes("swim"))
+      return { bg: "rgba(6, 182, 212, 0.8)", text: "#FFF" };
+    // Hiking - Brown/Earth
+    if (title.includes("登山") || title.includes("hiking") || title.includes("爬山"))
+      return { bg: "rgba(120, 113, 108, 0.8)", text: "#FFF" };
+    // Yoga - Purple
+    if (title.includes("yoga") || title.includes("瑜珈"))
+      return { bg: "rgba(168, 85, 247, 0.8)", text: "#FFF" };
+    // Fitness - Red
+    if (title.includes("健身") || title.includes("fitness"))
+      return { bg: "rgba(239, 68, 68, 0.8)", text: "#FFF" };
+    // Badminton - Teal
+    if (title.includes("羽球") || title.includes("badminton"))
+      return { bg: "rgba(20, 184, 166, 0.8)", text: "#FFF" };
+    // Tennis - Lime
+    if (title.includes("網球") || title.includes("tennis"))
+      return { bg: "rgba(132, 204, 22, 0.8)", text: "#FFF" };
+    // Table Tennis - Pink
+    if (title.includes("桌球") || title.includes("ping pong"))
+      return { bg: "rgba(236, 72, 153, 0.8)", text: "#FFF" };
+    // Default - Golden/Amber
+    return { bg: "rgba(212, 168, 83, 0.8)", text: "#FFF" };
   };
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 90) return Colors.error[500];
-    if (percentage >= 70) return Colors.warning[500];
-    return Colors.primary[600];
+  // Category-based icon for placeholder when no image
+  const getCategoryIcon = (): keyof typeof Ionicons.glyphMap => {
+    const title = event.title?.toLowerCase() || "";
+    if (title.includes("籃球") || title.includes("basketball")) return "basketball-outline";
+    if (title.includes("跑步") || title.includes("run") || title.includes("慢跑")) return "fitness-outline";
+    if (title.includes("足球") || title.includes("soccer") || title.includes("football")) return "football-outline";
+    if (title.includes("游泳") || title.includes("swim")) return "water-outline";
+    if (title.includes("登山") || title.includes("hiking") || title.includes("爬山")) return "trail-sign-outline";
+    if (title.includes("yoga") || title.includes("瑜珈")) return "body-outline";
+    // Generic fallback mapping based on common keywords if image is missing
+    if (title.includes("羽球") || title.includes("badminton")) return "tennisball-outline";
+    if (title.includes("網球") || title.includes("tennis")) return "tennisball-outline";
+    if (title.includes("桌球") || title.includes("ping pong")) return "ellipse-outline";
+    return "trophy-outline";
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    };
-    return date.toLocaleDateString('en-US', options);
+  const formatDate = (date: string | Date) => {
+    const d = new Date(date);
+    const weekdays = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+    const weekday = weekdays[d.getDay()];
+    return `${weekday}, ${d.getMonth() + 1}月${d.getDate()}日`;
   };
 
-  const statusColor = getStatusColor(event.status);
-  const progress = getProgressPercentage();
-  const progressColor = getProgressColor(progress);
+  // Get venue name or placeholder
+  const getVenueName = () => {
+    const title = event.title?.toLowerCase() || "";
+    if (title.includes("籃球")) return "籃球場";
+    if (title.includes("足球")) return "足球場";
+    if (title.includes("游泳")) return "游泳池";
+    if (title.includes("健身")) return "健身房";
+    return "運動場地";
+  };
+
+  // Calculate friends going (mock data for now)
+  const friendsGoing = Math.max(0, event.currentParticipants - 1);
+
+  // Calculate dynamic tint for the bottom glass pane
+  const bottomPaneTint = extractedColor ? extractedColor : 'rgba(255,255,255,0.65)';
+  const bottomPaneStyle = {
+    backgroundColor: extractedColor ? undefined : 'rgba(255,255,255,0.65)'
+  };
 
   return (
     <TouchableOpacity
-      onPress={() => router.push(`/event/${event.id}`)}
-      activeOpacity={0.8}
+      activeOpacity={0.9}
+      onPress={() => router.push(`/event/${event.id}` as any)}
       style={styles.container}
     >
-      <View style={styles.shadowContainer}>
-        {/* Accent gradient on left edge */}
-        <LinearGradient
-          colors={[Colors.primary[500], Colors.primary[700]]}
-          style={styles.accentBar}
+      {/* 1. Background Image Layer */}
+      <View style={StyleSheet.absoluteFillObject}>
+        {(event as any).image && MOCK_IMAGES[(event as any).image] ? (
+          <Image
+            source={MOCK_IMAGES[(event as any).image]}
+            style={styles.bgImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <LinearGradient
+            colors={["#f5c6a0", "#f8e1c8"]} // Fallback gradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.bgImage}
+          >
+            <Ionicons
+              name={getCategoryIcon()}
+              size={80}
+              color="rgba(255,255,255,0.5)"
+              style={{ position: 'absolute', bottom: -10, right: -10 }}
+            />
+          </LinearGradient>
+        )}
+      </View>
+
+      {/* 2. Floating Badges (Top) */}
+      <View style={styles.topBadgesContainer}>
+        {/* Category Pill */}
+        <View style={[styles.glassPill, { backgroundColor: getCategoryColors().bg }]}>
+          <Text style={styles.pillText}>
+            {getCategoryLabel().toUpperCase()}
+          </Text>
+        </View>
+
+        {/* Date Pill (Glass) */}
+        <View style={styles.glassPillNeutral}>
+          <GlassView
+            style={StyleSheet.absoluteFillObject}
+            glassEffectStyle="regular"
+          />
+          <Ionicons name="calendar-outline" size={12} color={Colors.gray[800]} style={{ marginRight: 4 }} />
+          <Text style={styles.pillTextDark}>{formatDate(event.createdAt)}</Text>
+        </View>
+      </View>
+
+      {/* 3. Bottom Glass Info Pane */}
+      <View style={styles.bottomGlassContainer}>
+        {/* Glass Effect */}
+        <GlassView
+          style={StyleSheet.absoluteFillObject}
+          glassEffectStyle="clear" // Frosted white look
         />
 
-        <BlurView intensity={90} tint="dark" style={styles.blurContainer}>
-          <View style={styles.content}>
-            {/* Header with badges */}
-            <View style={styles.header}>
-              <View style={styles.badges}>
-                <View style={[styles.badge, { backgroundColor: statusColor.bg }]}>
-                  <Text style={[styles.badgeText, { color: statusColor.text }]}>
-                    {event.status.toUpperCase()}
-                  </Text>
-                </View>
-                {event.visibility === 'private' && (
-                  <View style={[styles.badge, styles.privateBadge]}>
-                    <Ionicons name="lock-closed" size={10} color={Colors.gray[400]} />
-                    <Text style={[styles.badgeText, { color: Colors.gray[400] }]}>PRIVATE</Text>
-                  </View>
-                )}
-              </View>
+        {/* White tint overlay for stronger "Frosted" look ensuring text readability */}
+        {/* If dynamic color exists, allow it to tint the glass slightly, coupled with white to ensure contrast */}
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.7)' }]} />
+        {extractedColor && (
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: extractedColor, opacity: 0.15 }]} />
+        )}
+
+        {/* Content */}
+        <View style={styles.infoContent}>
+          {/* Title & Venue */}
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={styles.title} numberOfLines={1}>{event.title}</Text>
+            <View style={styles.venueRow}>
+              <Ionicons name="location-outline" size={12} color={Colors.gray[500]} />
+              <Text style={styles.venueText} numberOfLines={1}>{getVenueName()}</Text>
             </View>
+          </View>
 
-            {/* Title */}
-            <Text style={styles.title} numberOfLines={2}>
-              {event.title}
-            </Text>
-
-            {/* Description */}
-            {event.description && (
-              <Text style={styles.description} numberOfLines={2}>
-                {event.description}
-              </Text>
-            )}
-
-            {/* Date/Time and Location Info */}
-            <View style={styles.infoSection}>
-              <View style={styles.infoRow}>
-                <Ionicons name="calendar-outline" size={16} color={Colors.primary[400]} />
-                <Text style={styles.infoText}>{formatDate(event.createdAt)}</Text>
-              </View>
-              {event.venue?.name && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="location-outline" size={16} color={Colors.primary[400]} />
-                  <Text style={styles.infoText} numberOfLines={1}>{event.venue.name}</Text>
+          {/* Participants */}
+          <View style={styles.attendeesContainer}>
+            <View style={styles.avatarStack}>
+              {MOCK_AVATARS.slice(0, Math.min(3, event.currentParticipants)).map((avatar, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.avatarWrapper,
+                    { marginLeft: index > 0 ? -10 : 0, zIndex: 3 - index, borderColor: "#FFF" }, // Ensure white border on avatars
+                  ]}
+                >
+                  <Image source={avatar} style={styles.avatar} />
+                </View>
+              ))}
+              {event.currentParticipants > 3 && (
+                <View style={[styles.avatarWrapper, styles.avatarMore, { marginLeft: -10, zIndex: 0, borderColor: "#FFF" }]}>
+                  <Text style={styles.avatarMoreText}>+{event.currentParticipants - 3}</Text>
                 </View>
               )}
             </View>
-
-            {/* Participants Progress */}
-            <View style={styles.participants}>
-              <View style={styles.participantsHeader}>
-                <View style={styles.participantsLeft}>
-                  <Ionicons name="people" size={16} color={Colors.gray[400]} />
-                  <Text style={styles.participantsText}>
-                    {event.currentParticipants}/{event.maxParticipants}
-                  </Text>
-                </View>
-                <Text style={styles.percentage}>{Math.round(progress)}% full</Text>
-              </View>
-              <View style={styles.progressBarContainer}>
-                <View style={styles.progressBar}>
-                  <LinearGradient
-                    colors={[progressColor, progressColor]}
-                    style={[styles.progressFill, { width: `${progress}%` }]}
-                  />
-                </View>
-              </View>
-            </View>
-
-            {/* CTA Button */}
-            <TouchableOpacity
-              style={[styles.ctaButton, event.status !== 'open' && styles.ctaButtonDisabled]}
-              activeOpacity={0.7}
-              onPress={() => router.push(`/event/${event.id}`)}
-            >
-              <LinearGradient
-                colors={event.status === 'open' ? [Colors.primary[600], Colors.primary[700]] : [Colors.gray[400], Colors.gray[500]]}
-                style={styles.ctaGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.ctaText}>
-                  {event.status === 'open' ? 'Join Event' : 'View Details'}
-                </Text>
-                <Ionicons name="arrow-forward" size={18} color={Colors.white} />
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Almost full warning */}
-            {progress >= 90 && event.status === 'open' && (
-              <View style={styles.warningBanner}>
-                <Ionicons name="warning" size={14} color={Colors.warning[400]} />
-                <Text style={styles.warningText}>Filling up fast!</Text>
-              </View>
-            )}
           </View>
-        </BlurView>
+        </View>
       </View>
+
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
-  },
-  shadowContainer: {
-    borderRadius: 20,
-    backgroundColor: 'transparent',
-    position: 'relative',
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    marginHorizontal: 12,
+    marginVertical: 10,
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
+    // Card Shadow
     ...Platform.select({
       ios: {
-        shadowColor: Colors.black,
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
+        shadowOpacity: 0.15,
         shadowRadius: 16,
       },
       android: {
         elevation: 8,
       },
     }),
+    backgroundColor: '#fff', // Base for shadow
   },
-  accentBar: {
+  bgImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  // Top Badges
+  topBadgesContainer: {
     position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 5,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
-    zIndex: 2,
-  },
-  blurContainer: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.gray[800],
-    backgroundColor: Colors.gray[900],
-  },
-  content: {
-    padding: 20,
-    paddingLeft: 24, // Extra padding for accent bar
-  },
-  header: {
-    marginBottom: 12,
-  },
-  badges: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  privateBadge: {
-    backgroundColor: Colors.gray[800],
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.white,
-    marginBottom: 8,
-    lineHeight: 26,
-  },
-  description: {
-    fontSize: 15,
-    color: Colors.gray[400],
-    marginBottom: 16,
-    lineHeight: 22,
-  },
-  infoSection: {
-    marginBottom: 16,
-    gap: 10,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: Colors.gray[300],
-    fontWeight: '500',
-    flex: 1,
-  },
-  participants: {
-    marginBottom: 16,
-  },
-  participantsHeader: {
+    top: 16,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    zIndex: 10,
   },
-  participantsLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  participantsText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.gray[300],
-  },
-  percentage: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.gray[400],
-  },
-  progressBarContainer: {
-    width: '100%',
-  },
-  progressBar: {
-    height: 10,
-    backgroundColor: Colors.gray[800],
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  ctaButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  ctaButtonDisabled: {
-    opacity: 0.8,
-  },
-  ctaGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    gap: 8,
-  },
-  ctaText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.white,
-    letterSpacing: 0.3,
-  },
-  warningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 12,
-    paddingVertical: 8,
+  glassPill: {
     paddingHorizontal: 12,
-    backgroundColor: Colors.warning[900],
-    borderRadius: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  warningText: {
-    fontSize: 12,
-    color: Colors.warning[400],
+  glassPillNeutral: {
+    height: 28,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden', // For GlassView
+    backgroundColor: 'rgba(255,255,255,0.4)', // Fallback
+  },
+  pillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFF',
+    letterSpacing: 0.5,
+  },
+  pillTextDark: {
+    fontSize: 11,
     fontWeight: '600',
+    color: Colors.gray[800],
+  },
+
+  // Bottom Pane
+  bottomGlassContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80, // Fixed height for info pane
+    overflow: 'hidden',
+  },
+  infoContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: "NotoSansTC_700Bold",
+    fontWeight: "700",
+    color: Colors.gray[900],
+    marginBottom: 4,
+  },
+  venueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  venueText: {
+    fontSize: 12,
+    color: Colors.gray[500],
+    fontFamily: "NotoSansTC_500Medium",
+  },
+
+  // Attendees
+  attendeesContainer: {
+    justifyContent: 'center',
+  },
+  avatarStack: {
+    flexDirection: "row",
+  },
+  avatarWrapper: {
+    width: 32, // Slightly larger
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "#FFF",
+    overflow: "hidden",
+  },
+  avatar: {
+    width: "100%",
+    height: "100%",
+  },
+  avatarMore: {
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarMoreText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.white,
   },
 });

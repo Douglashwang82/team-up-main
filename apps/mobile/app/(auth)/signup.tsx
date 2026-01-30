@@ -1,31 +1,39 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-import { Colors } from '../../constants/Colors';
-import { useAuth } from '../../lib/AuthContext';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import { Colors } from "../../constants/Colors";
+import { useAuth } from "../../lib/AuthContext";
 
 export default function SignupScreen() {
   const router = useRouter();
   const { signup } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSignup = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (!firstName) newErrors.firstName = 'First name is required';
-    if (!lastName) newErrors.lastName = 'Last name is required';
-    if (!email) newErrors.email = 'Email is required';
-    if (!password) newErrors.password = 'Password is required';
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!firstName) newErrors.firstName = "請輸入名字";
+    if (!lastName) newErrors.lastName = "請輸入姓氏";
+    if (!email) newErrors.email = "請輸入電子郵件";
+    if (!password) newErrors.password = "請輸入密碼";
+    if (password !== confirmPassword) newErrors.confirmPassword = "密碼不相符";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -39,27 +47,30 @@ export default function SignupScreen() {
       // Navigation will be handled automatically by the root layout
     } catch (error) {
       setLoading(false);
-      setErrors({ email: error instanceof Error ? error.message : 'Signup failed. Please try again.' });
+      setErrors({
+        email:
+          error instanceof Error ? error.message : "註冊失敗，請稍後重試。",
+      });
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join TeamUp and start connecting</Text>
+            <Text style={styles.title}>建立帳號</Text>
+            <Text style={styles.subtitle}>加入 TeamUp 並開始您的運動生活</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.row}>
               <Input
-                label="First Name"
-                placeholder="John"
+                label="名字"
+                placeholder="小美"
                 value={firstName}
                 onChangeText={setFirstName}
                 error={errors.firstName}
@@ -67,8 +78,8 @@ export default function SignupScreen() {
               />
               <View style={styles.spacer} />
               <Input
-                label="Last Name"
-                placeholder="Doe"
+                label="姓氏"
+                placeholder="陳"
                 value={lastName}
                 onChangeText={setLastName}
                 error={errors.lastName}
@@ -77,8 +88,8 @@ export default function SignupScreen() {
             </View>
 
             <Input
-              label="Email"
-              placeholder="john.doe@example.com"
+              label="電子郵件"
+              placeholder="請輸入您的電子郵件"
               value={email}
               onChangeText={setEmail}
               error={errors.email}
@@ -87,8 +98,8 @@ export default function SignupScreen() {
             />
 
             <Input
-              label="Password"
-              placeholder="Create a password"
+              label="密碼"
+              placeholder="請設定密碼"
               value={password}
               onChangeText={setPassword}
               error={errors.password}
@@ -96,8 +107,8 @@ export default function SignupScreen() {
             />
 
             <Input
-              label="Confirm Password"
-              placeholder="Confirm your password"
+              label="確認密碼"
+              placeholder="請再次輸入密碼"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               error={errors.confirmPassword}
@@ -105,7 +116,7 @@ export default function SignupScreen() {
             />
 
             <Button
-              title="Create Account"
+              title="建立帳號"
               onPress={handleSignup}
               loading={loading}
               fullWidth
@@ -114,9 +125,9 @@ export default function SignupScreen() {
             />
 
             <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-                <Text style={styles.loginLink}>Sign In</Text>
+              <Text style={styles.loginText}>已經有帳號？ </Text>
+              <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+                <Text style={styles.loginLink}>登入</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -129,7 +140,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.base,
   },
   keyboardView: {
     flex: 1,
@@ -144,7 +155,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.gray[900],
     marginBottom: 8,
   },
@@ -153,11 +164,11 @@ const styles = StyleSheet.create({
     color: Colors.gray[600],
   },
   form: {
-    width: '100%',
+    width: "100%",
   },
   row: {
-    flexDirection: 'row',
-    width: '100%',
+    flexDirection: "row",
+    width: "100%",
   },
   halfInput: {
     flex: 1,
@@ -169,17 +180,17 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   loginText: {
     color: Colors.gray[600],
     fontSize: 14,
   },
   loginLink: {
-    color: Colors.primary[600],
+    color: Colors.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

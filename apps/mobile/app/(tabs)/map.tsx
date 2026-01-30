@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -8,12 +8,13 @@ import {
   Alert,
   Modal,
   ScrollView,
-  Platform
-} from 'react-native';
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
-import { Colors } from '../../constants/Colors';
+  Platform,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
+import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import { Colors } from "../../constants/Colors";
 
 // Venue interface matching API response
 interface Venue {
@@ -32,142 +33,198 @@ interface PlacePrediction {
   place_id: string;
 }
 
-import { apis } from '../../lib/api';
+import { apis } from "../../lib/api";
 
 // Sport type options
 const SPORT_TYPES = [
-  'All',
-  'Basketball',
-  'Soccer',
-  'Tennis',
-  'Baseball',
-  'Volleyball',
-  'Multi-sport',
-  'Track & Field',
-  'Fitness'
+  "All",
+  "Basketball",
+  "Soccer",
+  "Tennis",
+  "Baseball",
+  "Volleyball",
+  "Multi-sport",
+  "Track & Field",
+  "Fitness",
 ];
+
+// Sport type labels for display
+const SPORT_TYPE_LABELS: Record<string, string> = {
+  All: "全部",
+  Basketball: "籃球",
+  Soccer: "足球",
+  Tennis: "網球",
+  Baseball: "棒球",
+  Volleyball: "排球",
+  "Multi-sport": "綜合運動",
+  "Track & Field": "田徑",
+  Fitness: "健身",
+};
 
 // Function to get sport type icon emoji
 const getSportTypeIcon = (sportType: string): string => {
   const iconMap: { [key: string]: string } = {
-    'Basketball': '🏀',
-    'Soccer': '⚽',
-    'Tennis': '🎾',
-    'Baseball': '⚾',
-    'Volleyball': '🏐',
-    'Multi-sport': '🏟️',
-    'Track & Field': '🏃',
-    'Fitness': '💪'
+    Basketball: "🏀",
+    Soccer: "⚽",
+    Tennis: "🎾",
+    Baseball: "⚾",
+    Volleyball: "🏐",
+    "Multi-sport": "🏟️",
+    "Track & Field": "🏃",
+    Fitness: "💪",
   };
 
-  return iconMap[sportType] || '📍';
+  return iconMap[sportType] || "📍";
 };
 
 // IMPORTANT: Replace with your actual Google Maps API Key
 // Get it from: https://console.cloud.google.com/google/maps-apis
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCQpRkPBlpr47iTciS2-3IEjzRD57XCA8I';
+const GOOGLE_MAPS_API_KEY = "AIzaSyCQpRkPBlpr47iTciS2-3IEjzRD57XCA8I";
 
 const DEFAULT_LAT = 25.013958087753082;
 const DEFAULT_LNG = 121.53783024593216;
 
-// Dark mode map style
+// Helper function to lighten a hex color
+const lightenColor = (hex: string, percent: number): string => {
+  const num = parseInt(hex.replace("#", ""), 16);
+  const r = Math.min(
+    255,
+    Math.floor((num >> 16) + ((255 - (num >> 16)) * percent) / 100),
+  );
+  const g = Math.min(
+    255,
+    Math.floor(
+      ((num >> 8) & 0x00ff) + ((255 - ((num >> 8) & 0x00ff)) * percent) / 100,
+    ),
+  );
+  const b = Math.min(
+    255,
+    Math.floor((num & 0x0000ff) + ((255 - (num & 0x0000ff)) * percent) / 100),
+  );
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+};
+
+// Map colors based on design requirements
+const MAP_COLORS = {
+  primary: Colors.primary, // #FB5631 - for markers
+  lighter1: lightenColor(Colors.primary, 40), // Lighter 1 level for blocks
+  lighter2: lightenColor(Colors.primary, 60), // Lighter 2 level for blocks
+  road: "#ffffff", // White for roads
+};
+
+// Custom map style with design requirements
 const darkMapStyle = [
   {
-    "elementType": "geometry",
-    "stylers": [{ "color": "#212121" }]
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.lighter2 }], // Background/base geometry - lighter 2
   },
   {
-    "elementType": "labels.icon",
-    "stylers": [{ "visibility": "off" }]
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
   },
   {
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#757575" }]
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#666666" }],
   },
   {
-    "elementType": "labels.text.stroke",
-    "stylers": [{ "color": "#212121" }]
+    elementType: "labels.text.stroke",
+    stylers: [{ color: MAP_COLORS.lighter2 }],
   },
   {
-    "featureType": "administrative",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#757575" }]
+    featureType: "administrative",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.lighter1 }], // Administrative areas - lighter 1
   },
   {
-    "featureType": "administrative.country",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#9e9e9e" }]
+    featureType: "administrative.country",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#888888" }],
   },
   {
-    "featureType": "administrative.locality",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#bdbdbd" }]
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#666666" }],
   },
   {
-    "featureType": "poi",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#757575" }]
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.lighter1 }], // POI blocks - lighter 1
   },
   {
-    "featureType": "poi.park",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#181818" }]
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#888888" }],
   },
   {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#616161" }]
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.lighter2 }], // Parks - lighter 2
   },
   {
-    "featureType": "poi.park",
-    "elementType": "labels.text.stroke",
-    "stylers": [{ "color": "#1b1b1b" }]
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#999999" }],
   },
   {
-    "featureType": "road",
-    "elementType": "geometry.fill",
-    "stylers": [{ "color": "#2c2c2c" }]
+    featureType: "road",
+    elementType: "geometry.fill",
+    stylers: [{ color: MAP_COLORS.road }], // Roads - white
   },
   {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#8a8a8a" }]
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: MAP_COLORS.lighter1 }, { weight: 0.5 }], // Road borders
   },
   {
-    "featureType": "road.arterial",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#373737" }]
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#666666" }],
   },
   {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#3c3c3c" }]
+    featureType: "road.arterial",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.road }], // Arterial roads - white
   },
   {
-    "featureType": "road.highway.controlled_access",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#4e4e4e" }]
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.road }], // Highways - white
   },
   {
-    "featureType": "road.local",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#616161" }]
+    featureType: "road.highway.controlled_access",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.road }], // Controlled access highways - white
   },
   {
-    "featureType": "transit",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#757575" }]
+    featureType: "road.local",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.road }], // Local roads - white
   },
   {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#000000" }]
+    featureType: "road.local",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#888888" }],
   },
   {
-    "featureType": "water",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#3d3d3d" }]
-  }
+    featureType: "transit",
+    elementType: "geometry",
+    stylers: [{ color: MAP_COLORS.lighter1 }], // Transit - lighter 1
+  },
+  {
+    featureType: "transit",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#888888" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: lightenColor(Colors.primary, 80) }], // Water - very light primary
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#999999" }],
+  },
 ];
 
 export default function MapScreen() {
@@ -187,17 +244,20 @@ export default function MapScreen() {
     timestamp: Date.now(),
   });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [searchAddress, setSearchAddress] = useState<string>('');
+  const [searchAddress, setSearchAddress] = useState<string>("");
   const [searchResult, setSearchResult] = useState<{
     latitude: number;
     longitude: number;
     address: string;
   } | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [selectedSportType, setSelectedSportType] = useState<string>('All');
+  const [selectedSportType, setSelectedSportType] = useState<string>("All");
   const [showSportTypeModal, setShowSportTypeModal] = useState<boolean>(false);
-  const [placePredictions, setPlacePredictions] = useState<PlacePrediction[]>([]);
+  const [placePredictions, setPlacePredictions] = useState<PlacePrediction[]>(
+    [],
+  );
   const [showAutocomplete, setShowAutocomplete] = useState<boolean>(false);
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
 
   // Fetch venues when location changes or on mount
   useEffect(() => {
@@ -210,33 +270,36 @@ export default function MapScreen() {
           lat: lat,
           lng: lng,
           distance: 10000, // 10km radius
-          sportType: selectedSportType === 'All' ? undefined : selectedSportType
+          sportType:
+            selectedSportType === "All" ? undefined : selectedSportType,
         });
 
         // Map API response to Venue interface
-        // Note: The API response structure depends on the backend. 
+        // Note: The API response structure depends on the backend.
         // Based on routes/venues.py, it returns a list of objects with "venue" and "time_slots" keys
         // or just a list of venues if we update the client.
         // Let's assume the generated client returns what the backend sends.
 
         // @ts-ignore - The generated client types might not be fully up to date with our backend changes yet
-        const mappedVenues = response.map((item: any) => {
-          // Handle both structure with distance (from search) and direct list
-          const v = item.venue || item;
-          return {
-            id: v.id,
-            name: v.name,
-            latitude: v.latitude || lat, // Fallback to center if missing (shouldn't happen with our backend fix)
-            longitude: v.longitude || lng,
-            address: v.address,
-            city: v.city,
-            distance_meters: item.distance_meters
-          };
-        }).filter((v: Venue) => v.latitude && v.longitude);
+        const mappedVenues = response
+          .map((item: any) => {
+            // Handle both structure with distance (from search) and direct list
+            const v = item.venue || item;
+            return {
+              id: v.id,
+              name: v.name,
+              latitude: v.latitude || lat, // Fallback to center if missing (shouldn't happen with our backend fix)
+              longitude: v.longitude || lng,
+              address: v.address,
+              city: v.city,
+              distance_meters: item.distance_meters,
+            };
+          })
+          .filter((v: Venue) => v.latitude && v.longitude);
 
         setVenues(mappedVenues);
       } catch (error) {
-        console.error('Error fetching venues:', error);
+        console.error("Error fetching venues:", error);
       }
     };
 
@@ -248,8 +311,8 @@ export default function MapScreen() {
     (async () => {
       // Request location permissions
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
         return;
       }
 
@@ -258,7 +321,7 @@ export default function MapScreen() {
         const currentLocation = await Location.getCurrentPositionAsync({});
         setLocation(currentLocation);
       } catch (error) {
-        console.error('Error getting location:', error);
+        console.error("Error getting location:", error);
         // Fallback to default location is already set in initial state
         // But we can reset it here if needed, or just log the error
 
@@ -290,18 +353,18 @@ export default function MapScreen() {
           // Call Google Places Autocomplete API
           const response = await fetch(
             `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-              searchAddress
-            )}&key=${GOOGLE_MAPS_API_KEY}`
+              searchAddress,
+            )}&key=${GOOGLE_MAPS_API_KEY}`,
           );
 
           const data = await response.json();
 
-          if (data.status === 'OK' && data.predictions) {
+          if (data.status === "OK" && data.predictions) {
             setPlacePredictions(data.predictions);
             setShowAutocomplete(true);
-          } else if (data.status === 'REQUEST_DENIED') {
-            console.error('Google Places API error:', data.error_message);
-            Alert.alert('API Error', 'Please configure your Google Maps API key');
+          } else if (data.status === "REQUEST_DENIED") {
+            console.error("Google Places API error:", data.error_message);
+            Alert.alert("API 錯誤", "請設定您的 Google Maps API 金鑰");
             setPlacePredictions([]);
             setShowAutocomplete(false);
           } else {
@@ -309,7 +372,7 @@ export default function MapScreen() {
             setShowAutocomplete(false);
           }
         } catch (error) {
-          console.error('Autocomplete error:', error);
+          console.error("Autocomplete error:", error);
           setPlacePredictions([]);
           setShowAutocomplete(false);
         }
@@ -326,12 +389,12 @@ export default function MapScreen() {
   const getPlaceDetails = async (placeId: string, description: string) => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${GOOGLE_MAPS_API_KEY}`
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${GOOGLE_MAPS_API_KEY}`,
       );
 
       const data = await response.json();
 
-      if (data.status === 'OK' && data.result?.geometry?.location) {
+      if (data.status === "OK" && data.result?.geometry?.location) {
         const { lat, lng } = data.result.geometry.location;
 
         setSearchResult({
@@ -346,12 +409,15 @@ export default function MapScreen() {
 
         // Animate map to new location
         if (mapRef.current) {
-          mapRef.current.animateToRegion({
-            latitude: lat,
-            longitude: lng,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }, 1000);
+          mapRef.current.animateToRegion(
+            {
+              latitude: lat,
+              longitude: lng,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            },
+            1000,
+          );
         }
 
         // Update location to trigger venue fetch
@@ -365,15 +431,14 @@ export default function MapScreen() {
             heading: null,
             speed: null,
           },
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
-
       } else {
-        Alert.alert('Error', 'Could not get location details');
+        Alert.alert("錯誤", "無法取得地點詳情");
       }
     } catch (error) {
-      console.error('Place details error:', error);
-      Alert.alert('Error', 'Failed to get place details');
+      console.error("Place details error:", error);
+      Alert.alert("錯誤", "無法取得地點詳情");
     }
   };
 
@@ -382,23 +447,31 @@ export default function MapScreen() {
     getPlaceDetails(prediction.place_id, prediction.description);
   };
 
+  // Function to clear search
+  const handleClearSearch = () => {
+    setSearchAddress("");
+    setSearchResult(null);
+    setPlacePredictions([]);
+    setShowAutocomplete(false);
+  };
+
   // Function to search for address using Google Geocoding API
   const searchLocation = async () => {
     if (!searchAddress.trim()) {
-      Alert.alert('Error', 'Please enter an address to search');
+      Alert.alert("錯誤", "請輸入搜尋地址");
       return;
     }
 
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-          searchAddress
-        )}&key=${GOOGLE_MAPS_API_KEY}`
+          searchAddress,
+        )}&key=${GOOGLE_MAPS_API_KEY}`,
       );
 
       const data = await response.json();
 
-      if (data.status === 'OK' && data.results.length > 0) {
+      if (data.status === "OK" && data.results.length > 0) {
         const result = data.results[0];
         const { lat, lng } = result.geometry.location;
 
@@ -413,12 +486,15 @@ export default function MapScreen() {
 
         // Animate map to new location
         if (mapRef.current) {
-          mapRef.current.animateToRegion({
-            latitude: lat,
-            longitude: lng,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }, 1000);
+          mapRef.current.animateToRegion(
+            {
+              latitude: lat,
+              longitude: lng,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            },
+            1000,
+          );
         }
 
         // Update location to trigger venue fetch
@@ -432,15 +508,14 @@ export default function MapScreen() {
             heading: null,
             speed: null,
           },
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
-
       } else {
-        Alert.alert('Not Found', 'Could not find the specified address');
+        Alert.alert("找不到", "找不到指定地址");
       }
     } catch (error) {
-      console.error('Geocoding error:', error);
-      Alert.alert('Error', 'Failed to search for the address. Please try again.');
+      console.error("Geocoding error:", error);
+      Alert.alert("錯誤", "搜尋地址失敗，請稍後重試。");
     }
   };
 
@@ -453,7 +528,7 @@ export default function MapScreen() {
   };
 
   // Filter fields based on selected sport type
-  // We are now doing server-side filtering, so this client-side filter might be redundant 
+  // We are now doing server-side filtering, so this client-side filter might be redundant
   // or we can keep it for immediate feedback if we don't want to refetch on every filter change.
   // But the useEffect above refetches on sportType change, so 'venues' should already be filtered.
   const filteredFields = venues;
@@ -486,8 +561,8 @@ export default function MapScreen() {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
             }}
-            title="You are here"
-            description="Current location"
+            title="您的位置"
+            description="目前位置"
             pinColor="blue"
           />
         )}
@@ -499,7 +574,7 @@ export default function MapScreen() {
               latitude: searchResult.latitude,
               longitude: searchResult.longitude,
             }}
-            title="Search Result"
+            title="搜尋結果"
             description={searchResult.address}
             pinColor="red"
           />
@@ -530,7 +605,7 @@ export default function MapScreen() {
                   {field.address}
                 </Text>
                 <View style={styles.calloutFooter}>
-                  <Text style={styles.calloutLink}>Tap for details</Text>
+                  <Text style={styles.calloutLink}>點擊查看詳情</Text>
                   <Text style={styles.calloutArrow}>→</Text>
                 </View>
               </View>
@@ -540,18 +615,48 @@ export default function MapScreen() {
       </MapView>
 
       {/* Search input overlay */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Search for a place..."
-          style={styles.searchInput}
-          value={searchAddress}
-          onChangeText={setSearchAddress}
-          onSubmitEditing={searchLocation}
-          returnKeyType="search"
-        />
-        <TouchableOpacity style={styles.searchButton} onPress={searchLocation}>
-          <Text style={styles.searchButtonText}>Search</Text>
-        </TouchableOpacity>
+      <View style={styles.searchSection}>
+        <View
+          style={[
+            styles.searchContainer,
+            searchFocused && styles.searchContainerFocused,
+          ]}
+        >
+          <Ionicons
+            name="search"
+            size={20}
+            color={searchFocused ? Colors.gray[400] : Colors.white}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={[
+              styles.searchInput,
+              searchFocused && styles.searchInputFocused,
+            ]}
+            placeholder="搜尋地點..."
+            placeholderTextColor={
+              searchFocused ? Colors.gray[400] : Colors.white
+            }
+            value={searchAddress}
+            onChangeText={setSearchAddress}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            onSubmitEditing={searchLocation}
+            returnKeyType="search"
+          />
+          {searchAddress ? (
+            <TouchableOpacity
+              onPress={handleClearSearch}
+              style={styles.clearButton}
+            >
+              <Ionicons
+                name="close-circle"
+                size={20}
+                color={Colors.gray[400]}
+              />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
       {/* Google Places Autocomplete dropdown */}
@@ -580,7 +685,9 @@ export default function MapScreen() {
           onPress={() => setShowSportTypeModal(true)}
         >
           <Text style={styles.filterButtonText}>
-            {selectedSportType === 'All' ? 'Filter by Sport' : selectedSportType}
+            {selectedSportType === "All"
+              ? "依運動類型篩選"
+              : SPORT_TYPE_LABELS[selectedSportType] || selectedSportType}
           </Text>
           <Text style={styles.filterButtonIcon}>▼</Text>
         </TouchableOpacity>
@@ -599,25 +706,29 @@ export default function MapScreen() {
           onPress={() => setShowSportTypeModal(false)}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Sport Type</Text>
+            <Text style={styles.modalTitle}>選擇運動類型</Text>
             <ScrollView style={styles.modalScrollView}>
               {SPORT_TYPES.map((sportType) => (
                 <TouchableOpacity
                   key={sportType}
                   style={[
                     styles.sportTypeOption,
-                    selectedSportType === sportType && styles.sportTypeOptionSelected
+                    selectedSportType === sportType &&
+                    styles.sportTypeOptionSelected,
                   ]}
                   onPress={() => {
                     setSelectedSportType(sportType);
                     setShowSportTypeModal(false);
                   }}
                 >
-                  <Text style={[
-                    styles.sportTypeOptionText,
-                    selectedSportType === sportType && styles.sportTypeOptionTextSelected
-                  ]}>
-                    {sportType}
+                  <Text
+                    style={[
+                      styles.sportTypeOptionText,
+                      selectedSportType === sportType &&
+                      styles.sportTypeOptionTextSelected,
+                    ]}
+                  >
+                    {SPORT_TYPE_LABELS[sportType] || sportType}
                   </Text>
                   {selectedSportType === sportType && (
                     <Text style={styles.checkmark}>✓</Text>
@@ -635,58 +746,68 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[900],
+    backgroundColor: '#fbf5e2ff',
   },
   map: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
-  searchContainer: {
-    position: 'absolute',
-    top: 10,
+  searchSection: {
+    position: "absolute",
+    top: 60,
     left: 10,
     right: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    zIndex: 1001,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: "transparent",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchContainerFocused: {
+    backgroundColor: Colors.white,
+    borderColor: Colors.primary,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  searchIcon: {
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    height: 40,
-    backgroundColor: Colors.gray[800],
+    fontSize: 16,
     color: Colors.white,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginRight: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 5,
+    padding: 0,
   },
-  searchButton: {
-    backgroundColor: Colors.primary[600],
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 5,
+  searchInputFocused: {
+    color: Colors.gray[900],
   },
-  searchButtonText: {
-    color: Colors.white,
-    fontWeight: 'bold',
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
   },
   autocompleteContainer: {
-    position: 'absolute',
-    top: 95,
+    position: "absolute",
+    top: 118,
     left: 10,
     right: 10,
-    backgroundColor: Colors.gray[800],
-    borderRadius: 5,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
     maxHeight: 200,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
@@ -700,44 +821,44 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[700],
+    borderBottomColor: Colors.gray[200],
   },
   autocompleteSuggestionText: {
     fontSize: 14,
-    color: Colors.gray[200],
+    color: Colors.gray[900],
   },
   errorText: {
     flex: 1,
-    textAlign: 'center',
-    textAlignVertical: 'center',
+    textAlign: "center",
+    textAlignVertical: "center",
     fontSize: 16,
     color: Colors.error[500],
     padding: 20,
   },
   filterContainer: {
-    position: 'absolute',
-    top: 60,
+    position: "absolute",
+    top: 110,
     left: 10,
     right: 10,
   },
   filterButton: {
-    backgroundColor: Colors.gray[800],
+    backgroundColor: Colors.white,
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderRadius: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 5,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   filterButtonText: {
     fontSize: 16,
-    color: Colors.gray[200],
-    fontWeight: '500',
+    color: Colors.gray[900],
+    fontWeight: "500",
   },
   filterButtonIcon: {
     fontSize: 12,
@@ -745,17 +866,17 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: Colors.gray[900],
+    backgroundColor: Colors.white,
     borderRadius: 10,
     padding: 20,
-    width: '80%',
-    maxHeight: '70%',
-    shadowColor: '#000',
+    width: "80%",
+    maxHeight: "70%",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -763,10 +884,10 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 15,
-    textAlign: 'center',
-    color: Colors.white,
+    textAlign: "center",
+    color: Colors.gray[900],
   },
   modalScrollView: {
     maxHeight: 400,
@@ -775,34 +896,34 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[800],
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderBottomColor: Colors.gray[200],
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   sportTypeOptionSelected: {
-    backgroundColor: Colors.primary[900],
+    backgroundColor: lightenColor(Colors.primary, 80), // Very light primary background
   },
   sportTypeOptionText: {
     fontSize: 16,
-    color: Colors.gray[200],
+    color: Colors.gray[900],
   },
   sportTypeOptionTextSelected: {
-    color: Colors.primary[400],
-    fontWeight: 'bold',
+    color: Colors.primary,
+    fontWeight: "bold",
   },
   checkmark: {
     fontSize: 18,
-    color: Colors.primary[400],
-    fontWeight: 'bold',
+    color: Colors.primary,
+    fontWeight: "bold",
   },
   customMarker: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 8,
     borderWidth: 2,
-    borderColor: '#007AFF',
-    shadowColor: '#000',
+    borderColor: Colors.primary, // Use primary color for marker border
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
@@ -817,40 +938,43 @@ const styles = StyleSheet.create({
   calloutContainer: {
     padding: 12,
     width: 250,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
   },
   calloutTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   calloutSportType: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#007AFF',
+    fontWeight: "600",
+    color: Colors.primary,
     marginBottom: 6,
   },
   calloutDescription: {
     fontSize: 13,
-    color: '#666',
+    color: "#666",
     lineHeight: 18,
     marginBottom: 8,
   },
   calloutFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: "#eee",
   },
   calloutLink: {
     fontSize: 13,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: Colors.primary,
+    fontWeight: "500",
   },
   calloutArrow: {
     fontSize: 16,
-    color: '#007AFF',
+    color: Colors.primary,
   },
 });

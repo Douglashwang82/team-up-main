@@ -1,12 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api, setTokens, clearTokens } from './apiClient';
-import type { User } from './types';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { api, setTokens, clearTokens } from "./apiClient";
+import type { User } from "./types";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, displayName: string) => Promise<void>;
+  signup: (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -26,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await api.auth.getCurrentUser();
       setUser(userInfo);
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error("Auth check failed:", error);
       await clearTokens();
     } finally {
       setIsLoading(false);
@@ -41,12 +45,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await api.auth.getCurrentUser();
       setUser(userInfo);
     } catch (error) {
-      console.error('Login error:', error);
-      throw new Error(error instanceof Error ? error.message : 'Login failed. Please check your credentials.');
+      console.error("Login error:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please check your credentials.",
+      );
     }
   };
 
-  const signup = async (email: string, password: string, displayName: string) => {
+  const signup = async (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => {
     try {
       const response = await api.auth.signup({
         email,
@@ -58,8 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await api.auth.getCurrentUser();
       setUser(userInfo);
     } catch (error) {
-      console.error('Signup error:', error);
-      throw new Error(error instanceof Error ? error.message : 'Signup failed. Please try again.');
+      console.error("Signup error:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Signup failed. Please try again.",
+      );
     }
   };
 
@@ -73,12 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await api.auth.getCurrentUser();
       setUser(userInfo);
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      console.error("Failed to refresh user:", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, login, signup, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -87,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

@@ -1,14 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Card from '../../components/Card';
-import Button from '../../components/Button';
-import { Colors } from '../../constants/Colors';
-import { api } from '../../lib/apiClient';
-import { useAuth } from '../../lib/AuthContext';
-import type { EventDetails } from '../../lib/types';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import Card from "../../components/Card";
+import Button from "../../components/Button";
+import { Colors } from "../../constants/Colors";
+import { api } from "../../lib/apiClient";
+import { useAuth } from "../../lib/AuthContext";
+import type { EventDetails } from "../../lib/types";
 
 export default function EventDetailScreen() {
   const router = useRouter();
@@ -29,8 +37,8 @@ export default function EventDetailScreen() {
       const data = await api.events.get(id as string);
       setEvent(data);
     } catch (err) {
-      console.error('Failed to load event:', err);
-      setError('Failed to load event details.');
+      console.error("Failed to load event:", err);
+      setError("Failed to load event details.");
     } finally {
       setIsLoading(false);
     }
@@ -42,24 +50,20 @@ export default function EventDetailScreen() {
     setIsJoining(true);
     try {
       const response = await api.events.join(event.id, {
-        message: 'I would like to join this event!',
+        message: "我想加入這個活動！",
       });
 
-      Alert.alert(
-        'Success',
-        response.message,
-        [
-          {
-            text: 'OK',
-            onPress: () => loadEvent(), // Reload to get updated data
-          },
-        ]
-      );
+      Alert.alert("成功", response.message, [
+        {
+          text: "確定",
+          onPress: () => loadEvent(), // Reload to get updated data
+        },
+      ]);
     } catch (err) {
-      console.error('Failed to join event:', err);
+      console.error("Failed to join event:", err);
       Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to join event. Please try again.'
+        "錯誤",
+        err instanceof Error ? err.message : "加入活動失敗，請重試。",
       );
     } finally {
       setIsJoining(false);
@@ -68,25 +72,26 @@ export default function EventDetailScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open':
+      case "open":
         return { bg: Colors.success[700], text: Colors.success[500] };
-      case 'closed':
-        return { bg: Colors.primary[900], text: Colors.primary[400] };
+      case "closed":
+        return { bg: Colors.secondary, text: Colors.tertiary };
       default:
         return { bg: Colors.gray[800], text: Colors.gray[400] };
     }
   };
 
   const isOwner = user && event && event.owner_user_id === user.id;
-  const hasJoined = user && event && event.participants.some(p => p.user_id === user.id);
-  const canJoin = event && event.status === 'open' && !hasJoined && !isOwner;
+  const hasJoined =
+    user && event && event.participants.some((p) => p.user_id === user.id);
+  const canJoin = event && event.status === "open" && !hasJoined && !isOwner;
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
-          <Text style={styles.loadingText}>Loading event...</Text>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>正在載入活動...</Text>
         </View>
       </SafeAreaView>
     );
@@ -94,12 +99,20 @@ export default function EventDetailScreen() {
 
   if (error || !event) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={80} color={Colors.error[500]} />
-          <Text style={styles.errorTitle}>Oops!</Text>
-          <Text style={styles.errorSubtitle}>{error || 'Event not found'}</Text>
-          <Button title="Go Back" onPress={() => router.back()} style={styles.errorButton} />
+          <Ionicons
+            name="alert-circle-outline"
+            size={80}
+            color={Colors.error[500]}
+          />
+          <Text style={styles.errorTitle}>糟糕！</Text>
+          <Text style={styles.errorSubtitle}>{error || "找不到活動"}</Text>
+          <Button
+            title="返回"
+            onPress={() => router.back()}
+            style={styles.errorButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -109,16 +122,22 @@ export default function EventDetailScreen() {
   const progress = (event.current_participants / event.max_participants) * 100;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color={Colors.gray[900]} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Event Details</Text>
+        <Text style={styles.headerTitle}>活動詳情</Text>
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+      >
         <Card style={styles.mainCard}>
           <View style={styles.badges}>
             <View style={[styles.badge, { backgroundColor: statusColor.bg }]}>
@@ -126,14 +145,22 @@ export default function EventDetailScreen() {
                 {event.status.toUpperCase()}
               </Text>
             </View>
-            {event.visibility === 'private' && (
-              <View style={[styles.badge, { backgroundColor: Colors.gray[800] }]}>
-                <Text style={[styles.badgeText, { color: Colors.gray[400] }]}>PRIVATE</Text>
+            {event.visibility === "private" && (
+              <View
+                style={[styles.badge, { backgroundColor: Colors.gray[200] }]}
+              >
+                <Text style={[styles.badgeText, { color: Colors.gray[600] }]}>
+                  私人
+                </Text>
               </View>
             )}
-            {event.duration_type === 'permanent' && (
-              <View style={[styles.badge, { backgroundColor: Colors.primary[900] }]}>
-                <Text style={[styles.badgeText, { color: Colors.primary[400] }]}>RECURRING</Text>
+            {event.duration_type === "permanent" && (
+              <View
+                style={[styles.badge, { backgroundColor: Colors.secondary }]}
+              >
+                <Text style={[styles.badgeText, { color: Colors.tertiary }]}>
+                  定期
+                </Text>
               </View>
             )}
           </View>
@@ -145,12 +172,14 @@ export default function EventDetailScreen() {
         </Card>
 
         <Card style={styles.participantsCard}>
-          <Text style={styles.sectionTitle}>Participants</Text>
+          <Text style={styles.sectionTitle}>參加者</Text>
           <View style={styles.participantsInfo}>
             <Text style={styles.participantsCount}>
-              {event.current_participants} / {event.max_participants} joined
+              {event.current_participants} / {event.max_participants} 已加入
             </Text>
-            <Text style={styles.participantsPercentage}>{Math.round(progress)}%</Text>
+            <Text style={styles.participantsPercentage}>
+              {Math.round(progress)}%
+            </Text>
           </View>
           <View style={styles.progressBar}>
             <View
@@ -158,7 +187,8 @@ export default function EventDetailScreen() {
                 styles.progressFill,
                 {
                   width: `${progress}%`,
-                  backgroundColor: progress >= 90 ? Colors.error[500] : Colors.primary[600],
+                  backgroundColor:
+                    progress >= 90 ? Colors.error[500] : Colors.primary,
                 },
               ]}
             />
@@ -169,13 +199,19 @@ export default function EventDetailScreen() {
               {event.participants.map((participant) => (
                 <View key={participant.id} style={styles.participantItem}>
                   <View style={styles.participantAvatar}>
-                    <Ionicons name="person" size={16} color={Colors.gray[400]} />
+                    <Ionicons
+                      name="person"
+                      size={16}
+                      color={Colors.gray[400]}
+                    />
                   </View>
                   <View style={styles.participantInfo}>
-                    <Text style={styles.participantName}>{participant.display_name}</Text>
-                    {participant.role === 'owner' && (
+                    <Text style={styles.participantName}>
+                      {participant.display_name}
+                    </Text>
+                    {participant.role === "owner" && (
                       <View style={styles.ownerBadge}>
-                        <Text style={styles.ownerBadgeText}>Owner</Text>
+                        <Text style={styles.ownerBadgeText}>主辦人</Text>
                       </View>
                     )}
                   </View>
@@ -187,18 +223,26 @@ export default function EventDetailScreen() {
 
         {event.bookings && event.bookings.length > 0 && (
           <Card style={styles.bookingsCard}>
-            <Text style={styles.sectionTitle}>Venue Bookings</Text>
+            <Text style={styles.sectionTitle}>場地預訂</Text>
             {event.bookings.map((booking) => (
               <View key={booking.id} style={styles.bookingItem}>
                 <View style={styles.bookingHeader}>
-                  <Ionicons name="location" size={20} color={Colors.primary[400]} />
+                  <Ionicons name="location" size={20} color={Colors.tertiary} />
                   <Text style={styles.bookingVenue}>{booking.venue.name}</Text>
                 </View>
-                <Text style={styles.bookingCourt}>{booking.court.name} - {booking.court.sport_type}</Text>
-                <Text style={styles.bookingTime}>
-                  {new Date(booking.time_slot.starts_at).toLocaleString()} - {new Date(booking.time_slot.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <Text style={styles.bookingCourt}>
+                  {booking.court.name} - {booking.court.sport_type}
                 </Text>
-                <Text style={styles.bookingAddress}>{booking.venue.address}, {booking.venue.city}</Text>
+                <Text style={styles.bookingTime}>
+                  {new Date(booking.time_slot.starts_at).toLocaleString()} -{" "}
+                  {new Date(booking.time_slot.ends_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+                <Text style={styles.bookingAddress}>
+                  {booking.venue.address}, {booking.venue.city}
+                </Text>
               </View>
             ))}
           </Card>
@@ -208,7 +252,7 @@ export default function EventDetailScreen() {
       {canJoin && (
         <View style={styles.footer}>
           <Button
-            title="Join Event"
+            title="加入活動"
             onPress={handleJoin}
             fullWidth
             size="large"
@@ -220,8 +264,12 @@ export default function EventDetailScreen() {
       {hasJoined && !isOwner && (
         <View style={styles.footer}>
           <View style={styles.joinedMessage}>
-            <Ionicons name="checkmark-circle" size={24} color={Colors.success[500]} />
-            <Text style={styles.joinedText}>You've joined this event!</Text>
+            <Ionicons
+              name="checkmark-circle"
+              size={24}
+              color={Colors.success[500]}
+            />
+            <Text style={styles.joinedText}>您已加入此活動！</Text>
           </View>
         </View>
       )}
@@ -232,15 +280,15 @@ export default function EventDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.success[700],
+    backgroundColor: Colors.base,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: Colors.gray[900],
+    backgroundColor: Colors.base,
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray[800],
   },
@@ -249,8 +297,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: Colors.white,
+    fontWeight: "600",
+    color: Colors.gray[900],
   },
   headerRight: {
     width: 32,
@@ -259,36 +307,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    backgroundColor: Colors.gray[900],
+    backgroundColor: Colors.base,
     padding: 20,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: Colors.gray[400],
+    color: Colors.gray[600],
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 40,
   },
   errorTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: Colors.white,
+    fontWeight: "600",
+    color: Colors.gray[900],
     marginTop: 16,
     marginBottom: 8,
   },
   errorSubtitle: {
     fontSize: 14,
     color: Colors.gray[400],
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 24,
   },
   errorButton: {
@@ -298,7 +346,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   badges: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginBottom: 16,
   },
@@ -309,17 +357,17 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.white,
+    fontWeight: "bold",
+    color: Colors.gray[900],
     marginBottom: 12,
   },
   description: {
     fontSize: 16,
-    color: Colors.gray[400],
+    color: Colors.gray[600],
     lineHeight: 24,
   },
   participantsCard: {
@@ -327,20 +375,20 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: Colors.white,
+    fontWeight: "600",
+    color: Colors.gray[900],
     marginBottom: 16,
   },
   participantsInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   participantsCount: {
     fontSize: 14,
-    fontWeight: '600',
-    color: Colors.gray[300],
+    fontWeight: "600",
+    color: Colors.gray[700],
   },
   participantsPercentage: {
     fontSize: 14,
@@ -348,52 +396,52 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: Colors.gray[800],
+    backgroundColor: Colors.gray[200],
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 16,
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 4,
   },
   participantsList: {
     gap: 12,
   },
   participantItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   participantAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.gray[800],
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: Colors.gray[200],
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   participantInfo: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   participantName: {
     fontSize: 14,
-    fontWeight: '500',
-    color: Colors.white,
+    fontWeight: "500",
+    color: Colors.gray[900],
   },
   ownerBadge: {
-    backgroundColor: Colors.primary[900],
+    backgroundColor: Colors.secondary,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
   },
   ownerBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: Colors.primary[400],
+    fontWeight: "600",
+    color: Colors.tertiary,
   },
   bookingsCard: {
     marginBottom: 16,
@@ -404,15 +452,15 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.gray[800],
   },
   bookingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 4,
   },
   bookingVenue: {
     fontSize: 16,
-    fontWeight: '600',
-    color: Colors.white,
+    fontWeight: "600",
+    color: Colors.gray[900],
   },
   bookingCourt: {
     fontSize: 14,
@@ -430,20 +478,20 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
-    backgroundColor: Colors.gray[900],
+    backgroundColor: Colors.base,
     borderTopWidth: 1,
     borderTopColor: Colors.gray[800],
   },
   joinedMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingVertical: 12,
   },
   joinedText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.success[500],
   },
 });

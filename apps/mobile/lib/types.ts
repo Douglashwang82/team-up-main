@@ -39,13 +39,14 @@ export interface UpdateUserRequest {
 
 // ===[ Event Types ]===
 
-export type EventVisibility = 'public' | 'private';
-export type EventDurationType = 'temporary' | 'permanent';
-export type EventStatus = 'open' | 'closed';
+export type EventVisibility = "public" | "private";
+export type EventDurationType = "temporary" | "permanent";
+export type EventStatus = "open" | "closed";
 
 export interface Event {
   id: string;
   title: string;
+  image?: string | null;
   description?: string | null;
   status: EventStatus;
   max_participants: number;
@@ -85,7 +86,7 @@ export interface EventParticipant {
   user_id?: string | null;
   display_name: string;
   email: string;
-  role: 'owner' | 'member';
+  role: "owner" | "member";
   joined_at: string;
 }
 
@@ -99,7 +100,7 @@ export interface JoinEventRequest {
 
 export interface JoinEventResponse {
   id: string;
-  status: 'submitted' | 'approved';
+  status: "submitted" | "approved";
   message: string;
 }
 
@@ -110,13 +111,13 @@ export interface EventJoinRequest {
   applicant_email: string;
   applicant_phone?: string | null;
   message?: string | null;
-  status: 'submitted' | 'approved' | 'rejected';
+  status: "submitted" | "approved" | "rejected";
   created_at: string;
   reviewed_at?: string | null;
 }
 
 export interface ReviewJoinRequestRequest {
-  action: 'approve' | 'reject';
+  action: "approve" | "reject";
 }
 
 // ===[ Venue Types ]===
@@ -166,8 +167,8 @@ export interface VenueDetails {
 
 // ===[ Booking Types ]===
 
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled';
-export type PaymentStatus = 'none' | 'pending' | 'paid' | 'refunded';
+export type BookingStatus = "pending" | "confirmed" | "cancelled";
+export type PaymentStatus = "none" | "pending" | "paid" | "refunded";
 
 export interface Booking {
   id: string;

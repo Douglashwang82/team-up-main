@@ -22,16 +22,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} flex flex-col min-h-screen`}>
-        <AuthProvider>
-          <ToastProvider>
-            <Navigation />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-            <ToastContainer />
-          </ToastProvider>
-        </AuthProvider>
+        {/* <AuthProvider> */}
+        <ToastProvider>
+          <Navigation />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+          <ToastContainer />
+        </ToastProvider>
+        {/* </AuthProvider> */}
       </body>
     </html>
   );

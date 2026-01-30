@@ -1,235 +1,507 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
-import { useRouter } from 'expo-router';
-import { TicketOut } from '@team-up-main/api-client';
-import { apis } from '../../lib/api';
-import { useAuth } from '../../lib/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+} from "react-native";
+import { apis } from "../../lib/api";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Colors } from "../../constants/Colors";
 
-export default function TicketsScreen() {
-    const router = useRouter();
-    const { user } = useAuth();
-    const [tickets, setTickets] = useState<TicketOut[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SHEET_HEIGHT = SCREEN_HEIGHT * 0.7; // 80% of screen height
 
-    const fetchTickets = async () => {
-        try {
-            const data = await apis.tickets.listTickets();
-            setTickets(data);
-        } catch (error) {
-            console.error('Failed to fetch tickets:', error);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
+export default function CreateTicketScreen() {
+  const [loading, setLoading] = useState(false);
+  const [loadingVenues, setLoadingVenues] = useState(true);
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [time, setTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [venues, setVenues] = useState<any[]>([]);
+  const [selectedVenueIds, setSelectedVenueIds] = useState<string[]>([]);
 
-    useEffect(() => {
-        if (user) {
-            fetchTickets();
-        }
-    }, [user]);
+  const [formData, setFormData] = useState({
+    durationMinutes: "60",
+    sportType: "basketball",
+    intensity: "Medium",
+  });
 
-    const onRefresh = () => {
-        setRefreshing(true);
-        fetchTickets();
-    };
+  // Fetch venues on mount and when sport type changes
+  useEffect(() => {
+    fetchVenues();
+  }, [formData.sportType]);
 
-    const renderItem = ({ item }: { item: TicketOut }) => (
-        <TouchableOpacity
-            onPress={() => router.push(`/ticket/${item.id}`)}
-            activeOpacity={0.7}
-        >
-            <View style={styles.card}>
-                <View style={styles.header}>
-                    <Text style={styles.sportType}>{item.sportType}</Text>
-                    <View style={[
-                        styles.statusBadge,
-                        item.status === 'matched' ? styles.statusMatched :
-                            item.status === 'expired' ? styles.statusExpired : styles.statusOpen
-                    ]}>
-                        <Text style={[
-                            styles.statusText,
-                            item.status === 'matched' ? styles.textMatched :
-                                item.status === 'expired' ? styles.textExpired : styles.textOpen
-                        ]}>
-                            {item.status.toUpperCase()}
-                        </Text>
-                    </View>
-                </View>
+  const fetchVenues = async () => {
+    setLoadingVenues(true);
+    try {
+      // Fetch venues filtered by sport type
+      const data = await apis.venues.searchVenues({
+        sportType: formData.sportType,
+      });
+      setVenues(data);
+      // Clear selected venues that are no longer in the list
+      setSelectedVenueIds((prev) =>
+        prev.filter((id) => data.some((v) => v.venue.id === id)),
+      );
+    } catch (error) {
+      console.error("Failed to fetch venues:", error);
+      // Fallback to empty array if fetch fails
+      setVenues([]);
+      setSelectedVenueIds([]);
+    } finally {
+      setLoadingVenues(false);
+    }
+  };
 
-                <View style={styles.details}>
-                    <View style={styles.detailRow}>
-                        <Ionicons name="calendar-outline" size={16} color={Colors.gray[400]} />
-                        <Text style={styles.detailText}>{item.date.toLocaleDateString()}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <Ionicons name="time-outline" size={16} color={Colors.gray[400]} />
-                        <Text style={styles.detailText}>{item.startTime}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <Ionicons name="fitness-outline" size={16} color={Colors.gray[400]} />
-                        <Text style={styles.detailText}>{item.intensity}</Text>
-                    </View>
-                </View>
-            </View>
-        </TouchableOpacity>
+  const toggleVenue = (venueId: string) => {
+    setSelectedVenueIds((prev) =>
+      prev.includes(venueId)
+        ? prev.filter((id) => id !== venueId)
+        : [...prev, venueId],
     );
+  };
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.topBar}>
-                <Text style={styles.title}>My Tickets</Text>
-                <TouchableOpacity
-                    style={styles.createButton}
-                    onPress={() => router.push('/tickets/new')}
-                >
-                    <Ionicons name="add" size={24} color="white" />
-                </TouchableOpacity>
-            </View>
+  const handleCreate = async () => {
+    if (selectedVenueIds.length === 0) {
+      alert("請至少選擇一個場地");
+      return;
+    }
 
-            {loading ? (
-                <View style={styles.center}>
-                    <Text style={styles.loadingText}>Loading...</Text>
-                </View>
-            ) : tickets.length === 0 ? (
-                <View style={styles.center}>
-                    <Text style={styles.emptyText}>No tickets found</Text>
-                    <Text style={styles.emptySubText}>Create a ticket to find a match!</Text>
-                </View>
-            ) : (
-                <FlatList
-                    data={tickets}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.list}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor={Colors.primary[600]}
-                            colors={[Colors.primary[600]]}
-                        />
-                    }
-                />
-            )}
+    setLoading(true);
+    try {
+      const dateStr = date.toISOString().split("T")[0];
+      const timeStr = time.toLocaleTimeString("en-US", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      await apis.tickets.createTicket({
+        ticketCreateIn: {
+          date: new Date(dateStr),
+          startTime: timeStr,
+          durationMinutes: parseInt(formData.durationMinutes),
+          sportType: formData.sportType,
+          intensity: formData.intensity as any,
+          venueIds: selectedVenueIds,
+          currency: "USD",
+        },
+      });
+      Alert.alert("成功", "球票建立成功！");
+      // Reset form
+      setDate(new Date());
+      setTime(new Date());
+      setSelectedVenueIds([]);
+      setFormData({
+        durationMinutes: "60",
+        sportType: "basketball",
+        intensity: "Medium",
+      });
+    } catch (error) {
+      console.error("Failed to create ticket:", error);
+      Alert.alert("錯誤", "建立球票失敗");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+  };
+
+  const onTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(Platform.OS === "ios");
+    if (selectedTime) {
+      setTime(selectedTime);
+    }
+  };
+
+  return (
+    <View style={styles.overlay}>
+      <View style={styles.sheetContainer}>
+        {/* Drag Handle */}
+        <View style={styles.handleContainer}>
+          <View style={styles.handle} />
         </View>
-    );
+
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={styles.title}>發起揪團</Text>
+          </View>
+
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>日期</Text>
+              {Platform.OS === "android" && (
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={styles.dateButtonText}>
+                    {date.toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {(Platform.OS === "ios" || showDatePicker) && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="default"
+                  onChange={onDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>開始時間</Text>
+              {Platform.OS === "android" && (
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Text style={styles.dateButtonText}>
+                    {time.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {(Platform.OS === "ios" || showTimePicker) && (
+                <DateTimePicker
+                  value={time}
+                  mode="time"
+                  display="default"
+                  onChange={onTimeChange}
+                />
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>時長 (分鐘)</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.durationMinutes}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, durationMinutes: text })
+                }
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>運動類型</Text>
+              <View style={styles.pills}>
+                {["basketball", "badminton", "tennis", "soccer"].map((sport) => (
+                  <TouchableOpacity
+                    key={sport}
+                    style={[
+                      styles.pill,
+                      formData.sportType === sport && styles.pillActive,
+                    ]}
+                    onPress={() => setFormData({ ...formData, sportType: sport })}
+                  >
+                    <Text
+                      style={[
+                        styles.pillText,
+                        formData.sportType === sport && styles.pillTextActive,
+                      ]}
+                    >
+                      {sport === "basketball"
+                        ? "籃球"
+                        : sport === "badminton"
+                          ? "羽球"
+                          : sport === "tennis"
+                            ? "網球"
+                            : sport === "soccer"
+                              ? "足球"
+                              : sport}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>強度</Text>
+              <View style={styles.pills}>
+                {["Low", "Medium", "High"].map((intensity) => (
+                  <TouchableOpacity
+                    key={intensity}
+                    style={[
+                      styles.pill,
+                      formData.intensity === intensity && styles.pillActive,
+                    ]}
+                    onPress={() => setFormData({ ...formData, intensity })}
+                  >
+                    <Text
+                      style={[
+                        styles.pillText,
+                        formData.intensity === intensity && styles.pillTextActive,
+                      ]}
+                    >
+                      {intensity === "Low"
+                        ? "低"
+                        : intensity === "Medium"
+                          ? "中"
+                          : intensity === "High"
+                            ? "高"
+                            : intensity}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>場地 *</Text>
+              {loadingVenues ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : venues.length === 0 ? (
+                <Text style={styles.emptyText}>無可用場地</Text>
+              ) : (
+                <View style={styles.venueList}>
+                  {venues.map((venueData) => (
+                    <TouchableOpacity
+                      key={venueData.venue.id}
+                      style={[
+                        styles.venueCard,
+                        selectedVenueIds.includes(venueData.venue.id) &&
+                        styles.venueCardSelected,
+                      ]}
+                      onPress={() => toggleVenue(venueData.venue.id)}
+                    >
+                      <View style={styles.venueCardContent}>
+                        <View style={styles.venueInfo}>
+                          <Text
+                            style={[
+                              styles.venueName,
+                              selectedVenueIds.includes(venueData.venue.id) &&
+                              styles.venueNameSelected,
+                            ]}
+                          >
+                            {venueData.venue.name}
+                          </Text>
+                          <Text style={styles.venueAddress}>
+                            {venueData.venue.address}
+                          </Text>
+                        </View>
+                        {selectedVenueIds.includes(venueData.venue.id) && (
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={24}
+                            color={Colors.primary}
+                          />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {selectedVenueIds.length > 0 && (
+                <Text style={styles.selectedCount}>
+                  已選擇 {selectedVenueIds.length} 個場地
+                </Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              onPress={handleCreate}
+              disabled={loading}
+            >
+              <Text style={styles.submitButtonText}>
+                {loading ? "建立中..." : "建立球票"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Bottom spacing for scroll */}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.gray[900],
-    },
-    topBar: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: Colors.gray[900],
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.gray[800],
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: Colors.white,
-    },
-    createButton: {
-        backgroundColor: Colors.primary[600],
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    list: {
-        padding: 16,
-    },
-    card: {
-        backgroundColor: Colors.gray[900],
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: Colors.gray[800],
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    sportType: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: Colors.white,
-        textTransform: 'capitalize',
-    },
-    statusBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    statusOpen: {
-        backgroundColor: Colors.primary[900],
-    },
-    statusMatched: {
-        backgroundColor: Colors.success[700],
-    },
-    statusExpired: {
-        backgroundColor: Colors.gray[800],
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    textOpen: {
-        color: Colors.primary[400],
-    },
-    textMatched: {
-        color: Colors.success[500],
-    },
-    textExpired: {
-        color: Colors.gray[400],
-    },
-    details: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    detailRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    detailText: {
-        marginLeft: 4,
-        color: Colors.gray[400],
-        fontSize: 14,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        fontSize: 16,
-        color: Colors.gray[400],
-    },
-    emptyText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: Colors.white,
-    },
-    emptySubText: {
-        marginTop: 8,
-        color: Colors.gray[400],
-    },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent overlay
+    justifyContent: 'flex-end', // Push sheet to bottom
+  },
+  sheetContainer: {
+    height: SHEET_HEIGHT,
+    backgroundColor: '#fbf5e2ff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+    // Shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    // Shadow for Android
+    elevation: 20,
+  },
+  handleContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#fbf5e2ff',
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: Colors.gray[300],
+    borderRadius: 2,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#fbf5e2ff',
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray[200],
+    backgroundColor: Colors.white,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: Colors.gray[900],
+  },
+  form: {
+    padding: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+    color: Colors.gray[900],
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: Colors.gray[100],
+    color: Colors.gray[900],
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: Colors.gray[100],
+  },
+  dateButtonText: {
+    color: Colors.gray[900],
+    fontSize: 16,
+  },
+  pills: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  pill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+  },
+  pillActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  pillText: {
+    color: Colors.gray[600],
+  },
+  pillTextActive: {
+    color: Colors.gray[900],
+    fontWeight: "600",
+  },
+  submitButton: {
+    backgroundColor: Colors.primary,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
+  },
+  submitButtonText: {
+    color: Colors.gray[900],
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  emptyText: {
+    color: Colors.gray[400],
+    fontSize: 14,
+    fontStyle: "italic",
+  },
+  venueList: {
+    gap: 12,
+  },
+  venueCard: {
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: Colors.white,
+  },
+  venueCardSelected: {
+    borderColor: Colors.primary,
+    borderWidth: 2,
+    backgroundColor: Colors.secondary,
+  },
+  venueCardContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  venueInfo: {
+    flex: 1,
+  },
+  venueName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.gray[900],
+    marginBottom: 4,
+  },
+  venueNameSelected: {
+    color: Colors.tertiary,
+  },
+  venueAddress: {
+    fontSize: 14,
+    color: Colors.gray[400],
+  },
+  selectedCount: {
+    marginTop: 8,
+    fontSize: 14,
+    color: Colors.tertiary,
+    fontWeight: "500",
+  },
 });

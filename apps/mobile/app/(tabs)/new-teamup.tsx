@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-import Card from '../../components/Card';
-import { Colors } from '../../constants/Colors';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Switch,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import Card from "../../components/Card";
+import { Colors } from "../../constants/Colors";
 
 export default function NewTeamUpScreen() {
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [maxParticipants, setMaxParticipants] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -20,10 +27,10 @@ export default function NewTeamUpScreen() {
   const handleCreate = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (!title.trim()) newErrors.title = 'Title is required';
-    if (!description.trim()) newErrors.description = 'Description is required';
+    if (!title.trim()) newErrors.title = "請輸入標題";
+    if (!description.trim()) newErrors.description = "請輸入描述";
     if (!maxParticipants || parseInt(maxParticipants) < 2) {
-      newErrors.maxParticipants = 'Must have at least 2 participants';
+      newErrors.maxParticipants = "至少需要 2 名參加者";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -40,30 +47,36 @@ export default function NewTeamUpScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Ionicons name="close" size={28} color={Colors.gray[900]} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create TeamUp</Text>
+        <Text style={styles.headerTitle}>建立活動</Text>
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+      >
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Information</Text>
+          <Text style={styles.sectionTitle}>基本資訊</Text>
 
           <Input
-            label="Title"
-            placeholder='e.g., "Basketball Game - Morning Session"'
+            label="標題"
+            placeholder="例如：週末晨間籃球局"
             value={title}
             onChangeText={setTitle}
             error={errors.title}
           />
 
           <Input
-            label="Description"
-            placeholder="Describe your TeamUp..."
+            label="描述"
+            placeholder="請描述您的活動..."
             value={description}
             onChangeText={setDescription}
             error={errors.description}
@@ -73,8 +86,8 @@ export default function NewTeamUpScreen() {
           />
 
           <Input
-            label="Max Participants"
-            placeholder="e.g., 10"
+            label="最大參加人數"
+            placeholder="例如：10"
             value={maxParticipants}
             onChangeText={setMaxParticipants}
             error={errors.maxParticipants}
@@ -83,48 +96,77 @@ export default function NewTeamUpScreen() {
         </Card>
 
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={styles.sectionTitle}>設定</Text>
 
           <View style={styles.settingRow}>
             <View style={styles.settingContent}>
               <View style={styles.settingIcon}>
-                <Ionicons name="lock-closed-outline" size={24} color={Colors.gray[700]} />
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={24}
+                  color={Colors.gray[700]}
+                />
               </View>
               <View style={styles.settingText}>
-                <Text style={styles.settingTitle}>Private TeamUp</Text>
-                <Text style={styles.settingSubtitle}>Only invited users can join</Text>
+                <Text style={styles.settingTitle}>私人活動</Text>
+                <Text style={styles.settingSubtitle}>僅限受邀用戶加入</Text>
               </View>
             </View>
             <Switch
               value={isPrivate}
               onValueChange={setIsPrivate}
-              trackColor={{ false: Colors.gray[300], true: Colors.primary[500] }}
+              trackColor={{
+                false: Colors.gray[300],
+                true: Colors.primary[500],
+              }}
               thumbColor={Colors.white}
             />
           </View>
         </Card>
 
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Schedule</Text>
+          <Text style={styles.sectionTitle}>時間</Text>
           <TouchableOpacity style={styles.dateButton}>
-            <Ionicons name="calendar-outline" size={20} color={Colors.gray[600]} />
-            <Text style={styles.dateButtonText}>Select Date & Time</Text>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray[400]} />
+            <Ionicons
+              name="calendar-outline"
+              size={20}
+              color={Colors.gray[600]}
+            />
+            <Text style={styles.dateButtonText}>選擇日期與時間</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={Colors.gray[400]}
+            />
           </TouchableOpacity>
         </Card>
 
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
+          <Text style={styles.sectionTitle}>地點</Text>
           <TouchableOpacity style={styles.dateButton}>
-            <Ionicons name="location-outline" size={20} color={Colors.gray[600]} />
-            <Text style={styles.dateButtonText}>Select Venue</Text>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray[400]} />
+            <Ionicons
+              name="location-outline"
+              size={20}
+              color={Colors.gray[600]}
+            />
+            <Text style={styles.dateButtonText}>選擇場地</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={Colors.gray[400]}
+            />
           </TouchableOpacity>
         </Card>
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button title="Create TeamUp" onPress={handleCreate} loading={loading} fullWidth size="large" />
+        <Button
+          title="建立活動"
+          onPress={handleCreate}
+          loading={loading}
+          fullWidth
+          size="large"
+        />
       </View>
     </SafeAreaView>
   );
@@ -133,12 +175,12 @@ export default function NewTeamUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.base,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: Colors.white,
@@ -150,7 +192,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.gray[900],
   },
   headerRight: {
@@ -167,24 +209,24 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.gray[900],
     marginBottom: 16,
   },
   textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     paddingTop: 12,
   },
   settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   settingContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   settingIcon: {
     marginRight: 12,
@@ -194,7 +236,7 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.gray[900],
     marginBottom: 2,
   },
@@ -203,8 +245,8 @@ const styles = StyleSheet.create({
     color: Colors.gray[600],
   },
   dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     backgroundColor: Colors.gray[50],
     borderRadius: 12,

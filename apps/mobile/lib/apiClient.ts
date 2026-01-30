@@ -3,8 +3,8 @@
  * Direct integration with Flask backend
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import type {
   AuthResponse,
   LoginRequest,
@@ -36,21 +36,22 @@ import type {
   CreateTicketRequest,
   Notification,
   APIError,
-} from './types';
+} from "./types";
 
 // Use localhost for iOS simulator, 10.0.2.2 for Android emulator
 const localhost = Platform.select({
-  ios: 'http://localhost:8080',
-  android: 'http://10.0.2.2:8080',
+  ios: "http://localhost:8080",
+  android: "http://10.0.2.2:8080",
 });
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || localhost || 'http://localhost:8080';
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL || localhost || "http://localhost:8080";
 
 // ===[ Token Management ]===
 
 const getAccessToken = async (): Promise<string | null> => {
   try {
-    return await AsyncStorage.getItem('accessToken');
+    return await AsyncStorage.getItem("accessToken");
   } catch {
     return null;
   }
@@ -58,20 +59,23 @@ const getAccessToken = async (): Promise<string | null> => {
 
 const getRefreshToken = async (): Promise<string | null> => {
   try {
-    return await AsyncStorage.getItem('refreshToken');
+    return await AsyncStorage.getItem("refreshToken");
   } catch {
     return null;
   }
 };
 
-export const setTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
-  await AsyncStorage.setItem('accessToken', accessToken);
-  await AsyncStorage.setItem('refreshToken', refreshToken);
+export const setTokens = async (
+  accessToken: string,
+  refreshToken: string,
+): Promise<void> => {
+  await AsyncStorage.setItem("accessToken", accessToken);
+  await AsyncStorage.setItem("refreshToken", refreshToken);
 };
 
 export const clearTokens = async (): Promise<void> => {
-  await AsyncStorage.removeItem('accessToken');
-  await AsyncStorage.removeItem('refreshToken');
+  await AsyncStorage.removeItem("accessToken");
+  await AsyncStorage.removeItem("refreshToken");
 };
 
 // ===[ HTTP Client ]===
@@ -80,18 +84,18 @@ let refreshPromise: Promise<void> | null = null;
 
 async function fetchWithAuth(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> {
   const url = `${BASE_URL}${endpoint}`;
   const accessToken = await getAccessToken();
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
   if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
+    headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
   let response = await fetch(url, {
@@ -100,11 +104,11 @@ async function fetchWithAuth(
   });
 
   // Handle 401 with token refresh
-  if (response.status === 401 && !endpoint.includes('/auth/')) {
+  if (response.status === 401 && !endpoint.includes("/auth/")) {
     const refreshToken = await getRefreshToken();
     if (!refreshToken) {
       await clearTokens();
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     // Use singleton refresh promise to avoid race conditions
@@ -112,13 +116,13 @@ async function fetchWithAuth(
       refreshPromise = (async () => {
         try {
           const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refresh_token: refreshToken }),
           });
 
           if (!refreshResponse.ok) {
-            throw new Error('Token refresh failed');
+            throw new Error("Token refresh failed");
           }
 
           const data: AuthResponse = await refreshResponse.json();
@@ -137,7 +141,7 @@ async function fetchWithAuth(
     // Retry original request with new token
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
-      headers['Authorization'] = `Bearer ${newAccessToken}`;
+      headers["Authorization"] = `Bearer ${newAccessToken}`;
     }
 
     response = await fetch(url, {
@@ -151,16 +155,16 @@ async function fetchWithAuth(
 
 async function request<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
   const response = await fetchWithAuth(endpoint, options);
 
   if (!response.ok) {
     const error: APIError = await response.json().catch(() => ({
-      error: 'request_failed',
+      error: "request_failed",
       details: response.statusText,
     }));
-    throw new Error(error.error || 'Request failed');
+    throw new Error(error.error || "Request failed");
   }
 
   return response.json();
@@ -170,33 +174,33 @@ async function request<T>(
 
 export const authApi = {
   signup: async (data: SignupRequest): Promise<AuthResponse> => {
-    return request<AuthResponse>('/auth/signup', {
-      method: 'POST',
+    return request<AuthResponse>("/auth/signup", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    return request<AuthResponse>('/auth/login', {
-      method: 'POST',
+    return request<AuthResponse>("/auth/login", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   refresh: async (refreshToken: string): Promise<AuthResponse> => {
-    return request<AuthResponse>('/auth/refresh', {
-      method: 'POST',
+    return request<AuthResponse>("/auth/refresh", {
+      method: "POST",
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
   },
 
   getCurrentUser: async (): Promise<User> => {
-    return request<User>('/auth/me');
+    return request<User>("/auth/me");
   },
 
   updateCurrentUser: async (data: UpdateUserRequest): Promise<User> => {
-    return request<User>('/auth/me', {
-      method: 'PATCH',
+    return request<User>("/auth/me", {
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   },
@@ -206,30 +210,31 @@ export const authApi = {
 
 export const eventsApi = {
   create: async (data: CreateEventRequest): Promise<Event> => {
-    return request<Event>('/events', {
-      method: 'POST',
+    return request<Event>("/events", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   list: async (params?: EventListParams): Promise<Event[]> => {
     const searchParams = new URLSearchParams();
-    if (params?.status) searchParams.append('status', params.status);
-    if (params?.visibility) searchParams.append('visibility', params.visibility);
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    if (params?.offset) searchParams.append('offset', params.offset.toString());
+    if (params?.status) searchParams.append("status", params.status);
+    if (params?.visibility)
+      searchParams.append("visibility", params.visibility);
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    if (params?.offset) searchParams.append("offset", params.offset.toString());
 
     const query = searchParams.toString();
-    return request<Event[]>(`/events${query ? `?${query}` : ''}`);
+    return request<Event[]>(`/events${query ? `?${query}` : ""}`);
   },
 
   search: async (params: EventSearchParams): Promise<Event[]> => {
     const searchParams = new URLSearchParams();
-    searchParams.append('keyword', params.keyword);
-    if (params.limit) searchParams.append('limit', params.limit.toString());
-    if (params.offset) searchParams.append('offset', params.offset.toString());
+    searchParams.append("keyword", params.keyword);
+    if (params.limit) searchParams.append("limit", params.limit.toString());
+    if (params.offset) searchParams.append("offset", params.offset.toString());
 
-    return request<Event[]>(`/events/search?${searchParams.toString()}`);
+    return request<Event[]>(`/events?${searchParams.toString()}`);
   },
 
   get: async (id: string): Promise<EventDetails> => {
@@ -238,20 +243,23 @@ export const eventsApi = {
 
   update: async (id: string, data: UpdateEventRequest): Promise<Event> => {
     return request<Event>(`/events/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(data),
     });
   },
 
   delete: async (id: string): Promise<{ ok: boolean }> => {
     return request<{ ok: boolean }>(`/events/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 
-  join: async (id: string, data?: JoinEventRequest): Promise<JoinEventResponse> => {
+  join: async (
+    id: string,
+    data?: JoinEventRequest,
+  ): Promise<JoinEventResponse> => {
     return request<JoinEventResponse>(`/events/${id}/join`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data || {}),
     });
   },
@@ -263,17 +271,20 @@ export const eventsApi = {
   reviewJoinRequest: async (
     eventId: string,
     requestId: string,
-    data: ReviewJoinRequestRequest
+    data: ReviewJoinRequestRequest,
   ): Promise<{ ok: boolean; status: string; message: string }> => {
     return request(`/events/${eventId}/join-requests/${requestId}/review`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
-  bookTimeSlot: async (id: string, data: BookTimeSlotRequest): Promise<Booking> => {
+  bookTimeSlot: async (
+    id: string,
+    data: BookTimeSlotRequest,
+  ): Promise<Booking> => {
     return request<Booking>(`/events/${id}/book`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
@@ -288,11 +299,14 @@ export const eventsApi = {
 export const venuesApi = {
   search: async (params: VenueSearchParams): Promise<VenueResult[]> => {
     const searchParams = new URLSearchParams();
-    if (params.lat !== undefined) searchParams.append('lat', params.lat.toString());
-    if (params.lng !== undefined) searchParams.append('lng', params.lng.toString());
-    if (params.distance) searchParams.append('distance', params.distance.toString());
-    if (params.datetime) searchParams.append('datetime', params.datetime);
-    if (params.sport_type) searchParams.append('sport_type', params.sport_type);
+    if (params.lat !== undefined)
+      searchParams.append("lat", params.lat.toString());
+    if (params.lng !== undefined)
+      searchParams.append("lng", params.lng.toString());
+    if (params.distance)
+      searchParams.append("distance", params.distance.toString());
+    if (params.datetime) searchParams.append("datetime", params.datetime);
+    if (params.sport_type) searchParams.append("sport_type", params.sport_type);
 
     return request<VenueResult[]>(`/venues?${searchParams.toString()}`);
   },
@@ -304,14 +318,14 @@ export const venuesApi = {
   getCourtTimeSlots: async (
     venueId: string,
     courtId: string,
-    date?: string
+    date?: string,
   ): Promise<any[]> => {
     const searchParams = new URLSearchParams();
-    if (date) searchParams.append('date', date);
+    if (date) searchParams.append("date", date);
 
     const query = searchParams.toString();
     return request<any[]>(
-      `/venues/${venueId}/courts/${courtId}/time_slots${query ? `?${query}` : ''}`
+      `/venues/${venueId}/courts/${courtId}/time_slots${query ? `?${query}` : ""}`,
     );
   },
 };
@@ -320,20 +334,20 @@ export const venuesApi = {
 
 export const bookingsApi = {
   create: async (data: CreateBookingRequest): Promise<Booking> => {
-    return request<Booking>('/bookings', {
-      method: 'POST',
+    return request<Booking>("/bookings", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   list: async (params?: BookingListParams): Promise<Booking[]> => {
     const searchParams = new URLSearchParams();
-    if (params?.status) searchParams.append('status', params.status);
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    if (params?.offset) searchParams.append('offset', params.offset.toString());
+    if (params?.status) searchParams.append("status", params.status);
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    if (params?.offset) searchParams.append("offset", params.offset.toString());
 
     const query = searchParams.toString();
-    return request<Booking[]>(`/bookings${query ? `?${query}` : ''}`);
+    return request<Booking[]>(`/bookings${query ? `?${query}` : ""}`);
   },
 
   get: async (id: string): Promise<BookingDetails> => {
@@ -342,14 +356,14 @@ export const bookingsApi = {
 
   update: async (id: string, data: UpdateBookingRequest): Promise<Booking> => {
     return request<Booking>(`/bookings/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   },
 
   cancel: async (id: string): Promise<{ ok: boolean; message: string }> => {
     return request(`/bookings/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -357,15 +371,17 @@ export const bookingsApi = {
 // ===[ Tickets API ]===
 
 export const ticketsApi = {
-  create: async (data: CreateTicketRequest): Promise<{ id: string; status: string; message: string }> => {
-    return request('/tickets', {
-      method: 'POST',
+  create: async (
+    data: CreateTicketRequest,
+  ): Promise<{ id: string; status: string; message: string }> => {
+    return request("/tickets", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   list: async (): Promise<Ticket[]> => {
-    return request<Ticket[]>('/tickets');
+    return request<Ticket[]>("/tickets");
   },
 
   get: async (id: string): Promise<TicketDetails> => {
@@ -377,12 +393,12 @@ export const ticketsApi = {
 
 export const notificationsApi = {
   list: async (): Promise<Notification[]> => {
-    return request<Notification[]>('/notifications');
+    return request<Notification[]>("/notifications");
   },
 
   markAsRead: async (id: string): Promise<{ message: string }> => {
     return request(`/notifications/${id}/read`, {
-      method: 'POST',
+      method: "POST",
     });
   },
 };
@@ -391,7 +407,7 @@ export const notificationsApi = {
 
 export const healthApi = {
   check: async (): Promise<{ status: string }> => {
-    return request<{ status: string }>('/health');
+    return request<{ status: string }>("/health");
   },
 };
 

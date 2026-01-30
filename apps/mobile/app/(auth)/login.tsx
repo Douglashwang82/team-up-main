@@ -1,25 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-import { Colors } from '../../constants/Colors';
-import { useAuth } from '../../lib/AuthContext';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import { Colors } from "../../constants/Colors";
+import { useAuth } from "../../lib/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
 
   const handleLogin = async () => {
     const newErrors: { email?: string; password?: string } = {};
 
-    if (!email) newErrors.email = 'Email is required';
-    if (!password) newErrors.password = 'Password is required';
+    if (!email) newErrors.email = "請輸入電子郵件";
+    if (!password) newErrors.password = "請輸入密碼";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -32,25 +42,28 @@ export default function LoginScreen() {
       // Navigation will be handled automatically by the root layout
     } catch (error) {
       setLoading(false);
-      setErrors({ email: error instanceof Error ? error.message : 'Login failed. Please try again.' });
+      setErrors({
+        email:
+          error instanceof Error ? error.message : "登入失敗，請稍後重試。",
+      });
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>WETEAM</Text>
+            <Text style={styles.title}>揪團</Text>
           </View>
 
           <View style={styles.form}>
             <Input
-              label="Email"
-              placeholder="Enter your email"
+              label="電子郵件"
+              placeholder="請輸入您的電子郵件"
               value={email}
               onChangeText={setEmail}
               error={errors.email}
@@ -59,8 +72,8 @@ export default function LoginScreen() {
             />
 
             <Input
-              label="Password"
-              placeholder="Enter your password"
+              label="密碼"
+              placeholder="請輸入您的密碼"
               value={password}
               onChangeText={setPassword}
               error={errors.password}
@@ -68,11 +81,11 @@ export default function LoginScreen() {
             />
 
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              <Text style={styles.forgotPasswordText}>忘記密碼？</Text>
             </TouchableOpacity>
 
             <Button
-              title="Sign In"
+              title="登入"
               onPress={handleLogin}
               loading={loading}
               fullWidth
@@ -81,9 +94,9 @@ export default function LoginScreen() {
             />
 
             <View style={styles.signupContainer}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-                <Text style={styles.signupLink}>Sign Up</Text>
+              <Text style={styles.signupText}>還沒有帳號？ </Text>
+              <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+                <Text style={styles.signupLink}>立即註冊</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -96,7 +109,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.gray[900],
+    backgroundColor: Colors.base,
   },
   keyboardView: {
     flex: 1,
@@ -104,49 +117,49 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 24,
-    justifyContent: 'center',
+    // justifyContent: 'center',
   },
   header: {
     marginBottom: 40,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: Colors.white,
+    fontWeight: "bold",
+    color: Colors.gray[900],
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.gray[400],
+    color: Colors.gray[600],
   },
   form: {
-    width: '100%',
+    width: "100%",
   },
   forgotPassword: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 24,
   },
   forgotPasswordText: {
-    color: Colors.primary[400],
+    color: Colors.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   loginButton: {
     marginBottom: 24,
   },
   signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   signupText: {
-    color: Colors.gray[400],
+    color: Colors.gray[600],
     fontSize: 14,
   },
   signupLink: {
-    color: Colors.primary[400],
+    color: Colors.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

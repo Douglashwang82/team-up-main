@@ -1,80 +1,60 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
-import NotificationCenter from '../../components/NotificationCenter';
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../constants/Colors";
+import NotificationCenter from "../../components/NotificationCenter";
+import GlassTabBar from "../../components/GlassTabBar";
 
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={(props) => <GlassTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary[400],
+        tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray[500],
-        tabBarStyle: {
-          backgroundColor: Colors.gray[900],
-          borderTopColor: Colors.gray[800],
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 60,
-        },
         headerShown: true,
         headerStyle: {
-          backgroundColor: Colors.gray[900],
+          backgroundColor: "#fbf5e2ff",
         },
-        headerTintColor: Colors.white,
+        headerTintColor: Colors.gray[900],
         headerRight: () => <NotificationCenter />,
+        animation: "shift",
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Events',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
-          ),
+          title: "活動列表",
+          headerShown: false,
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Map',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map" size={size} color={color} />
-          ),
+          title: "地圖搜尋",
+          headerShown: false,
         }}
       />
       <Tabs.Screen
         name="tickets"
         options={{
-          title: 'Tickets',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="ticket" size={size} color={color} />
-          ),
+          title: "發起揪團",
+          headerShown: false,
         }}
       />
       <Tabs.Screen
         name="my-events"
         options={{
-          title: 'My Events',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
-          ),
+          title: "我的活動",
+          headerShown: false,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
+          title: "個人檔案",
+          headerShown: false,
         }}
       />
-      {/* <Tabs.Screen
-        name="teamup"
-        options={{
-          href: null,
-        }}
-      /> */}
       <Tabs.Screen
         name="new-teamup"
         options={{

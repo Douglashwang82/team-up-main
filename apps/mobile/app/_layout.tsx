@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { AuthProvider, useAuth } from '../lib/AuthContext';
-import { View, ActivityIndicator } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { useEffect } from "react";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { AuthProvider, useAuth } from "../lib/AuthContext";
+import { View, ActivityIndicator } from "react-native";
+import { Colors } from "../constants/Colors";
+import { useFonts, NotoSansTC_400Regular, NotoSansTC_500Medium, NotoSansTC_700Bold } from '@expo-google-fonts/noto-sans-tc';
 
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
@@ -26,21 +27,57 @@ function RootLayoutNav() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.gray[50] }}>
-        <ActivityIndicator size="large" color={Colors.primary[600]} />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: Colors.gray[50],
+        }}
+      >
+        <ActivityIndicator size="large" />
       </View>
     );
   }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
+        name="event/[id]"
+        options={{
+          presentation: "card",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="field/[id]"
+        options={{
+          presentation: "card",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="teamup/[id]"
+        options={{
+          presentation: "card",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ticket/[id]"
+        options={{
+          presentation: "card",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="tickets/new"
         options={{
-          presentation: 'modal',
-          headerShown: false
+          presentation: "modal",
+          headerShown: false,
         }}
       />
     </Stack>
@@ -48,6 +85,27 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    NotoSansTC_400Regular,
+    NotoSansTC_500Medium,
+    NotoSansTC_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: Colors.base,
+        }}
+      >
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <AuthProvider>
       <StatusBar style="auto" />
