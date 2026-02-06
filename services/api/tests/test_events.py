@@ -235,28 +235,30 @@ class TestListEvents:
 
 
 class TestSearchEvents:
-    """Tests for searching events"""
+    """Tests for searching events via keyword parameter on /events"""
 
     def test_search_events_success(self, client, db, event):
         """Test searching events by keyword"""
-        response = client.get("/events/search", query_string={
+        response = client.get("/events", query_string={
             "keyword": "Basketball"
         })
         assert response.status_code == 200
         data = response.get_json()
         assert isinstance(data, list)
 
-    def test_search_events_no_keyword(self, client, db):
-        """Test searching without keyword fails"""
-        response = client.get("/events/search")
-        assert response.status_code == 400
+    def test_search_events_no_keyword_returns_all(self, client, db, event):
+        """Test listing without keyword returns all events"""
+        response = client.get("/events")
+        assert response.status_code == 200
         data = response.get_json()
-        assert data["error"] == "title_keyword_required"
+        assert isinstance(data, list)
 
-    def test_search_events_empty_keyword(self, client, db):
-        """Test searching with empty keyword fails"""
-        response = client.get("/events/search", query_string={"keyword": "   "})
-        assert response.status_code == 400
+    def test_search_events_empty_keyword_returns_all(self, client, db, event):
+        """Test listing with empty keyword returns all events"""
+        response = client.get("/events", query_string={"keyword": "   "})
+        assert response.status_code == 200
+        data = response.get_json()
+        assert isinstance(data, list)
 
 
 class TestGetEvent:

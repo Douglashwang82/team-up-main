@@ -343,11 +343,11 @@ def main():
     print("=" * 80)
 
     try:
-        # test_auth()
+        test_auth()
         test_venues()
-        # test_bookings()
-        # test_events()
-        # print_summary()
+        test_bookings()
+        test_events()
+        print_summary()
     except KeyboardInterrupt:
         print("\n\n⚠️  Tests interrupted by user")
     except Exception as e:

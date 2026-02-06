@@ -78,28 +78,32 @@ function TabButton({
                     ]}
                 >
                 </Animated.View>
-            )}
+            )
+            }
             <Animated.View
                 style={[
                     animatedStyle,
                     isTicketTab && styles.fabButton,
+                    isFocused && isTicketTab && styles.focusedFabButton,
                 ]}
             >
                 <Ionicons
                     name={iconName}
                     size={isTicketTab ? 40 : 30}
-                    color={iconColor}
+                    color={isFocused ? isTicketTab ? "white" : Colors.primary : Colors.gray[400]}
                 />
             </Animated.View>
-            {!isTicketTab && (
-                <Text style={[
-                    styles.label,
-                    { color: isFocused ? Colors.primary : Colors.gray[400] }
-                ]}>
-                    {ROUTE_LABELS[route]}
-                </Text>
-            )}
-        </TouchableOpacity>
+            {/* {
+                !isTicketTab && (
+                    <Text style={[
+                        styles.label,
+                        { color: isFocused ? Colors.primary : Colors.gray[400] }
+                    ]}>
+                        {ROUTE_LABELS[route]}
+                    </Text>
+                )
+            } */}
+        </TouchableOpacity >
     );
 }
 
@@ -137,7 +141,7 @@ export default function GlassTabBar({ state, descriptors, navigation }: BottomTa
             {/* Glass Background */}
             <GlassView
                 style={styles.canvasContainer}
-                glassEffectStyle="regular"
+                glassEffectStyle="clear"
             />
 
             {/* Tab Buttons */}
@@ -196,14 +200,14 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.4)",
-        backgroundColor: "rgba(212, 45, 45, 0.1)",
+        backgroundColor: "rgba(12, 10, 10, 0.1)",
         // Premium glass shadow
         ...Platform.select({
             ios: {
                 shadowColor: "#000",
-                shadowOffset: { width: 0, height: -8 },
-                shadowOpacity: 0.15,
-                shadowRadius: 20,
+                shadowOffset: { width: 0, height: -2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
             },
             android: {
                 elevation: 12,
@@ -229,24 +233,26 @@ const styles = StyleSheet.create({
     },
     fabButton: {
         backgroundColor: Colors.gray[200],
-        borderRadius: 20,
+        borderRadius: 24,
         width: 48,
         height: 48,
         alignItems: "center",
         justifyContent: "center",
         marginTop: 0,
-        // FAB shadow removed to use glass slice instead
-        // ...Platform.select({
-        //     ios: {
-        //         shadowColor: Colors.primary,
-        //         shadowOffset: { width: 0, height: 4 },
-        //         shadowOpacity: 0.4,
-        //         shadowRadius: 8,
-        //     },
-        //     android: {
-        //         elevation: 8,
-        //     },
-        // }),
+        ...Platform.select({
+            ios: {
+                shadowColor: Colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.4,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 8,
+            },
+        }),
+    },
+    focusedFabButton: {
+        backgroundColor: Colors.primary,
     },
     fabGlassBacking: {
         position: 'absolute',

@@ -74,14 +74,22 @@ class BookingOut(BaseModel):
     court: CourtOut
     venue: VenueOut
 
+class OwnerOut(BaseModel):
+    """Owner information for events"""
+    id: UUID
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+
 class EventOut(BaseModel):
     """Basic Event response"""
     id: UUID
     title: str
+    image: Optional[str] = None
     description: Optional[str] = None
     status: EventStatus
     max_participants: int
     current_participants: int
+    owner: Optional[OwnerOut] = None
     visibility: Visibility
     duration_type: DurationType
     created_at: datetime
@@ -103,6 +111,7 @@ class EventDetailOut(BaseModel):
     """Detailed Event response with participants and bookings"""
     id: UUID
     title: str
+    image: Optional[str] = None
     description: Optional[str] = None
     status: EventStatus
     max_participants: int

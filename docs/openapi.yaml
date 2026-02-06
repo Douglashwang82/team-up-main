@@ -116,7 +116,7 @@ paths:
   /venues:
     get:
       tags: [Venues]
-      summary: Search venues with available timeslots
+      summary: Search venues with available time slots
       description: |
         Search venues based on location, datetime, and sport type.
         Supports geolocation-based search with distance filtering.
@@ -158,7 +158,7 @@ paths:
             example: basketball
       responses:
         '200':
-          description: List of venues with available timeslots
+          description: List of venues with available time slots
           content:
             application/json:
               schema:
@@ -188,11 +188,11 @@ paths:
         '404':
           description: Venue not found
 
-  /venues/{venue_id}/courts/{court_id}/timeslots:
+  /venues/{venue_id}/courts/{court_id}/time_slots:
     get:
       tags: [Venues]
-      summary: Get available timeslots for a court
-      operationId: getCourtTimeslots
+      summary: Get available time slots for a court
+      operationId: getCourtTimeSlots
       parameters:
         - name: venue_id
           in: path
@@ -215,7 +215,7 @@ paths:
             example: "2025-10-20"
       responses:
         '200':
-          description: List of available timeslots
+          description: List of available time slots
           content:
             application/json:
               schema:
@@ -385,20 +385,30 @@ paths:
   /events:
     get:
       tags: [Events]
-      summary: List Events with filters
+      summary: List and search Events
+      description: |
+        List Events with optional filtering and search.
+        Supports filtering by status, visibility, and keyword search on title.
       operationId: listEvents
       parameters:
         - name: status
           in: query
+          description: Filter by event status
           schema:
             type: string
             enum: [open, closed]
             default: open
         - name: visibility
           in: query
+          description: Filter by visibility
           schema:
             type: string
             enum: [public, private]
+        - name: keyword
+          in: query
+          description: Search keyword (searches in title)
+          schema:
+            type: string
         - name: limit
           in: query
           schema:
@@ -446,41 +456,6 @@ paths:
         '401':
           description: Unauthorized
 
-  /events/search:
-    get:
-      tags: [Events]
-      summary: Search Events by keyword
-      operationId: searchEvents
-      parameters:
-        - name: keyword
-          in: query
-          required: true
-          description: Search keyword
-          schema:
-            type: string
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        '200':
-          description: List of matching Events
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventOut'
-
   /events/{event_id}:
     get:
       tags: [Events]
@@ -507,7 +482,7 @@ paths:
     post:
       tags: [Events]
       summary: Book a timeslot for Event (owner only)
-      description: Event owner can book multiple timeslots for the team
+      description: Event owner can book multiple time slots for the team
       operationId: bookTimeslotForEvent
       security:
         - bearerAuth: []
@@ -1176,6 +1151,19 @@ components:
           enum: [open, closed]
           default: open
 
+    OwnerOut:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+
     EventOut:
       type: object
       required: [id, title, status, max_participants, current_participants, visibility, duration_type, created_at]
@@ -1185,6 +1173,10 @@ components:
           format: uuid
         title:
           type: string
+        image:
+          type: string
+          nullable: true
+          description: URL or path to event image
         description:
           type: string
           nullable: true
@@ -1195,6 +1187,8 @@ components:
           type: integer
         current_participants:
           type: integer
+        owner:
+          $ref: '#/components/schemas/OwnerOut'
         visibility:
           type: string
           enum: [public, private]
@@ -1214,6 +1208,10 @@ components:
           format: uuid
         title:
           type: string
+        image:
+          type: string
+          nullable: true
+          description: URL or path to event image
         description:
           type: string
           nullable: true

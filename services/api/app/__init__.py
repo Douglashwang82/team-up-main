@@ -15,17 +15,47 @@ from .routes.notifications import bp as notifications_bp
 
 def create_app() -> Flask:
     app = Flask(__name__)
+
+    # Register health check FIRST before anything else
+    app.register_blueprint(health_bp)
+
     CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
     app.config["JWT_SECRET"] = settings.JWT_SECRET
 
-    if os.getenv("BOOTSTRAP_DB", "1") == "1":
-        try:
-            ensure_postgis_extension()
-            create_all_tables()
-        except Exception as e:
-            app.logger.warning(f"DB bootstrap skipped/failed: {e}")
+    # Database initialization - be lenient with errors on first startup
+    # This happens AFTER health check is registered
+    bootstrap_db = os.getenv("BOOTSTRAP_DB", "1")
+    app.logger.info(f"BOOTSTRAP_DB setting: {bootstrap_db}")
 
-    app.register_blueprint(health_bp)
+    if bootstrap_db == "1":
+        app.logger.info("Starting database bootstrap...")
+        print('Starting database bootstrap...')
+        try:
+            # Try to enable PostGIS, but don't fail if it already exists or we lack permissions
+            try:
+                app.logger.info("Attempting to enable PostGIS extensions...")
+                print('Attempting to enable PostGIS extensions...')
+                ensure_postgis_extension()
+                app.logger.info("PostGIS extensions enabled successfully")
+                print('PostGIS extensions enabled successfully')
+            except Exception as ext_err:
+                app.logger.warning(f"PostGIS extension setup skipped: {ext_err}")
+                print(f"PostGIS extension setup skipped: {ext_err}")
+
+            # Create tables
+            app.logger.info("Creating database tables...")
+            print('Creating database tables...')
+            create_all_tables()
+            app.logger.info("Database tables initialized successfully")
+            print('Database tables initialized successfully')
+        except Exception as e:
+            app.logger.error(f"DB bootstrap failed (app will continue): {e}")
+            import traceback
+            app.logger.error(traceback.format_exc())
+            print(traceback.format_exc())
+    else:
+        app.logger.info("Database bootstrap disabled (BOOTSTRAP_DB=0)")
+        print('Database bootstrap disabled (BOOTSTRAP_DB=0)')
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(venues_bp, url_prefix="/venues")
     app.register_blueprint(events_bp, url_prefix="/events")

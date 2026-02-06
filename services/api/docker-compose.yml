@@ -26,7 +26,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/team_up
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/team_up
       JWT_SECRET: change_me
       BOOTSTRAP_DB: "1"
       FLASK_RUN_PORT: "8080"

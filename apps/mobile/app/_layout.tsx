@@ -84,6 +84,8 @@ function RootLayoutNav() {
   );
 }
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     NotoSansTC_400Regular,
@@ -98,7 +100,7 @@ export default function RootLayout() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: Colors.base,
+          backgroundColor: Colors.modern.background,
         }}
       >
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -107,9 +109,11 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <StatusBar style="auto" />
-      <RootLayoutNav />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <StatusBar style="light" />
+        <RootLayoutNav />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

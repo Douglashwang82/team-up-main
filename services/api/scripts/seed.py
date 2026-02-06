@@ -10,6 +10,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import bcrypt
+import random
 
 # Add the project root to the path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -64,38 +65,115 @@ def create_users(session: Session) -> list[User]:
         {
             "email": "alice@example.com",
             "password": "password123",
-            "display_name": "Alice Chen",
-            "phone": "+886-912-345-678"
+            "display_name": "陳小美",
+            "phone": "+886-912-345-678",
+            "avatar_url": "mock-ava-1.png"
         },
         {
             "email": "bob@example.com",
             "password": "password123",
-            "display_name": "Bob Wang",
-            "phone": "+886-923-456-789"
+            "display_name": "王大明",
+            "phone": "+886-923-456-789",
+            "avatar_url": "mock-ava-2.png"
         },
         {
             "email": "charlie@example.com",
             "password": "password123",
-            "display_name": "Charlie Lin",
-            "phone": "+886-934-567-890"
+            "display_name": "林小華",
+            "phone": "+886-934-567-890",
+            "avatar_url": "mock-ava-1.png"
         },
         {
             "email": "diana@example.com",
             "password": "password123",
-            "display_name": "Diana Wu",
-            "phone": "+886-945-678-901"
+            "display_name": "吳雅婷",
+            "phone": "+886-945-678-901",
+            "avatar_url": "mock-ava-2.png"
         },
         {
             "email": "evan@example.com",
             "password": "password123",
-            "display_name": "Evan Lee",
-            "phone": "+886-956-789-012"
+            "display_name": "李志偉",
+            "phone": "+886-956-789-012",
+            "avatar_url": "mock-ava-1.png"
         },
         {
             "email": "fiona@example.com",
             "password": "password123",
-            "display_name": "Fiona Zhang",
-            "phone": "+886-967-890-123"
+            "display_name": "張心怡",
+            "phone": "+886-967-890-123",
+            "avatar_url": "mock-ava-2.png"
+        },
+        # Additional users
+        {
+            "email": "george@example.com",
+            "password": "password123",
+            "display_name": "黃建宏",
+            "phone": "+886-978-901-234",
+            "avatar_url": "mock-ava-1.png"
+        },
+        {
+            "email": "helen@example.com",
+            "password": "password123",
+            "display_name": "許佳玲",
+            "phone": "+886-989-012-345",
+            "avatar_url": "mock-ava-2.png"
+        },
+        {
+            "email": "ivan@example.com",
+            "password": "password123",
+            "display_name": "劉俊傑",
+            "phone": "+886-990-123-456",
+            "avatar_url": "mock-ava-1.png"
+        },
+        {
+            "email": "jenny@example.com",
+            "password": "password123",
+            "display_name": "楊雅琪",
+            "phone": "+886-901-234-567",
+            "avatar_url": "mock-ava-2.png"
+        },
+        {
+            "email": "kevin@example.com",
+            "password": "password123",
+            "display_name": "周柏翰",
+            "phone": "+886-912-345-001",
+            "avatar_url": "mock-ava-1.png"
+        },
+        {
+            "email": "linda@example.com",
+            "password": "password123",
+            "display_name": "蔡宜庭",
+            "phone": "+886-923-456-002",
+            "avatar_url": "mock-ava-2.png"
+        },
+        {
+            "email": "mike@example.com",
+            "password": "password123",
+            "display_name": "鄭書豪",
+            "phone": "+886-934-567-003",
+            "avatar_url": "mock-ava-1.png"
+        },
+        {
+            "email": "nancy@example.com",
+            "password": "password123",
+            "display_name": "謝欣妤",
+            "phone": "+886-945-678-004",
+            "avatar_url": "mock-ava-2.png"
+        },
+        {
+            "email": "oscar@example.com",
+            "password": "password123",
+            "display_name": "郭冠廷",
+            "phone": "+886-956-789-005",
+            "avatar_url": "mock-ava-1.png"
+        },
+        {
+            "email": "peggy@example.com",
+            "password": "password123",
+            "display_name": "徐詩涵",
+            "phone": "+886-967-890-006",
+            "avatar_url": "mock-ava-2.png"
         },
     ]
 
@@ -105,7 +183,8 @@ def create_users(session: Session) -> list[User]:
             email=data["email"],
             password_hash=bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
             display_name=data["display_name"],
-            phone=data.get("phone")
+            phone=data.get("phone"),
+            avatar_url=data.get("avatar_url")
         )
         session.add(user)
         users.append(user)
@@ -132,74 +211,178 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
 
     venues_data = [
         {
-            "name": "Taipei Sports Center",
-            "address": "No. 10, Nanjing East Road, Section 4, Songshan District",
+            "name": "臺北體育館",
+            "address": "台北市松山區南京東路四段10號",
             "city": "Taipei",
             "lat": 25.0520,
             "lng": 121.5491,
             "contact_phone": "+886-2-2570-2330",
             "partner_code": "TSC001",
             "courts": [
-                {"name": "Court A", "sport_type": "basketball"},
-                {"name": "Court B", "sport_type": "basketball"},
-                {"name": "Court C", "sport_type": "badminton"},
-                {"name": "Court D", "sport_type": "badminton"},
+                {"name": "A場", "sport_type": "basketball"},
+                {"name": "B場", "sport_type": "basketball"},
+                {"name": "C場", "sport_type": "badminton"},
+                {"name": "D場", "sport_type": "badminton"},
             ]
         },
         {
-            "name": "Xinyi Sports Complex",
-            "address": "No. 99, Songshou Road, Xinyi District",
+            "name": "信義運動中心",
+            "address": "台北市信義區松壽路99號",
             "city": "Taipei",
             "lat": 25.0363,
             "lng": 121.5645,
             "contact_phone": "+886-2-2723-5200",
             "partner_code": "XSC001",
             "courts": [
-                {"name": "Main Court", "sport_type": "basketball"},
-                {"name": "Practice Court 1", "sport_type": "basketball"},
-                {"name": "Practice Court 2", "sport_type": "volleyball"},
+                {"name": "主球場", "sport_type": "basketball"},
+                {"name": "練習場1", "sport_type": "basketball"},
+                {"name": "練習場2", "sport_type": "volleyball"},
             ]
         },
         {
-            "name": "Da'an Fitness Center",
-            "address": "No. 55, Section 2, Xinsheng South Road, Da'an District",
+            "name": "大安運動中心",
+            "address": "台北市大安區新生南路二段55號",
             "city": "Taipei",
             "lat": 25.0261,
             "lng": 121.5332,
             "contact_phone": "+886-2-2362-5566",
             "partner_code": "DFC001",
             "courts": [
-                {"name": "Indoor Court 1", "sport_type": "badminton"},
-                {"name": "Indoor Court 2", "sport_type": "badminton"},
-                {"name": "Tennis Court A", "sport_type": "tennis"},
-                {"name": "Tennis Court B", "sport_type": "tennis"},
+                {"name": "室內球場1", "sport_type": "badminton"},
+                {"name": "室內球場2", "sport_type": "badminton"},
+                {"name": "網球場A", "sport_type": "tennis"},
+                {"name": "網球場B", "sport_type": "tennis"},
             ]
         },
         {
-            "name": "Banqiao Stadium",
-            "address": "No. 8, Wenhua Road, Banqiao District",
+            "name": "板橋體育場",
+            "address": "新北市板橋區文化路一段8號",
             "city": "New Taipei City",
             "lat": 25.0141,
             "lng": 121.4627,
             "contact_phone": "+886-2-2272-8666",
             "partner_code": "BQS001",
             "courts": [
-                {"name": "Basketball Court 1", "sport_type": "basketball"},
-                {"name": "Basketball Court 2", "sport_type": "basketball"},
-                {"name": "Volleyball Court", "sport_type": "volleyball"},
+                {"name": "籃球場1", "sport_type": "basketball"},
+                {"name": "籃球場2", "sport_type": "basketball"},
+                {"name": "排球場", "sport_type": "volleyball"},
             ]
         },
         {
-            "name": "Tamsui Riverside Park",
-            "address": "Riverside Road, Tamsui District",
+            "name": "淡水河濱公園",
+            "address": "新北市淡水區中正路一段",
             "city": "New Taipei City",
             "lat": 25.1740,
             "lng": 121.4458,
             "contact_phone": "+886-2-2621-2345",
             "partner_code": "TRP001",
             "courts": [
-                {"name": "Outdoor Court 1", "sport_type": "basketball"},
-                {"name": "Outdoor Court 2", "sport_type": "basketball"},
+                {"name": "戶外球場1", "sport_type": "basketball"},
+                {"name": "戶外球場2", "sport_type": "basketball"},
+            ]
+        },
+        # Additional venues
+        {
+            "name": "內湖運動中心",
+            "address": "台北市內湖區洲子街12號",
+            "city": "Taipei",
+            "lat": 25.0780,
+            "lng": 121.5680,
+            "contact_phone": "+886-2-2658-8000",
+            "partner_code": "NHC001",
+            "courts": [
+                {"name": "籃球場A", "sport_type": "basketball"},
+                {"name": "籃球場B", "sport_type": "basketball"},
+                {"name": "羽球場1", "sport_type": "badminton"},
+                {"name": "羽球場2", "sport_type": "badminton"},
+                {"name": "羽球場3", "sport_type": "badminton"},
+            ]
+        },
+        {
+            "name": "南港運動中心",
+            "address": "台北市南港區玉成街69號",
+            "city": "Taipei",
+            "lat": 25.0420,
+            "lng": 121.5890,
+            "contact_phone": "+886-2-2783-1599",
+            "partner_code": "NGC001",
+            "courts": [
+                {"name": "主場", "sport_type": "basketball"},
+                {"name": "副場", "sport_type": "volleyball"},
+                {"name": "羽球場", "sport_type": "badminton"},
+            ]
+        },
+        {
+            "name": "中正運動中心",
+            "address": "台北市中正區信義路一段1號",
+            "city": "Taipei",
+            "lat": 25.0340,
+            "lng": 121.5180,
+            "contact_phone": "+886-2-2395-2323",
+            "partner_code": "CZC001",
+            "courts": [
+                {"name": "籃球場", "sport_type": "basketball"},
+                {"name": "羽球場A", "sport_type": "badminton"},
+                {"name": "羽球場B", "sport_type": "badminton"},
+            ]
+        },
+        {
+            "name": "新莊體育館",
+            "address": "新北市新莊區中華路一段75號",
+            "city": "New Taipei City",
+            "lat": 25.0360,
+            "lng": 121.4320,
+            "contact_phone": "+886-2-2992-8800",
+            "partner_code": "XZC001",
+            "courts": [
+                {"name": "主球場", "sport_type": "basketball"},
+                {"name": "副球場1", "sport_type": "basketball"},
+                {"name": "副球場2", "sport_type": "volleyball"},
+                {"name": "排球訓練場", "sport_type": "volleyball"},
+            ]
+        },
+        {
+            "name": "三重綜合體育館",
+            "address": "新北市三重區中正北路1號",
+            "city": "New Taipei City",
+            "lat": 25.0680,
+            "lng": 121.4880,
+            "contact_phone": "+886-2-2983-5566",
+            "partner_code": "SZC001",
+            "courts": [
+                {"name": "籃球場1", "sport_type": "basketball"},
+                {"name": "籃球場2", "sport_type": "basketball"},
+                {"name": "羽球場1", "sport_type": "badminton"},
+                {"name": "羽球場2", "sport_type": "badminton"},
+            ]
+        },
+        {
+            "name": "永和國民運動中心",
+            "address": "新北市永和區仁愛路222號",
+            "city": "New Taipei City",
+            "lat": 25.0120,
+            "lng": 121.5140,
+            "contact_phone": "+886-2-2929-7799",
+            "partner_code": "YHC001",
+            "courts": [
+                {"name": "羽球場1", "sport_type": "badminton"},
+                {"name": "羽球場2", "sport_type": "badminton"},
+                {"name": "桌球室", "sport_type": "table_tennis"},
+            ]
+        },
+        {
+            "name": "台北網球中心",
+            "address": "台北市士林區福林路77號",
+            "city": "Taipei",
+            "lat": 25.0980,
+            "lng": 121.5280,
+            "contact_phone": "+886-2-2881-8888",
+            "partner_code": "TTC001",
+            "courts": [
+                {"name": "網球場1", "sport_type": "tennis"},
+                {"name": "網球場2", "sport_type": "tennis"},
+                {"name": "網球場3", "sport_type": "tennis"},
+                {"name": "網球場4", "sport_type": "tennis"},
             ]
         },
     ]
@@ -293,8 +476,8 @@ def create_events(session: Session, users: list[User], time_slots: list[TimeSlot
 
     events_data = [
         {
-            "title": "Weekend Basketball Game",
-            "description": "Looking for players for a friendly basketball game this weekend. All skill levels welcome!",
+            "title": "週末籃球賽",
+            "description": "誠徵週末籃球球友，友誼賽性質，歡迎各程度球友參加！",
             "owner": users[0],  # Alice
             "max_participants": 10,
             "visibility": Visibility.public.value,
@@ -302,8 +485,8 @@ def create_events(session: Session, users: list[User], time_slots: list[TimeSlot
             "duration_type": "temporary",
         },
         {
-            "title": "Badminton Doubles Practice",
-            "description": "Regular badminton practice for intermediate players. Let's improve together!",
+            "title": "羽球雙打練習",
+            "description": "固定羽球雙打練習，適合中級程度，一起進步！",
             "owner": users[1],  # Bob
             "max_participants": 8,
             "visibility": Visibility.public.value,
@@ -311,8 +494,8 @@ def create_events(session: Session, users: list[User], time_slots: list[TimeSlot
             "duration_type": "permanent",
         },
         {
-            "title": "Friday Night Hoops",
-            "description": "Weekly Friday night basketball. Competitive but fun!",
+            "title": "週五籃球夜",
+            "description": "每週五晚上的籃球局，略有強度但氣氛愉快！",
             "owner": users[2],  # Charlie
             "max_participants": 12,
             "visibility": Visibility.public.value,
@@ -320,8 +503,8 @@ def create_events(session: Session, users: list[User], time_slots: list[TimeSlot
             "duration_type": "permanent",
         },
         {
-            "title": "Tennis Club - Beginner Friendly",
-            "description": "New tennis group for beginners. Coach available for guidance.",
+            "title": "網球新手村",
+            "description": "適合新手的網球團，現場有教練指導。",
             "owner": users[3],  # Diana
             "max_participants": 6,
             "visibility": Visibility.private.value,
@@ -330,8 +513,8 @@ def create_events(session: Session, users: list[User], time_slots: list[TimeSlot
             "invite_token": "TENNIS2024ABC",
         },
         {
-            "title": "Volleyball Tournament Prep",
-            "description": "Preparing for upcoming tournament. Experienced players only.",
+            "title": "排球比賽備戰",
+            "description": "備戰近期比賽，限有經驗者。",
             "owner": users[4],  # Evan
             "max_participants": 8,
             "visibility": Visibility.private.value,
@@ -339,13 +522,152 @@ def create_events(session: Session, users: list[User], time_slots: list[TimeSlot
             "duration_type": "temporary",
         },
         {
-            "title": "Sunday Morning Badminton",
-            "description": "Relaxed badminton session for Sunday morning. Coffee afterwards!",
+            "title": "週日早晨羽球",
+            "description": "週日早晨輕鬆打，打完一起喝咖啡！",
             "owner": users[5],  # Fiona
             "max_participants": 8,
             "visibility": Visibility.public.value,
             "status": "open",
             "duration_type": "temporary",
+        },
+        # Additional events
+        {
+            "title": "內湖籃球社團",
+            "description": "內湖地區的籃球愛好者聚集地，每週固定練習，歡迎有基礎的球友加入！",
+            "owner": users[6],  # George
+            "max_participants": 15,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
+        },
+        {
+            "title": "女生羽球團",
+            "description": "專屬女性的羽球團，不分程度，主打輕鬆愉快的運動氛圍。",
+            "owner": users[7],  # Helen
+            "max_participants": 12,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
+        },
+        {
+            "title": "公司籃球隊練習",
+            "description": "XX科技籃球隊週末練習，準備參加企業聯賽。",
+            "owner": users[8],  # Ivan
+            "max_participants": 12,
+            "visibility": Visibility.private.value,
+            "status": "open",
+            "duration_type": "temporary",
+            "invite_token": "XXTECH2024",
+        },
+        {
+            "title": "網球初學者團",
+            "description": "一起從零開始學網球！會請教練來指導，費用均攤。",
+            "owner": users[9],  # Jenny
+            "max_participants": 8,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
+        },
+        {
+            "title": "排球混合團",
+            "description": "男女混合排球，著重基本功練習與團隊配合。",
+            "owner": users[10],  # Kevin
+            "max_participants": 14,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
+        },
+        {
+            "title": "三對三籃球賽",
+            "description": "週末三對三街頭籃球，快節奏比賽！",
+            "owner": users[11],  # Linda
+            "max_participants": 9,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "temporary",
+        },
+        {
+            "title": "高手羽球局",
+            "description": "限定中高階球友，追求高品質對打體驗。",
+            "owner": users[12],  # Mike
+            "max_participants": 8,
+            "visibility": Visibility.private.value,
+            "status": "open",
+            "duration_type": "permanent",
+            "invite_token": "PROPLAYER88",
+        },
+        {
+            "title": "親子籃球活動",
+            "description": "親子同樂的籃球活動，大人小孩一起打球！",
+            "owner": users[13],  # Nancy
+            "max_participants": 20,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "temporary",
+        },
+        {
+            "title": "大學校友籃球",
+            "description": "台大校友籃球隊，每週固定打球聚會。",
+            "owner": users[14],  # Oscar
+            "max_participants": 10,
+            "visibility": Visibility.private.value,
+            "status": "open",
+            "duration_type": "permanent",
+            "invite_token": "NTUALUMNI",
+        },
+        {
+            "title": "夜間羽球團",
+            "description": "下班後的羽球時光，紓壓放鬆的好選擇！",
+            "owner": users[15],  # Peggy
+            "max_participants": 10,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
+        },
+        {
+            "title": "新手籃球教學",
+            "description": "適合完全沒有經驗的朋友，有專人指導基本動作。",
+            "owner": users[0],  # Alice
+            "max_participants": 8,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "temporary",
+        },
+        {
+            "title": "週末排球樂",
+            "description": "輕鬆的週末排球活動，打完一起聚餐！",
+            "owner": users[1],  # Bob
+            "max_participants": 12,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "temporary",
+        },
+        {
+            "title": "網球雙打配對",
+            "description": "尋找雙打搭檔的網球活動，每次隨機配對。",
+            "owner": users[2],  # Charlie
+            "max_participants": 8,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
+        },
+        {
+            "title": "晨間籃球運動",
+            "description": "早起打球的健康生活，每週三、五早上6點半。",
+            "owner": users[3],  # Diana
+            "max_participants": 10,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
+        },
+        {
+            "title": "羽球積分賽",
+            "description": "內部積分制比賽，累積積分有獎勵！",
+            "owner": users[4],  # Evan
+            "max_participants": 16,
+            "visibility": Visibility.public.value,
+            "status": "open",
+            "duration_type": "permanent",
         },
     ]
 
@@ -359,7 +681,9 @@ def create_events(session: Session, users: list[User], time_slots: list[TimeSlot
             visibility=data["visibility"],
             status=data["status"],
             duration_type=data["duration_type"],
+
             invite_token=data.get("invite_token"),
+            image=f"mock-{random.randint(1, 4)}.png",
         )
         session.add(event)
         events.append(event)
@@ -465,6 +789,216 @@ def create_participants(session: Session, events: list[Event], users: list[User]
         session.add(participant)
         participants_count += 1
 
+    # Event 6: 內湖籃球社團 (George's team)
+    for i, user in enumerate([users[6], users[0], users[2], users[8], users[10], users[12]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[6].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 7: 女生羽球團 (Helen's team)
+    for i, user in enumerate([users[7], users[3], users[5], users[9], users[11], users[13], users[15]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[7].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 8: 公司籃球隊練習 (Ivan's team - private)
+    for i, user in enumerate([users[8], users[6], users[10], users[12], users[14]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[8].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 9: 網球初學者團 (Jenny's team)
+    for i, user in enumerate([users[9], users[7], users[13]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[9].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 10: 排球混合團 (Kevin's team)
+    for i, user in enumerate([users[10], users[1], users[4], users[7], users[11], users[14]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[10].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 11: 三對三籃球賽 (Linda's team)
+    for i, user in enumerate([users[11], users[0], users[2], users[6], users[8]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[11].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 12: 高手羽球局 (Mike's team - private)
+    for i, user in enumerate([users[12], users[4], users[6]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[12].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 13: 親子籃球活動 (Nancy's team)
+    for i, user in enumerate([users[13], users[3], users[9], users[15]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[13].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 14: 大學校友籃球 (Oscar's team - private)
+    for i, user in enumerate([users[14], users[2], users[8], users[10]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[14].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 15: 夜間羽球團 (Peggy's team)
+    for i, user in enumerate([users[15], users[1], users[5], users[7], users[11]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[15].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 16: 新手籃球教學 (Alice's 2nd team)
+    for i, user in enumerate([users[0], users[9], users[13]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[16].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 17: 週末排球樂 (Bob's 2nd team)
+    for i, user in enumerate([users[1], users[4], users[7], users[10], users[14]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[17].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 18: 網球雙打配對 (Charlie's 2nd team)
+    for i, user in enumerate([users[2], users[3], users[9], users[15]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[18].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 19: 晨間籃球運動 (Diana's 2nd team)
+    for i, user in enumerate([users[3], users[6], users[8], users[12]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[19].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
+    # Event 20: 羽球積分賽 (Evan's 2nd team)
+    for i, user in enumerate([users[4], users[1], users[5], users[7], users[11], users[12], users[15]]):
+        role = "owner" if i == 0 else "member"
+        participant = EventParticipant(
+            event_id=events[20].id,
+            user_id=user.id,
+            role=role,
+            display_name=user.display_name,
+            email=user.email,
+            phone=user.phone,
+        )
+        session.add(participant)
+        participants_count += 1
+
     session.commit()
     print(f"✅ Created {participants_count} participants")
 
@@ -477,32 +1011,153 @@ def create_join_requests(session: Session, events: list[Event], users: list[User
         {
             "event": events[0],  # Weekend Basketball
             "applicant": users[4],  # Evan
-            "message": "I'd love to join! I play center position.",
+            "message": "我想參加！我打中鋒。",
             "status": joinRequestStatus.submitted.value,
         },
         {
             "event": events[0],  # Weekend Basketball
             "applicant": users[5],  # Fiona
-            "message": "Can I join? I'm a beginner but eager to learn!",
+            "message": "我可以參加嗎？我是新手但我很想學！",
             "status": joinRequestStatus.approved.value,
         },
         {
             "event": events[1],  # Badminton Doubles
             "applicant": users[3],  # Diana
-            "message": "Looking for regular practice partners!",
+            "message": "正在尋找固定的練習夥伴！",
             "status": joinRequestStatus.submitted.value,
         },
         {
             "event": events[3],  # Tennis Club (invite-only)
             "applicant": users[0],  # Alice
-            "message": "Got the invite token from a friend. Excited to learn!",
+            "message": "朋友給我邀請碼，很期待能學習！",
             "status": joinRequestStatus.submitted.value,
         },
         {
             "event": events[5],  # Sunday Badminton
             "applicant": users[2],  # Charlie
-            "message": "Perfect timing! Count me in.",
+            "message": "時間剛好！算我一份。",
             "status": joinRequestStatus.rejected.value,
+        },
+        # Additional join requests
+        {
+            "event": events[6],  # 內湖籃球社團
+            "applicant": users[14],  # Oscar
+            "message": "住內湖附近，很方便！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[6],  # 內湖籃球社團
+            "applicant": users[1],  # Bob
+            "message": "想找固定打球的地方。",
+            "status": joinRequestStatus.approved.value,
+        },
+        {
+            "event": events[7],  # 女生羽球團
+            "applicant": users[0],  # Alice
+            "message": "剛開始學羽球，可以加入嗎？",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[9],  # 網球初學者團
+            "applicant": users[11],  # Linda
+            "message": "一直想學網球，剛好有這個團！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[9],  # 網球初學者團
+            "applicant": users[15],  # Peggy
+            "message": "請問初學者也可以參加嗎？",
+            "status": joinRequestStatus.approved.value,
+        },
+        {
+            "event": events[10],  # 排球混合團
+            "applicant": users[3],  # Diana
+            "message": "大學有打過排球，想繼續打。",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[10],  # 排球混合團
+            "applicant": users[13],  # Nancy
+            "message": "朋友推薦來的！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[11],  # 三對三籃球賽
+            "applicant": users[4],  # Evan
+            "message": "喜歡三對三的節奏感！",
+            "status": joinRequestStatus.approved.value,
+        },
+        {
+            "event": events[11],  # 三對三籃球賽
+            "applicant": users[14],  # Oscar
+            "message": "以前常打三對三。",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[13],  # 親子籃球活動
+            "applicant": users[1],  # Bob
+            "message": "想帶小孩一起運動！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[13],  # 親子籃球活動
+            "applicant": users[6],  # George
+            "message": "看起來很適合全家活動。",
+            "status": joinRequestStatus.approved.value,
+        },
+        {
+            "event": events[15],  # 夜間羽球團
+            "applicant": users[0],  # Alice
+            "message": "下班後想運動一下！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[15],  # 夜間羽球團
+            "applicant": users[4],  # Evan
+            "message": "時間很適合上班族。",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[15],  # 夜間羽球團
+            "applicant": users[9],  # Jenny
+            "message": "辦公室在附近，很方便。",
+            "status": joinRequestStatus.approved.value,
+        },
+        {
+            "event": events[16],  # 新手籃球教學
+            "applicant": users[7],  # Helen
+            "message": "完全沒打過籃球，可以嗎？",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[17],  # 週末排球樂
+            "applicant": users[6],  # George
+            "message": "週末想找地方運動！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[18],  # 網球雙打配對
+            "applicant": users[12],  # Mike
+            "message": "正在找雙打夥伴！",
+            "status": joinRequestStatus.approved.value,
+        },
+        {
+            "event": events[19],  # 晨間籃球運動
+            "applicant": users[0],  # Alice
+            "message": "早起打球感覺很棒！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[20],  # 羽球積分賽
+            "applicant": users[3],  # Diana
+            "message": "有積分制感覺很刺激！",
+            "status": joinRequestStatus.submitted.value,
+        },
+        {
+            "event": events[20],  # 羽球積分賽
+            "applicant": users[9],  # Jenny
+            "message": "喜歡這種競賽模式。",
+            "status": joinRequestStatus.approved.value,
         },
     ]
 
@@ -596,6 +1251,148 @@ def create_bookings(session: Session, events: list[Event], users: list[User], ti
             "status": BookingStatus.cancelled.value,
             "payment_status": PaymentStatus.failed.value,
         },
+        # Additional bookings for new events
+        {
+            "owner": users[6],  # George
+            "event": events[6],  # 內湖籃球社團
+            "time_slot": bookable_time_slots[65],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[7],  # Helen
+            "event": events[7],  # 女生羽球團
+            "time_slot": bookable_time_slots[75],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[8],  # Ivan
+            "event": events[8],  # 公司籃球隊練習
+            "time_slot": bookable_time_slots[85],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[9],  # Jenny
+            "event": events[9],  # 網球初學者團
+            "time_slot": bookable_time_slots[95],
+            "status": BookingStatus.pending.value,
+            "payment_status": PaymentStatus.pending.value,
+        },
+        {
+            "owner": users[10],  # Kevin
+            "event": events[10],  # 排球混合團
+            "time_slot": bookable_time_slots[105],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[11],  # Linda
+            "event": events[11],  # 三對三籃球賽
+            "time_slot": bookable_time_slots[115],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[12],  # Mike
+            "event": events[12],  # 高手羽球局
+            "time_slot": bookable_time_slots[125],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[13],  # Nancy
+            "event": events[13],  # 親子籃球活動
+            "time_slot": bookable_time_slots[135],
+            "status": BookingStatus.pending.value,
+            "payment_status": PaymentStatus.pending.value,
+        },
+        {
+            "owner": users[14],  # Oscar
+            "event": events[14],  # 大學校友籃球
+            "time_slot": bookable_time_slots[145],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[15],  # Peggy
+            "event": events[15],  # 夜間羽球團
+            "time_slot": bookable_time_slots[155],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[0],  # Alice
+            "event": events[16],  # 新手籃球教學
+            "time_slot": bookable_time_slots[165],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[1],  # Bob
+            "event": events[17],  # 週末排球樂
+            "time_slot": bookable_time_slots[175],
+            "status": BookingStatus.pending.value,
+            "payment_status": PaymentStatus.pending.value,
+        },
+        {
+            "owner": users[2],  # Charlie
+            "event": events[18],  # 網球雙打配對
+            "time_slot": bookable_time_slots[185],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[3],  # Diana
+            "event": events[19],  # 晨間籃球運動
+            "time_slot": bookable_time_slots[195],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[4],  # Evan
+            "event": events[20],  # 羽球積分賽
+            "time_slot": bookable_time_slots[205],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        # Additional individual bookings
+        {
+            "owner": users[6],  # George - individual booking
+            "event": None,
+            "time_slot": bookable_time_slots[215],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[8],  # Ivan - individual booking
+            "event": None,
+            "time_slot": bookable_time_slots[225],
+            "status": BookingStatus.pending.value,
+            "payment_status": PaymentStatus.pending.value,
+        },
+        {
+            "owner": users[10],  # Kevin - individual booking
+            "event": None,
+            "time_slot": bookable_time_slots[235],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
+        {
+            "owner": users[12],  # Mike - cancelled booking
+            "event": None,
+            "time_slot": bookable_time_slots[245],
+            "status": BookingStatus.cancelled.value,
+            "payment_status": PaymentStatus.failed.value,
+        },
+        {
+            "owner": users[14],  # Oscar - individual booking
+            "event": None,
+            "time_slot": bookable_time_slots[255],
+            "status": BookingStatus.confirmed.value,
+            "payment_status": PaymentStatus.succeeded.value,
+        },
     ]
 
     event_booking_count = 0
@@ -640,14 +1437,18 @@ def print_summary(session: Session):
     print(f"📅 Bookings:           {booking_count}")
     print("="*60)
 
-    print("\n📧 Test User Credentials:")
+    print("\n📧 Test User Credentials (all use password: password123):")
     print("-" * 60)
-    print("Email: alice@example.com   | Password: password123")
-    print("Email: bob@example.com     | Password: password123")
-    print("Email: charlie@example.com | Password: password123")
-    print("Email: diana@example.com   | Password: password123")
-    print("Email: evan@example.com    | Password: password123")
-    print("Email: fiona@example.com   | Password: password123")
+    test_emails = [
+        "alice@example.com", "bob@example.com", "charlie@example.com",
+        "diana@example.com", "evan@example.com", "fiona@example.com",
+        "george@example.com", "helen@example.com", "ivan@example.com",
+        "jenny@example.com", "kevin@example.com", "linda@example.com",
+        "mike@example.com", "nancy@example.com", "oscar@example.com",
+        "peggy@example.com"
+    ]
+    for email in test_emails:
+        print(f"  {email}")
     print("-" * 60)
 
 

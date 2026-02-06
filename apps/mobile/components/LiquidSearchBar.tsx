@@ -34,7 +34,7 @@ export default function LiquidSearchBar({
             {/* Glass Background */}
             <GlassView
                 style={styles.canvasContainer}
-                glassEffectStyle="regular"
+                glassEffectStyle="clear"
             />
 
             {/* Search Input Overlay */}
@@ -43,14 +43,14 @@ export default function LiquidSearchBar({
                     <Ionicons
                         name="search"
                         size={18}
-                        color={Colors.gray[500]}
+                        color="rgba(255,255,255,0.9)"
                     />
                 </View>
                 <TextInput
                     ref={inputRef}
                     style={styles.input}
                     placeholder="搜尋活動..."
-                    placeholderTextColor={Colors.gray[400]}
+                    placeholderTextColor="rgba(255,255,255,0.6)"
                     value={value}
                     onChangeText={onChangeText}
                     onFocus={onFocus}
@@ -63,7 +63,7 @@ export default function LiquidSearchBar({
                         style={styles.clearButton}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="close-circle" size={18} color={Colors.gray[400]} />
+                        <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.9)" />
                     </TouchableOpacity>
                 ) : null}
                 {isFocused && (
@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
         borderRadius: 26,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.4)',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(255, 255, 255, 0.5)',
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
     },
     inputContainer: {
         ...StyleSheet.absoluteFillObject,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 10,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 15,
-        color: Colors.gray[800],
+        color: '#FFFFFF',
         fontWeight: '500',
         padding: 0,
         letterSpacing: 0.2,
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     },
     cancelText: {
         fontSize: 14,
-        color: Colors.primary,
+        color: '#FFFFFF',
         fontWeight: '600',
     },
 });

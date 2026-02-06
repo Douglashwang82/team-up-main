@@ -1,0 +1,8 @@
+# PostgreSQL with PostGIS for Railway
+FROM postgis/postgis:17-3.5
+
+# Expose PostgreSQL port
+EXPOSE 5432
+
+# Use default postgres entrypoint
+# Railway will set DATABASE_URL automatically

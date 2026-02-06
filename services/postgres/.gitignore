@@ -1,0 +1,9 @@
+# PostgreSQL data
+pgdata/
+
+# Environment files
+.env
+.env.local
+
+# Railway
+.railway/

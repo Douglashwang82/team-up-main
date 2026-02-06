@@ -64,5 +64,35 @@ export const Colors = {
     warmTech: ["#F97316", "#FB923C"],      // 橙色漸層
     coolAccent: ["#3B82F6", "#0EA5E9"],    // 藍色漸層
     sunset: ["#F97316", "#EC4899"],        // 日落漸層
+    ocean: ["#06B6D4", "#3B82F6"],         // 海洋漸層
+    // Fitness App Inspired - Warm Coral/Pink
+    warmCoral: ["#4f0c20ff", "#8B1538", "#E85D75", "#FF9A8A"], // Deep burgundy -> coral -> light pink
+    coralGlow: ["#FF6B6B", "#FFA07A", "#FFB6C1"], // Bright coral tones
   },
+
+  // 2026 Modern Style Palette
+  modern: {
+    background: "#0f0f13", // Deep Carbon
+    surface: "#18181b",    // Lighter Carbon
+    text: {
+      primary: "#FFFFFF",
+      secondary: "rgba(255, 255, 255, 0.7)",
+      tertiary: "rgba(255, 255, 255, 0.5)",
+    },
+    accent: {
+      primary: "#F97316", // Retain Brand Orange
+      glow: "#fdba74",    // Orange Glow
+      cyan: "#22d3ee",    // Cyber Cyan
+      purple: "#a855f7",  // Cyber Purple
+      rose: "#fb7185",    // Cyber Rose
+      coral: "#FF6B6B",   // Coral accent
+      peach: "#FFA07A",   // Peach accent
+    },
+    glass: {
+      border: "rgba(255, 255, 255, 0.15)",
+      borderHighlight: "rgba(255, 255, 255, 0.3)",
+      surface: "rgba(20, 20, 25, 0.6)",
+      warmSurface: "rgba(255, 107, 107, 0.15)", // Warm coral tint
+    }
+  }
 };

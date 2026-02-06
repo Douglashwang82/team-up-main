@@ -330,46 +330,14 @@ GET /events
 |-----------|------|---------|-------------|
 | status | string | "open" | Filter by event status (`open`, `closed`) |
 | visibility | string | - | Filter by visibility (`public`, `private`) |
+| keyword | string | - | Search keyword for event titles |
 | limit | integer | 20 | Maximum number of results (max: 100) |
 | offset | integer | 0 | Number of results to skip |
 
-**Response:** `200 OK`
-
-```json
-[
-  {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "title": "Weekend Basketball",
-    "description": "Casual basketball game",
-    "status": "open",
-    "max_participants": 10,
-    "current_participants": 5,
-    "visibility": "public",
-    "duration_type": "temporary",
-    "created_at": "2025-11-29T10:00:00+00:00"
-  }
-]
-```
-
----
-
-#### Search Events
-
-Search events by keyword.
-
-```http
-GET /events/search
-```
-
-**Authentication:** Optional
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| keyword | string | Yes | Search keyword for event titles |
-| limit | integer | No | Maximum number of results (default: 20, max: 100) |
-| offset | integer | No | Number of results to skip (default: 0) |
+**Examples:**
+- List all open events: `GET /events`
+- Search by keyword: `GET /events?keyword=basketball`
+- Combined filters: `GET /events?keyword=basketball&status=open&visibility=public`
 
 **Response:** `200 OK`
 

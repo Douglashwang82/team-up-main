@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, ScrollView, Animated, NativeSyntheticEvent, NativeScrollEvent, Modal, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Keyboard, Dimensions, FlatList } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, interpolate, Extrapolate, SharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,9 +12,9 @@ import { apis } from '../../lib/api';
 import { EventOut } from '@team-up-main/api-client';
 import LiquidSearchBar from '../../components/LiquidSearchBar';
 import GridBackground from '../../components/GridBackground';
-import BackgroundBlobs from '../../components/BackgroundBlobs';
+import WarmBubbleBackground from '../../components/WarmBubbleBackground';
 
-
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const SEARCH_SECTION_HEIGHT = 70; // Height of the search section (no chips)
 
@@ -32,15 +33,27 @@ export default function EventsScreen() {
   const [searchInput, setSearchInput] = useState(''); // Separate input for modal
   const searchInputRef = useRef<TextInput>(null);
 
-  // Scroll animation state - using diffClamp for smooth header
-  const scrollY = useRef(new Animated.Value(0)).current;
+  // Scroll animation state - using Reanimated for high performance
+  const scrollY = useSharedValue(0);
 
-  // Clamp the scroll value to create smooth hide/show effect
-  const headerTranslateY = scrollY.interpolate({
-    inputRange: [0, SEARCH_SECTION_HEIGHT],
-    outputRange: [0, -SEARCH_SECTION_HEIGHT],
-    extrapolateLeft: 'clamp', // Don't move when pulling down
-    extrapolateRight: 'extend', // Continue hiding when scrolling far
+  // Scroll handler for Reanimated
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  // Header animation using Reanimated
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(
+      scrollY.value,
+      [0, SEARCH_SECTION_HEIGHT],
+      [0, -SEARCH_SECTION_HEIGHT],
+      Extrapolate.CLAMP
+    );
+    return {
+      transform: [{ translateY }],
+    };
   });
 
 
@@ -145,38 +158,19 @@ export default function EventsScreen() {
     ).slice(0, 10);
   }, [searchInput, events]);
 
-  // Animated scroll event handler
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: true }
-  );
+
 
   return (
     <View style={styles.container}>
-      {/* Gradient Background - Top to Bottom */}
-      <LinearGradient
-        colors={[Colors.gray[200], Colors.gray[400]]} // Midnight Blue -> Deep Violet
-        style={StyleSheet.absoluteFillObject}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-      />
-
-      {/* Vibrant Color Blobs for Glass Depth */}
-      {/* <BackgroundBlobs /> */}
-
-      <GridBackground
-        gridSize={40}
-        lineColor="rgba(0, 0, 0, 0.03)" // Dark subtle grid for light background
-        backgroundColor='transparent'
-        style={StyleSheet.absoluteFillObject}
-      />
+      {/* Warm Bubble Background - Animated Gradient Bubbles */}
+      <WarmBubbleBackground />
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Animated Search Bar Section */}
         <Animated.View
           style={[
             styles.searchSection,
-            { transform: [{ translateY: searchModalVisible ? 0 : headerTranslateY }] }
+            headerAnimatedStyle
           ]}
         >
           {/* Search Bar - Liquid Glass Effect */}
@@ -256,19 +250,30 @@ export default function EventsScreen() {
           </View>
         ) : (
           <Animated.FlatList
+            style={{ flex: 1 }}
             data={events}
-            renderItem={({ item }) => <EventCard event={item} />}
+            renderItem={({ item, index }) => (
+              <EventCard
+                event={item}
+                index={index}
+                scrollY={scrollY}
+              />
+            )}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
             onScroll={handleScroll}
             scrollEventThrottle={16}
+            pagingEnabled={false}
+            snapToInterval={SCREEN_HEIGHT * 0.7 + 32}
+            snapToAlignment="start"
+            decelerationRate="fast"
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
-                tintColor={Colors.primary}
-                colors={[Colors.primary]}
+                tintColor={Colors.white}
+                colors={[Colors.white]}
               />
             }
           />
@@ -443,7 +448,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.white,
+    color: Colors.modern.text.primary,
     marginTop: 8,
   },
   loadingSubtext: {
@@ -469,7 +474,7 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.white,
+    color: Colors.modern.text.primary,
     marginBottom: 12,
   },
   errorSubtitle: {
@@ -518,7 +523,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.white,
+    color: Colors.modern.text.primary,
     marginBottom: 12,
   },
   emptySubtitle: {
@@ -545,7 +550,7 @@ const styles = StyleSheet.create({
   createEventText: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.white,
+    color: Colors.modern.text.primary,
     letterSpacing: 0.3,
   },
   // Modal Styles

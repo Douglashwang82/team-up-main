@@ -14,6 +14,7 @@ class Event(Base):
     title: Mapped[str] = mapped_column(sa.Text, nullable=False)
     description: Mapped[str | None]
     owner_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False)
+    image: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
 
     # 組團相關設定
     max_participants: Mapped[int] = mapped_column(sa.Integer, default=10, nullable=False)

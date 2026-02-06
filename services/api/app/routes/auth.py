@@ -62,19 +62,27 @@ def me():
         u = s.get(User, g.user_id)
         if not u:
             return jsonify({"error": "not_found"}), 404
-        return jsonify({"id": str(u.id), "email": u.email, "display_name": u.display_name})
+        return jsonify({
+            "id": str(u.id),
+            "email": u.email,
+            "display_name": u.display_name,
+            "avatar_url": u.avatar_url,
+            "phone": u.phone
+        })
 
 @bp.patch("/me")
 @require_auth
 def update_me():
     """
-    Updates the authenticated user's display name.
+    Updates the authenticated user's profile (display name, avatar_url, phone).
 
     Returns:
         JSON response with:
             - id (str): User ID
             - email (str): User email
             - display_name (str): User display name
+            - avatar_url (str|null): User avatar URL
+            - phone (str|null): User phone number
         or error message if user not found.
     """
     data = request.get_json()
@@ -84,10 +92,24 @@ def update_me():
         u = s.get(User, g.user_id)
         if not u:
             return jsonify({"error": "not_found"}), 404
-        u.display_name = data.get("display_name", u.display_name)
-    try:
-        s.commit()
-    except Exception as e:
-        s.rollback()
-        return jsonify({"error": "update_failed", "details": str(e)}), 500
-    return jsonify({"id": str(u.id), "email": u.email, "display_name": u.display_name})
+
+        # Update fields if provided
+        if "display_name" in data:
+            u.display_name = data["display_name"]
+        if "avatar_url" in data:
+            u.avatar_url = data["avatar_url"]
+        if "phone" in data:
+            u.phone = data["phone"]
+
+        try:
+            s.commit()
+        except Exception as e:
+            s.rollback()
+            return jsonify({"error": "update_failed", "details": str(e)}), 500
+        return jsonify({
+            "id": str(u.id),
+            "email": u.email,
+            "display_name": u.display_name,
+            "avatar_url": u.avatar_url,
+            "phone": u.phone
+        })

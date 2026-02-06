@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
-import { StyleSheet, Dimensions } from "react-native";
-import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
+import { StyleSheet, Dimensions, View } from "react-native";
+import { Canvas, Fill, Shader, Skia, Uniforms } from "@shopify/react-native-skia";
+import { useSharedValue, withRepeat, withTiming, Easing, useDerivedValue } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-// A smooth liquid mesh gradient shader
-// Blends 3 colorful orbs that move slowly over time
+// A smooth liquid mesh gradient shader - Modern 2026 Style
+// Darker, richer, neon-infused
 const source = Skia.RuntimeEffect.Make(`
 uniform float2 u_resolution;
 uniform float u_time;
@@ -14,52 +15,78 @@ float4 main(float2 xy) {
   float2 uv = xy / u_resolution;
   
   // Create moving coordinate centers for the blobs
-  // Blob 1: Top Left (Purple)
-  float2 p1 = float2(0.2 + 0.1 * sin(u_time * 0.5), 0.2 + 0.1 * cos(u_time * 0.3));
-  // Blob 2: Bottom Right (Blue/Cyan)
-  float2 p2 = float2(0.8 - 0.1 * cos(u_time * 0.4), 0.8 - 0.1 * sin(u_time * 0.6));
-  // Blob 3: Center Left (Orange)
-  float2 p3 = float2(0.1 + 0.2 * sin(u_time * 0.3 + 2.0), 0.6 + 0.1 * cos(u_time * 0.5 + 1.0));
+  // Blob 1: Top Left - slow moving
+  float2 p1 = float2(0.3 + 0.2 * sin(u_time * 0.3), 0.3 + 0.2 * cos(u_time * 0.2));
+  // Blob 2: Bottom Right - faster
+  float2 p2 = float2(0.7 - 0.2 * cos(u_time * 0.5), 0.7 - 0.2 * sin(u_time * 0.4));
+  // Blob 3: Center/Floating - medium
+  float2 p3 = float2(0.5 + 0.3 * sin(u_time * 0.4 + 1.0), 0.5 + 0.2 * cos(u_time * 0.6 + 2.0));
 
   // Calculate distance fields
   float d1 = distance(uv, p1);
   float d2 = distance(uv, p2);
   float d3 = distance(uv, p3);
 
-  // Soften the falloff
-  d1 = smoothstep(0.0, 0.8, d1);
-  d2 = smoothstep(0.0, 0.8, d2);
-  d3 = smoothstep(0.0, 0.7, d3);
+  // Soften the falloff for that "glow" look
+  d1 = smoothstep(0.0, 1.2, d1); // Larger spread
+  d2 = smoothstep(0.0, 1.0, d2);
+  d3 = smoothstep(0.0, 1.1, d3);
 
-  // Colors - Pastel Light Mode
-  float3 c1 = float3(0.91, 0.48, 0.98); // Soft Lavender #E879F9
-  float3 c2 = float3(0.40, 0.91, 0.98); // Soft Cyan #67E8F9
-  float3 c3 = float3(0.99, 0.73, 0.45); // Soft Peach #FDBA74
-  float3 bg = float3(0.96, 0.97, 1.0);  // Alice Blue/Off White Base
+  // Colors - 2026 Dark Neon Mode
+  float3 c1 = float3(0.66, 0.33, 0.97); // Neon Purple #A855F7
+  float3 c2 = float3(0.0, 0.7, 0.9);   // Cyan/Blue #0EA5E9
+  float3 c3 = float3(0.98, 0.45, 0.09); // Bright Orange #F97316
+  
+  // Deep Background
+  float3 bg = float3(0.05, 0.05, 0.08); // Almost Black Blue
 
   // Mix based on influence
   float3 color = bg;
-  color = mix(color, c1, 0.5 * (1.0 - d1)); // Softer influence
-  color = mix(color, c2, 0.5 * (1.0 - d2));
-  color = mix(color, c3, 0.5 * (1.0 - d3));
+  
+  // Additive mixing for "Light" effect
+  color += c1 * (1.0 - d1) * 0.6;
+  color += c2 * (1.0 - d2) * 0.5;
+  color += c3 * (1.0 - d3) * 0.4;
+
+  // Add subtle noise/dither (optional, simpler version)
+  // float noise = fract(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+  // color += noise * 0.02;
 
   return float4(color, 1.0);
 }
 `)!;
 
-// Static background - no animation
 export default function BackgroundBlobs() {
-    // Fixed uniforms for a static snapshot of the gradient
-    const uniforms = {
-        u_resolution: [SCREEN_WIDTH, SCREEN_HEIGHT],
-        u_time: 5.0, // Fixed time point for a nice static composition
-    };
+    const time = useSharedValue(0);
+
+    useEffect(() => {
+        time.value = withRepeat(
+            withTiming(100, { duration: 40000, easing: Easing.linear }),
+            -1,
+            false
+        );
+    }, []);
+
+    const uniforms = useDerivedValue(() => {
+        return {
+            u_resolution: [SCREEN_WIDTH, SCREEN_HEIGHT],
+            u_time: time.value,
+        };
+    }, [time]);
 
     return (
-        <Canvas style={StyleSheet.absoluteFillObject}>
-            <Fill>
-                <Shader source={source} uniforms={uniforms} />
-            </Fill>
-        </Canvas>
+        <View style={StyleSheet.absoluteFillObject}>
+            <Canvas style={{ flex: 1 }}>
+                <Fill>
+                    <Shader source={source} uniforms={uniforms} />
+                </Fill>
+            </Canvas>
+        </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    }
+});

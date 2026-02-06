@@ -54,6 +54,7 @@ def create_event():
             visibility=data.get("visibility", "public"),
             duration_type=data.get("duration_type", "temporary"),
             status=data.get("status", "open"),
+            image=data.get("image"),
         )
 
         s.add(event)
@@ -75,6 +76,7 @@ def create_event():
         return jsonify({
             "id": str(event.id),
             "title": event.title,
+            "image": event.image,
             "status": event.status,
             "max_participants": event.max_participants,
             "current_participants": 1,
@@ -98,7 +100,7 @@ def update_event(event_id):
             return jsonify({"error": "not_owner"}), 403
 
         # Update fields
-        for field in ["title", "description", "status", "max_participants", "visibility", "duration_type"]:
+        for field in ["title", "description", "status", "max_participants", "visibility", "duration_type", "image"]:
             if field in data:
                 setattr(event, field, data[field])
 
@@ -107,6 +109,7 @@ def update_event(event_id):
         return jsonify({
             "id": str(event.id),
             "title": event.title,
+            "image": event.image,
             "status": event.status,
             "max_participants": event.max_participants,
             "visibility": event.visibility,
@@ -254,9 +257,10 @@ def list_event_bookings(event_id):
 @bp.get("")
 @optional_auth
 def list_events():
-    """List Events, support filtering"""
+    """List Events with filtering and search support"""
     status = request.args.get("status", "open")
     visibility = request.args.get("visibility")
+    keyword = request.args.get("keyword", "").strip()
     limit = min(int(request.args.get("limit", 20)), 100)
     offset = max(int(request.args.get("offset", 0)), 0)
 
@@ -267,6 +271,8 @@ def list_events():
             query = query.where(Event.status == status)
         if visibility:
             query = query.where(Event.visibility == visibility)
+        if keyword:
+            query = query.where(Event.title.ilike(f"%{keyword}%"))
 
         results = s.execute(
             query.order_by(desc(Event.created_at)).offset(offset).limit(limit)
@@ -280,53 +286,25 @@ def list_events():
                 .where(EventParticipant.event_id == event.id)
             ) or 0
 
-            event_list.append({
-                "id": str(event.id),
-                "title": event.title,
-                "description": event.description,
-                "status": event.status,
-                "max_participants": event.max_participants,
-                "current_participants": participant_count,
-                "visibility": event.visibility,
-                "duration_type": event.duration_type,
-                "created_at": event.created_at.isoformat(),
-            })
-
-        return jsonify(event_list)
-
-# ===[ Search Events ]===
-@bp.get("/search")
-@optional_auth
-def search_events():
-    keyword = request.args.get("keyword", "").strip()
-    limit = min(int(request.args.get("limit", 20)), 100)
-    offset = max(int(request.args.get("offset", 0)), 0)
-
-    if not keyword:
-        return jsonify({"error": "title_keyword_required"}), 400
-
-    with SessionLocal() as s:
-        query = select(Event).where(Event.title.ilike(f"%{keyword}%"))
-
-        results = s.execute(
-            query.order_by(desc(Event.created_at)).offset(offset).limit(limit)
-        ).scalars().all()
-
-        event_list = []
-        for event in results:
-            # Calculate participant count
-            participant_count = s.scalar(
-                select(func.count()).select_from(EventParticipant)
-                .where(EventParticipant.event_id == event.id)
-            ) or 0
+            # Get owner info
+            owner = s.get(User, event.owner_user_id)
+            owner_data = None
+            if owner:
+                owner_data = {
+                    "id": str(owner.id),
+                    "display_name": owner.display_name,
+                    "avatar_url": owner.avatar_url,
+                }
 
             event_list.append({
                 "id": str(event.id),
                 "title": event.title,
+                "image": event.image,
                 "description": event.description,
                 "status": event.status,
                 "max_participants": event.max_participants,
                 "current_participants": participant_count,
+                "owner": owner_data,
                 "visibility": event.visibility,
                 "duration_type": event.duration_type,
                 "created_at": event.created_at.isoformat(),
@@ -410,6 +388,7 @@ def get_event(event_id):
         return jsonify({
             "id": str(event.id),
             "title": event.title,
+            "image": event.image,
             "description": event.description,
             "status": event.status,
             "max_participants": event.max_participants,
@@ -446,6 +425,7 @@ def get_my_created_events():
             event_list.append({
                 "id": str(event.id),
                 "title": event.title,
+                "image": event.image,
                 "description": event.description,
                 "status": event.status,
                 "max_participants": event.max_participants,
@@ -488,6 +468,7 @@ def get_my_joined_events():
             event_list.append({
                 "id": str(event.id),
                 "title": event.title,
+                "image": event.image,
                 "description": event.description,
                 "status": event.status,
                 "max_participants": event.max_participants,
@@ -531,6 +512,7 @@ def get_my_pending_events():
             event_list.append({
                 "id": str(event.id),
                 "title": event.title,
+                "image": event.image,
                 "description": event.description,
                 "status": event.status,
                 "max_participants": event.max_participants,
