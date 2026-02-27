@@ -1,5 +1,6 @@
 [phases.setup]
 nixPkgs = ["python310"]
+aptPkgs = ["postgresql-client"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
