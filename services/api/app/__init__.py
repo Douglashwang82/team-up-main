@@ -60,12 +60,18 @@ def create_app() -> Flask:
                 cur.execute("DROP TYPE IF EXISTS visibility_type CASCADE;")
                 cur.execute("DROP TYPE IF EXISTS booking_status CASCADE;")
                 create_all_tables()
-                with open("scripts/railway_seed.sql", "r") as f:
-                    sql = f.read()
-                print("Running seed script length:", len(sql))
-                cur.execute(sql)
-                app.logger.info("SEED DATABASE RESTORED SUCCESSFULLY!")
-                print("SEED DATABASE RESTORED SUCCESSFULLY!")
+                
+                app.logger.info("Running psql to restore seed data...")
+                print("Running psql to restore seed data...")
+                # Note: we must use psql instead of psycopg2.execute because the dump contains COPY commands
+                exit_code = os.system('psql "$DATABASE_URL" -f scripts/railway_seed.sql')
+                
+                if exit_code == 0:
+                    app.logger.info("SEED DATABASE RESTORED SUCCESSFULLY!")
+                    print("SEED DATABASE RESTORED SUCCESSFULLY!")
+                else:
+                    app.logger.error(f"psql failed with exit code: {exit_code}")
+                    print(f"psql failed with exit code: {exit_code}")
             else:
                 app.logger.info("Creating database tables...")
                 print('Creating database tables...')
