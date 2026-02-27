@@ -12,6 +12,7 @@ from .routes.events import bp as events_bp
 from .routes.bookings import bp as bookings_bp
 from .routes.tickets import bp as tickets_bp
 from .routes.notifications import bp as notifications_bp
+from .routes.user import bp as user_bp
 
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -19,7 +20,7 @@ def create_app() -> Flask:
     # Register health check FIRST before anything else
     app.register_blueprint(health_bp)
 
-    CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
+    CORS(app, resources={r"/*": {"origins": ["*"]}})
     app.config["JWT_SECRET"] = settings.JWT_SECRET
 
     # Database initialization - be lenient with errors on first startup
@@ -43,11 +44,35 @@ def create_app() -> Flask:
                 print(f"PostGIS extension setup skipped: {ext_err}")
 
             # Create tables
-            app.logger.info("Creating database tables...")
-            print('Creating database tables...')
-            create_all_tables()
-            app.logger.info("Database tables initialized successfully")
-            print('Database tables initialized successfully')
+            if os.getenv("SEED_DB") == "1":
+                app.logger.info("SEED_DB=1, Starting complete reset and seed...")
+                print("SEED_DB=1, Starting complete reset and seed...")
+                from .core.db import Base, engine
+                Base.metadata.drop_all(bind=engine)
+                import psycopg2
+                conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
+                conn.autocommit = True
+                cur = conn.cursor()
+                cur.execute("DROP TABLE IF EXISTS alembic_version CASCADE;")
+                cur.execute("DROP TYPE IF EXISTS sport_type CASCADE;")
+                cur.execute("DROP TYPE IF EXISTS auth_provider CASCADE;")
+                cur.execute("DROP TYPE IF EXISTS join_request_status CASCADE;")
+                cur.execute("DROP TYPE IF EXISTS visibility_type CASCADE;")
+                cur.execute("DROP TYPE IF EXISTS booking_status CASCADE;")
+                create_all_tables()
+                with open("scripts/railway_seed.sql", "r") as f:
+                    sql = f.read()
+                print("Running seed script length:", len(sql))
+                cur.execute(sql)
+                app.logger.info("SEED DATABASE RESTORED SUCCESSFULLY!")
+                print("SEED DATABASE RESTORED SUCCESSFULLY!")
+            else:
+                app.logger.info("Creating database tables...")
+                print('Creating database tables...')
+                create_all_tables()
+                app.logger.info("Database tables initialized successfully")
+                print('Database tables initialized successfully')
+
         except Exception as e:
             app.logger.error(f"DB bootstrap failed (app will continue): {e}")
             import traceback
@@ -62,6 +87,7 @@ def create_app() -> Flask:
     app.register_blueprint(bookings_bp, url_prefix="/bookings")
     app.register_blueprint(tickets_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(user_bp, url_prefix="/user")
 
     @app.errorhandler(PydanticValidationError)
     def handle_validation_error(e):
