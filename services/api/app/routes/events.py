@@ -51,6 +51,8 @@ def create_event():
             description=data.get("description"),
             owner_user_id=g.user_id,
             max_participants=data["max_participants"],
+            venue_id=data.get("venue_id"),
+            court_id=data.get("court_id"),
             visibility=data.get("visibility", "public"),
             duration_type=data.get("duration_type", "temporary"),
             status=data.get("status", "open"),
@@ -100,7 +102,7 @@ def update_event(event_id):
             return jsonify({"error": "not_owner"}), 403
 
         # Update fields
-        for field in ["title", "description", "status", "max_participants", "visibility", "duration_type", "image"]:
+        for field in ["title", "description", "status", "max_participants", "visibility", "duration_type", "image", "venue_id", "court_id"]:
             if field in data:
                 setattr(event, field, data[field])
 
