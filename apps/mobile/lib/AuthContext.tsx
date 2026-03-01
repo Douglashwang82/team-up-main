@@ -30,7 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await api.auth.getCurrentUser();
       setUser(userInfo);
     } catch (error) {
-      console.error("Auth check failed:", error);
+      // It is normal to fail auth check if the user is simply not logged in (e.g., throwing "Authentication required" or "Unauthorized")
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes("Authentication required") && !errorMessage.includes("Unauthorized") && !errorMessage.includes("unauthorized")) {
+        console.warn("Auth check failed with unexpected error:", error);
+      }
       await clearTokens();
     } finally {
       setIsLoading(false);

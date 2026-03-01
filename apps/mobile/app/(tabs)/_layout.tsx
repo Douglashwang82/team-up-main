@@ -1,5 +1,4 @@
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import NotificationCenter from "../../components/NotificationCenter";
 import GlassTabBar from "../../components/GlassTabBar";
@@ -13,7 +12,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: Colors.gray[500],
         headerShown: true,
         headerStyle: {
-          backgroundColor: "#fbf5e2ff",
+          backgroundColor: "#fbe2e2ff",
         },
         headerTintColor: Colors.gray[900],
         headerRight: () => <NotificationCenter />,

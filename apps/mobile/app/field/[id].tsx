@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -12,16 +13,61 @@ import { Ionicons } from "@expo/vector-icons";
 import Card from "../../components/Card";
 import Button from "../../components/Button";
 import { Colors } from "../../constants/Colors";
-import { MOCK_FIELDS, MOCK_EVENTS } from "../../constants/mockData";
 import { getSportTypeColor, renderStars } from "../../utils/fieldHelpers";
+import { apis } from "../../lib/api";
+import { VenueDetail, CourtOut } from "@team-up-main/api-client";
 
 export default function FieldDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const [venue, setVenue] = useState<VenueDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const field = MOCK_FIELDS.find((f) => f.id === id) || MOCK_FIELDS[0];
-  const upcomingEvents = MOCK_EVENTS.filter((event) => event.fieldId === id);
-  const sportColor = getSportTypeColor(field.sportType);
+  useEffect(() => {
+    async function fetchVenue() {
+      try {
+        setLoading(true);
+        const data = await apis.venues.getVenueById({ venueId: id as string });
+        setVenue(data as VenueDetail);
+      } catch (err: any) {
+        setError(err.message || "Failed to load venue details");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (id) fetchVenue();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <Header onBack={() => router.back()} />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primary[500]} />
+          <Text style={styles.loadingText}>載入中...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !venue) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <Header onBack={() => router.back()} />
+        <View style={styles.centerContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={Colors.error[500]} />
+          <Text style={styles.errorText}>{error || "找不到場地"}</Text>
+          <Button title="返回" onPress={() => router.back()} variant="outline" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Handle fallback or dynamic sport layout
+  const sportType = venue.courts && venue.courts.length > 0 ? venue.courts[0].sportType || "籃球" : "籃球";
+  const sportColor = getSportTypeColor(sportType);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -31,20 +77,18 @@ export default function FieldDetailScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.content}
       >
-        <FieldMainCard field={field} sportColor={sportColor} />
-        <FieldInfoCard field={field} />
-        <FieldFacilitiesCard facilities={field.facilities} />
-        <FieldEventsCard
-          events={upcomingEvents}
-          onEventPress={(eventId: string) => router.push(`/teamup/${eventId}`)}
-        />
+        <FieldMainCard venue={venue} sportColor={sportColor} sportType={sportType} />
+        <FieldInfoCard venue={venue} />
+        {/* If facilities exist, show them. For MVP we omit since it's not strictly on VenueDetail schema */}
+        {/* <FieldFacilitiesCard facilities={["Parking", "Restrooms"]} /> */}
+        <FieldCourtsCard courts={venue.courts || []} venueId={venue.id} router={router} />
       </ScrollView>
 
       <FieldFooter
         onCreateEvent={() =>
           router.push({
             pathname: "/(tabs)/new-teamup",
-            params: { fieldId: field.id, fieldName: field.name },
+            params: { venueId: venue.id, venueName: venue.name },
           })
         }
         onViewMap={() => router.back()}
@@ -67,42 +111,42 @@ function Header({ onBack }: { onBack: () => void }) {
 }
 
 // Main Field Card Component
-function FieldMainCard({ field, sportColor }: any) {
+function FieldMainCard({ venue, sportColor, sportType }: any) {
   return (
     <Card style={styles.mainCard}>
       <View style={styles.iconContainer}>
-        <Text style={styles.fieldIcon}>{field.icon}</Text>
+        <Text style={styles.fieldIcon}>🏢</Text>
       </View>
 
       <View style={[styles.badge, { backgroundColor: sportColor.bg }]}>
         <Text style={[styles.badgeText, { color: sportColor.text }]}>
-          {field.sportType}
+          {sportType}
         </Text>
       </View>
 
-      <Text style={styles.title}>{field.name}</Text>
-      <Text style={styles.description}>{field.description}</Text>
+      <Text style={styles.title}>{venue.name}</Text>
+      <Text style={styles.description}>{venue.description || "暫無簡介"}</Text>
 
       <View style={styles.ratingContainer}>
-        <View style={styles.stars}>{renderStars(field.rating)}</View>
-        <Text style={styles.ratingText}>{field.rating.toFixed(1)}</Text>
+        <View style={styles.stars}>{renderStars(4.5)}</View>
+        <Text style={styles.ratingText}>{"4.5"}</Text>
       </View>
     </Card>
   );
 }
 
 // Info Card Component
-function FieldInfoCard({ field }: any) {
+function FieldInfoCard({ venue }: any) {
   return (
     <Card style={styles.infoCard}>
       <Text style={styles.sectionTitle}>資訊</Text>
 
-      <InfoRow icon="location-outline" label="地址" value={field.address} />
+      <InfoRow icon="location-outline" label="地址" value={venue.address || "未知地址"} />
 
       <InfoRow
-        icon="time-outline"
-        label="營業時間"
-        value={field.openingHours}
+        icon="call-outline"
+        label="聯絡電話"
+        value={venue.contactPhone || "未提供"}
       />
     </Card>
   );
@@ -128,94 +172,67 @@ function InfoRow({
   );
 }
 
-// Facilities Card Component
-function FieldFacilitiesCard({ facilities }: { facilities: string[] }) {
-  return (
-    <Card style={styles.facilitiesCard}>
-      <Text style={styles.sectionTitle}>設施</Text>
-      <View style={styles.facilitiesList}>
-        {facilities.map((facility, index) => (
-          <View key={index} style={styles.facilityItem}>
-            <Ionicons
-              name="checkmark-circle"
-              size={20}
-              color={Colors.success[500]}
-            />
-            <Text style={styles.facilityText}>{facility}</Text>
-          </View>
-        ))}
-      </View>
-    </Card>
-  );
-}
-
-// Events Card Component
-function FieldEventsCard({ events, onEventPress }: any) {
+// Courts Card Component
+function FieldCourtsCard({ courts, venueId, router }: any) {
   return (
     <Card style={styles.eventsCard}>
       <View style={styles.eventsHeader}>
-        <Text style={styles.sectionTitle}>即將舉行的活動</Text>
-        <Text style={styles.eventCount}>{events.length}</Text>
+        <Text style={styles.sectionTitle}>場內球場</Text>
+        <Text style={styles.eventCount}>{courts.length}</Text>
       </View>
 
-      {events.length > 0 ? (
+      {courts.length > 0 ? (
         <View style={styles.eventsList}>
-          {events.map((event: any) => (
-            <EventItem
-              key={event.id}
-              event={event}
-              onPress={() => onEventPress(event.id)}
+          {courts.map((court: CourtOut) => (
+            <CourtItem
+              key={court.id}
+              court={court}
+              onPress={() => {
+                // Feature for future: view specific court details/timeslots
+              }}
             />
           ))}
         </View>
       ) : (
-        <EmptyEvents />
+        <EmptyEvents text="此場地尚無設置球場" />
       )}
     </Card>
   );
 }
 
-function EventItem({ event, onPress }: any) {
+function CourtItem({ court, onPress }: any) {
   return (
-    <TouchableOpacity style={styles.eventItem} onPress={onPress}>
+    <TouchableOpacity style={styles.eventItem} onPress={onPress} disabled={true}>
       <View style={styles.eventDateBadge}>
-        <Text style={styles.eventDateDay}>{event.date.getDate()}</Text>
-        <Text style={styles.eventDateMonth}>
-          {event.date
-            .toLocaleDateString("en-US", { month: "short" })
-            .toUpperCase()}
-        </Text>
+        <Ionicons name="basketball-outline" size={24} color={Colors.white} />
       </View>
 
       <View style={styles.eventContent}>
-        <Text style={styles.eventTitle}>{event.title}</Text>
+        <Text style={styles.eventTitle}>{court.name}</Text>
         <View style={styles.eventMeta}>
           <View style={styles.eventMetaItem}>
             <Ionicons
-              name="person-outline"
+              name="pricetag-outline"
               size={14}
               color={Colors.gray[400]}
             />
             <Text style={styles.eventMetaText}>
-              {event.participants}/{event.maxParticipants}
+              {court.isFree ? "免費" : "需付費"}
             </Text>
           </View>
           <Text style={styles.eventMetaDivider}>•</Text>
-          <Text style={styles.eventOrganizer}>{event.organizer}</Text>
+          <Text style={styles.eventOrganizer}>{court.surfaceType || "室外/室內"}</Text>
         </View>
       </View>
-
-      <Ionicons name="chevron-forward" size={20} color={Colors.gray[500]} />
     </TouchableOpacity>
   );
 }
 
-function EmptyEvents() {
+function EmptyEvents({ text }: { text: string }) {
   return (
     <View style={styles.emptyEvents}>
-      <Ionicons name="calendar-outline" size={48} color={Colors.gray[600]} />
-      <Text style={styles.emptyEventsText}>尚無即將舉行的活動</Text>
-      <Text style={styles.emptyEventsSubtext}>成為第一個建立活動的人！</Text>
+      <Ionicons name="alert-circle-outline" size={48} color={Colors.gray[600]} />
+      <Text style={styles.emptyEventsText}>{text}</Text>
     </View>
   );
 }
@@ -224,7 +241,7 @@ function EmptyEvents() {
 function FieldFooter({ onCreateEvent, onViewMap }: any) {
   return (
     <View style={styles.footer}>
-      <Button title="建立活動" onPress={onCreateEvent} fullWidth size="large" />
+      <Button title="在此建立活動" onPress={onCreateEvent} fullWidth size="large" />
       <View style={styles.footerSpacer} />
       <Button
         title="在地圖上查看"
@@ -241,6 +258,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.base,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: Colors.gray[500],
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.gray[900],
+    marginTop: 16,
+    marginBottom: 24,
+    textAlign: "center",
   },
   header: {
     flexDirection: "row",

@@ -157,6 +157,8 @@ export default function TicketDetailScreen() {
                   createdAt: new Date(),
                   status: event.status as EventStatus,
                 }}
+                index={0}
+                scrollY={0}
               />
             ))
           ) : (

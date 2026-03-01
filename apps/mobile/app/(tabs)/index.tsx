@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Keyboard, Dimensions, FlatList } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, interpolate, Extrapolate, SharedValue } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -11,6 +11,7 @@ import { Colors } from '../../constants/Colors';
 import { apis } from '../../lib/api';
 import { EventOut } from '@team-up-main/api-client';
 import LiquidSearchBar from '../../components/LiquidSearchBar';
+import EventFilterModal, { EventFilterState } from '../../components/EventFilterModal';
 import GridBackground from '../../components/GridBackground';
 import WarmBubbleBackground from '../../components/WarmBubbleBackground';
 
@@ -33,6 +34,11 @@ export default function EventsScreen() {
   const [searchInput, setSearchInput] = useState(''); // Separate input for modal
   const searchInputRef = useRef<TextInput>(null);
 
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<EventFilterState>({});
+
+  const insets = useSafeAreaInsets();
+
   // Scroll animation state - using Reanimated for high performance
   const scrollY = useSharedValue(0);
 
@@ -45,26 +51,46 @@ export default function EventsScreen() {
 
   // Header animation using Reanimated
   const headerAnimatedStyle = useAnimatedStyle(() => {
+    const headerHeight = SEARCH_SECTION_HEIGHT + insets.top;
     const translateY = interpolate(
       scrollY.value,
-      [0, SEARCH_SECTION_HEIGHT],
-      [0, -SEARCH_SECTION_HEIGHT],
+      [0, headerHeight],
+      [0, -headerHeight],
       Extrapolate.CLAMP
     );
     return {
       transform: [{ translateY }],
     };
-  });
+  }, [insets.top]);
 
 
   useEffect(() => {
     loadEvents();
-  }, []);
+  }, [keyword, activeFilters]);
+
+  // Map Chinese UI categories to English DB fields
+  const CATEGORY_MAP: Record<string, string> = {
+    '籃球': 'basketball',
+    '羽球': 'badminton',
+    '排球': 'volleyball',
+    '網球': 'tennis',
+    '桌球': 'table_tennis',
+    '撞球': 'billiards',
+    '游泳': 'swimming',
+    '健身': 'fitness'
+  };
 
   const loadEvents = async () => {
     try {
       setError(null);
-      const data = await apis.events.listEvents({ status: 'open', limit: 50 });
+      const data = await apis.events.listEvents({
+        status: 'open',
+        limit: 50,
+        keyword: keyword || undefined,
+        category: activeFilters.category ? CATEGORY_MAP[activeFilters.category] || activeFilters.category : undefined,
+        division: activeFilters.division,
+        datetimeAfter: activeFilters.datetime_after ? new Date(activeFilters.datetime_after) : undefined,
+      });
       setEvents(data);
     } catch (err) {
       console.error('Failed to load events:', err);
@@ -89,7 +115,7 @@ export default function EventsScreen() {
     setIsSearching(true);
     try {
       setError(null);
-      const data = await apis.events.searchEvents({ keyword, limit: 50 });
+      const data = await apis.events.listEvents({ keyword, limit: 50 });
       setEvents(data);
     } catch (err) {
       console.error('Search failed:', err);
@@ -136,7 +162,7 @@ export default function EventsScreen() {
     if (searchTerm.trim()) {
       setIsSearching(true);
       try {
-        const data = await apis.events.searchEvents({ keyword: searchTerm, limit: 50 });
+        const data = await apis.events.listEvents({ keyword: searchTerm, limit: 50 });
         setEvents(data);
       } catch (err) {
         console.error('Search failed:', err);
@@ -162,34 +188,46 @@ export default function EventsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Warm Bubble Background - Animated Gradient Bubbles */}
-      <WarmBubbleBackground />
+      {/* Animated Search Bar Section (Absolute to screen, padded by insets) */}
+      <Animated.View
+        style={[
+          styles.searchSection,
+          { paddingTop: insets.top + 8 },
+          headerAnimatedStyle
+        ]}
+      >
+        {/* Search Bar - Liquid Glass Effect */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <LiquidSearchBar
+            value={searchInput}
+            onChangeText={(text) => {
+              setSearchInput(text);
+              if (!searchModalVisible) setSearchModalVisible(true);
+            }}
+            onFocus={() => setSearchModalVisible(true)}
+            onSubmitEditing={() => applySearch(searchInput)}
+            onClear={() => { setSearchInput(''); setKeyword(''); }}
+            onCancel={closeSearchModal}
+            isFocused={searchModalVisible}
+            inputRef={searchInputRef}
+          />
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setFilterModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.filterButtonGlass}>
+              {/* Show indicator if any filter is active */}
+              {(activeFilters.category || activeFilters.division || activeFilters.datetime_after) && (
+                <View style={styles.activeFilterDot} />
+              )}
+              <Ionicons name="options-outline" size={24} color={Colors.gray[600]} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Animated Search Bar Section */}
-        <Animated.View
-          style={[
-            styles.searchSection,
-            headerAnimatedStyle
-          ]}
-        >
-          {/* Search Bar - Liquid Glass Effect */}
-          <View style={{ alignItems: 'center' }}>
-            <LiquidSearchBar
-              value={searchInput}
-              onChangeText={(text) => {
-                setSearchInput(text);
-                if (!searchModalVisible) setSearchModalVisible(true);
-              }}
-              onFocus={() => setSearchModalVisible(true)}
-              onSubmitEditing={() => applySearch(searchInput)}
-              onClear={() => { setSearchInput(''); setKeyword(''); loadEvents(); }}
-              onCancel={closeSearchModal}
-              isFocused={searchModalVisible}
-              inputRef={searchInputRef}
-            />
-          </View>
-        </Animated.View>
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -260,14 +298,11 @@ export default function EventsScreen() {
               />
             )}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={[styles.list, { paddingTop: SEARCH_SECTION_HEIGHT + insets.top }]}
             showsVerticalScrollIndicator={false}
             onScroll={handleScroll}
             scrollEventThrottle={16}
             pagingEnabled={false}
-            snapToInterval={SCREEN_HEIGHT * 0.7 + 32}
-            snapToAlignment="start"
-            decelerationRate="fast"
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
@@ -281,7 +316,9 @@ export default function EventsScreen() {
 
         {/* Suggestions Overlay - Slides from right */}
         {searchModalVisible && (
-          <Animated.View style={styles.suggestionsOverlay}>
+          <Animated.View style={[styles.suggestionsOverlay, { top: SEARCH_SECTION_HEIGHT + insets.top }]}>
+            <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" />
+
             {/* Suggestions List */}
             <FlatList
               data={filteredSuggestions}
@@ -291,21 +328,24 @@ export default function EventsScreen() {
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.suggestionItem}
-                  onPress={() => applySearch(item.title)}
+                  onPress={() => {
+                    setSearchInput(item.title);
+                    applySearch(item.title);
+                  }}
                 >
-                  <Ionicons name="time-outline" size={20} color={Colors.gray[400]} />
+                  <Ionicons name="time-outline" size={20} color={Colors.gray[500]} />
                   <View style={styles.suggestionContent}>
                     <Text style={styles.suggestionTitle} numberOfLines={1}>{item.title}</Text>
                     <Text style={styles.suggestionSubtitle} numberOfLines={1}>
                       {item.owner?.displayName || '匿名用戶'}
                     </Text>
                   </View>
-                  <Ionicons name="arrow-forward" size={16} color={Colors.gray[300]} />
+                  <Ionicons name="arrow-up-left-box" size={16} color={Colors.gray[400]} />
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
                 <View style={styles.noSuggestions}>
-                  <Ionicons name="search-outline" size={48} color={Colors.gray[300]} />
+                  <Ionicons name="search-outline" size={48} color={Colors.gray[400]} />
                   <Text style={styles.noSuggestionsText}>開始輸入以搜尋活動</Text>
                 </View>
               }
@@ -313,6 +353,16 @@ export default function EventsScreen() {
           </Animated.View>
         )}
       </SafeAreaView>
+
+      {/* Filter Modal */}
+      <EventFilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        currentFilters={activeFilters}
+        onApply={(filters) => {
+          setActiveFilters(filters);
+        }}
+      />
     </View>
   );
 }
@@ -327,13 +377,62 @@ const styles = StyleSheet.create({
   // Search Section Styles
   searchSection: {
     position: 'absolute',
-    top: 50,
     left: 0,
     right: 0,
-    height: SEARCH_SECTION_HEIGHT,
-    zIndex: 100,
+    zIndex: 100, // Make sure this is above the list
     paddingHorizontal: 8,
-    paddingTop: 8,
+    // Note: paddingTop is applied dynamically via inline styles using useSafeAreaInsets
+  },
+  filterButton: {
+    width: 52,
+    height: 52,
+  },
+  filterButtonGlass: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 26,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeFilterDot: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+    borderWidth: 1,
+    borderColor: Colors.base,
+    zIndex: 2,
+  },
+  // Suggestion Overlay Styles
+  suggestionsOverlay: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 0,
+    zIndex: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)', // Base tint for the glass
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    // Glass shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  searchBlur: {
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   searchGlassContainer: {
     borderRadius: 20,
@@ -346,10 +445,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 5,
-  },
-  searchBlur: {
-    borderRadius: 20,
-    overflow: 'hidden',
   },
   searchGradientBorder: {
     borderRadius: 18,
@@ -391,15 +486,6 @@ const styles = StyleSheet.create({
   searchLoader: {
     marginLeft: 8,
   },
-  suggestionsOverlay: {
-    position: 'absolute',
-    top: SEARCH_SECTION_HEIGHT,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(254, 242, 222, 0.95)', // Semi-transparent to show gradient
-    zIndex: 99,
-  },
   // Filter Chips Styles
   filterContainer: {
     gap: 6, // Reduced gap
@@ -430,7 +516,7 @@ const styles = StyleSheet.create({
   },
   // List Styles
   list: {
-    paddingTop: SEARCH_SECTION_HEIGHT, // Start content below search bar
+    // paddingTop is applied dynamically via inline styles using headerHeight
     paddingHorizontal: 0, // Full width cards
     paddingBottom: 120, // Increased for safe area + tab bar
   },
@@ -598,33 +684,34 @@ const styles = StyleSheet.create({
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[100],
-    gap: 12,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    gap: 14,
   },
   suggestionContent: {
     flex: 1,
   },
   suggestionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: Colors.gray[900],
-    marginBottom: 2,
+    marginBottom: 4,
   },
   suggestionSubtitle: {
-    fontSize: 13,
-    color: Colors.gray[400],
+    fontSize: 14,
+    color: Colors.gray[500],
   },
   noSuggestions: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    gap: 12,
+    paddingVertical: 80,
+    gap: 16,
   },
   noSuggestionsText: {
-    fontSize: 15,
-    color: Colors.gray[400],
+    fontSize: 16,
+    color: Colors.gray[500],
+    fontWeight: '500',
   },
 });

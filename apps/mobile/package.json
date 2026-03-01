@@ -4,6 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "start:local": "expo start -c",
+    "start:remote": "EXPO_PUBLIC_API_URL=https://api-production-0020e.up.railway.app expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "ios:17": "expo run:ios --device 'iPhone 17'",

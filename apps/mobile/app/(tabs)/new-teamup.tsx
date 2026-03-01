@@ -6,20 +6,26 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import { Colors } from "../../constants/Colors";
+import { apis } from "../../lib/api";
 
 export default function NewTeamUpScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const venueId = params.venueId as string | undefined;
+  const venueName = params.venueName as string | undefined;
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [maxParticipants, setMaxParticipants] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("10");
   const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,7 +35,9 @@ export default function NewTeamUpScreen() {
 
     if (!title.trim()) newErrors.title = "請輸入標題";
     if (!description.trim()) newErrors.description = "請輸入描述";
-    if (!maxParticipants || parseInt(maxParticipants) < 2) {
+
+    const parsedParticipants = parseInt(maxParticipants, 10);
+    if (!maxParticipants || isNaN(parsedParticipants) || parsedParticipants < 2) {
       newErrors.maxParticipants = "至少需要 2 名參加者";
     }
 
@@ -39,11 +47,32 @@ export default function NewTeamUpScreen() {
     }
 
     setLoading(true);
-    // TODO: Implement actual create logic
-    setTimeout(() => {
+
+    try {
+      await apis.events.createEvent({
+        eventCreateIn: {
+          title: title.trim(),
+          description: description.trim(),
+          maxParticipants: parsedParticipants,
+          visibility: isPrivate ? "private" : "public",
+          venueId: venueId, // Attach the venue ID directly
+          durationType: "temporary",
+          status: "open",
+        },
+      });
+
+      Alert.alert("建立成功", "活動已成功發布！", [
+        {
+          text: "確定",
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (e: any) {
+      console.error("Failed to create event", e);
+      Alert.alert("錯誤", "建立活動時發生問題，請稍後再試。");
+    } finally {
       setLoading(false);
-      router.back();
-    }, 1500);
+    }
   };
 
   return (
@@ -125,36 +154,23 @@ export default function NewTeamUpScreen() {
         </Card>
 
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>時間</Text>
-          <TouchableOpacity style={styles.dateButton}>
-            <Ionicons
-              name="calendar-outline"
-              size={20}
-              color={Colors.gray[600]}
-            />
-            <Text style={styles.dateButtonText}>選擇日期與時間</Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={Colors.gray[400]}
-            />
-          </TouchableOpacity>
-        </Card>
-
-        <Card style={styles.section}>
           <Text style={styles.sectionTitle}>地點</Text>
-          <TouchableOpacity style={styles.dateButton}>
+          <TouchableOpacity style={styles.dateButton} disabled={!!venueName}>
             <Ionicons
               name="location-outline"
               size={20}
               color={Colors.gray[600]}
             />
-            <Text style={styles.dateButtonText}>選擇場地</Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={Colors.gray[400]}
-            />
+            <Text style={[styles.dateButtonText, venueName ? { color: Colors.primary[600], fontWeight: "600" } : {}]}>
+              {venueName || "選擇場地"}
+            </Text>
+            {!venueName && (
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={Colors.gray[400]}
+              />
+            )}
           </TouchableOpacity>
         </Card>
       </ScrollView>

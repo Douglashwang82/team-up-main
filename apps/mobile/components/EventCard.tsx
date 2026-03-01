@@ -3,192 +3,225 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   Dimensions,
   Platform,
+  TouchableOpacity,
+  Linking,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { Canvas, BackdropBlur, Fill } from "@shopify/react-native-skia";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
-  interpolate,
-  Extrapolate,
-  SharedValue,
-  useDerivedValue,
-} from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import {
+  Canvas,
+  Image,
+  useImage,
+  Skia,
+  LinearGradient as SkiaGradient,
+  vec,
+  Group,
+  BackdropBlur,
+  Path,
+  Rect,
+  RoundedRect,
+  Fill
+} from "@shopify/react-native-skia";
 
+import { api } from "../lib/apiClient"; // Import API client
+import { useAuth } from "../lib/AuthContext"; // Import Auth Context
 import { EventOut } from "@team-up-main/api-client";
-import { Colors } from "../constants/Colors";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT_DIM } = Dimensions.get("window");
 const SCREEN_HEIGHT = SCREEN_HEIGHT_DIM || 800; // Fallback
-const CARD_WIDTH = SCREEN_WIDTH - 32;
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.7;
+const CARD_WIDTH = SCREEN_WIDTH - 60;
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.35;
 const CARD_RADIUS = 24;
-const CARD_MARGIN_BOTTOM = 32;
-const SNAP_INTERVAL = CARD_HEIGHT + CARD_MARGIN_BOTTOM;
 
 const MOCK_IMAGES: Record<string, any> = {
   "mock-1.png": require("../assets/mock-images/mock-1.png"),
   "mock-2.png": require("../assets/mock-images/mock-2.png"),
   "mock-3.png": require("../assets/mock-images/mock-3.png"),
   "mock-4.png": require("../assets/mock-images/mock-4.png"),
-  "mock-ava-1.png": require("../assets/mock-images/mock-ava-1.png"),
-  "mock-ava-2.png": require("../assets/mock-images/mock-ava-2.png"),
 };
-
-const MOCK_AVATARS = [
-  require("../assets/mock-images/mock-ava-1.png"),
-  require("../assets/mock-images/mock-ava-2.png"),
-];
 
 interface EventCardProps {
   event: EventOut;
   index: number;
-  scrollY: SharedValue<number>;
+  scrollY: any; // Simplified type as we aren't using scrollY heavily for complex logic anymore
 }
 
 export default function EventCard({ event, index, scrollY }: EventCardProps) {
   const router = useRouter();
+  // Cycle through mock images based on index
+  const mockKeys = Object.keys(MOCK_IMAGES);
+  const bgImageSource = MOCK_IMAGES[mockKeys[index % mockKeys.length]];
+  const bgImage = useImage(bgImageSource);
 
-  const pressed = useSharedValue(false);
+  // Create Fluted (Moru) Glass Pattern
+  const flutedPath = React.useMemo(() => {
+    const p = Skia.Path.Make();
+    for (let x = 0; x <= CARD_WIDTH; x += 6) {
+      p.moveTo(x, 0);
+      p.lineTo(x, CARD_HEIGHT);
+    }
+    return p;
+  }, []);
 
-  // Separate animation for press scaling for reliability
-  const pressScale = useDerivedValue(() => {
-    return withSpring(pressed.value ? 0.97 : 1, { damping: 12, stiffness: 150 });
-  });
 
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    // Correct focus calculation: focus when scrollY is exactly (index * SNAP_INTERVAL)
-    const cardCenter = index * SNAP_INTERVAL;
 
-    const inputRange = [
-      cardCenter - SNAP_INTERVAL,
-      cardCenter,
-      cardCenter + SNAP_INTERVAL,
-    ];
 
-    const currentScroll = scrollY?.value ?? 0;
+  const booking = event.bookings?.[0];
+  const timeSlot = booking?.timeSlot;
+  const venue = booking?.venue;
+  const court = booking?.court;
+  const eventDate = timeSlot?.startsAt ? new Date(timeSlot.startsAt) : new Date(event.createdAt);
 
-    const scrollScale = interpolate(
-      currentScroll,
-      inputRange,
-      [0.9, 1, 0.9],
-      Extrapolate.CLAMP
-    );
-
-    const opacityValue = interpolate(
-      currentScroll,
-      inputRange,
-      [0.6, 1, 0.6],
-      Extrapolate.CLAMP
-    );
-
-    return {
-      transform: [
-        { scale: scrollScale * pressScale.value }
-      ],
-      opacity: opacityValue,
-    };
-  });
-
-  const tapGesture = Gesture.Tap()
-    .onBegin(() => {
-      pressed.value = true;
-    })
-    .onFinalize(() => {
-      pressed.value = false;
-      runOnJS(router.push)(`/event/${event.id}` as any);
-    });
-
-  const formatDate = (date: string | Date) => {
-    const d = new Date(date);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
+  const formatDateTime = (date: Date) => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${months[date.getMonth()]} ${date.getDate()} • ${hours}:${minutes}`;
   };
 
-  const getTime = (date: string | Date) => {
-    const d = new Date(date);
-    return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
-  }
+  const { user } = useAuth();
+  const [isJoining, setIsJoining] = React.useState(false);
 
-  const getVenueName = () => {
-    if (event.title?.includes("籃球")) return "Civic Center Court";
-    if (event.title?.includes("足球")) return "Riverside Field";
-    return "Downtown Arena";
+  // Determine initial status based on backend provided userJoinStatus, fallback to checking participants list.
+  const [joinStatus, setJoinStatus] = React.useState<'none' | 'pending' | 'joined'>(
+    (event.userJoinStatus as 'none' | 'pending' | 'joined' | undefined) || (event.participants?.some(p => p.userId === user?.id) ? 'joined' : 'none')
+  );
+
+  React.useEffect(() => {
+    const status = (event.userJoinStatus as 'none' | 'pending' | 'joined' | undefined) ||
+      (event.participants?.some(p => p.userId === user?.id) ? 'joined' : 'none');
+    setJoinStatus(status);
+  }, [event.userJoinStatus, event.participants, user?.id]);
+
+  const getVenueName = () => venue?.name || (event as any).venueName || "Outdoor Court";
+  const getFieldName = () => court?.name || "Main Field";
+
+  const handleJoin = async () => {
+    if (!user) {
+      Alert.alert("Please login", "You need to be logged in to join events.");
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const response = await api.events.join(event.id, { message: "Join request from card" });
+
+      if (response.status === 'approved') {
+        Alert.alert("Success", "You have joined the event!");
+        setJoinStatus('joined');
+      } else if (response.status === 'submitted') {
+        Alert.alert("Request Sent", "Your join request is pending approval.");
+        setJoinStatus('pending');
+      }
+    } catch (error: any) {
+      console.log('join error', error);
+      const errorMessage = error.message?.toLowerCase() || "";
+
+      // Handle case where user already has a pending request
+      if (errorMessage.includes("pending") || errorMessage.includes("already requested") || errorMessage.includes("already_applied")) {
+        setJoinStatus('pending');
+        Alert.alert("Status", "You already have a pending request for this event.");
+      }
+      // Handle case where user is already joined (but maybe list wasn't updated)
+      else if (errorMessage.includes("already joined") || errorMessage.includes("participant")) {
+        setJoinStatus('joined');
+        Alert.alert("Status", "You are already a participant of this event.");
+      }
+      else {
+        Alert.alert("Error", error.message || "Failed to join event");
+      }
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   return (
-    <GestureDetector gesture={tapGesture}>
-      <Animated.View style={[styles.container, animatedContainerStyle]}>
-        {/* Glassmorphic Content Container - Maximum Backdrop Blur */}
-        <View style={styles.glassContainer}>
-          <Canvas style={StyleSheet.absoluteFillObject}>
-            <BackdropBlur blur={100}>
-              <Fill color="rgba(255, 255, 255, 0.3)" />
-            </BackdropBlur>
-          </Canvas>
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={() => router.push(`/event/${event.id}`)}
+      style={[styles.container, { zIndex: 1000 - index }]}
+    >
+      {/* Skia Background Layer */}
+      {/* Moru Glass Effect Layer */}
+      <Canvas style={StyleSheet.absoluteFill}>
+        {/* 1. Blur Background */}
+        <BackdropBlur blur={15} />
 
-          {/* Clean Frosted Matte Overlay */}
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255, 255, 255, 0.4)', opacity: 0.9 }]} />
+        {/* 2. Base Glass Tint */}
+        <Fill color="rgba(255, 255, 255, 0.1)" />
 
-          <View style={styles.contentPadding}>
-            {/* Top Row: Date & Status */}
-            <View style={styles.topRow}>
-              <View style={styles.dateBadge}>
-                <Text style={styles.dateText}>{formatDate(event.createdAt)}</Text>
-                <View style={styles.timeDivider} />
-                <Text style={styles.timeText}>{getTime(event.createdAt)}</Text>
-              </View>
+        {/* 5. Glass Border */}
+        <RoundedRect
+          x={1} y={1}
+          width={CARD_WIDTH - 2}
+          height={CARD_HEIGHT - 2}
+          style="stroke"
+          strokeWidth={1}
+          color="rgba(22, 15, 15, 0.6)"
+          r={CARD_RADIUS}
+        />
+      </Canvas>
 
-              <View style={styles.statusBadge}>
-                <Ionicons name="people" size={12} color="#FF6B6B" />
-                <Text style={styles.statusText}>
-                  {event.currentParticipants}/{event.maxParticipants}
-                </Text>
-              </View>
+      {/* Text Content Overlay */}
+      <View style={styles.contentOverlay}>
+        <View style={styles.topSection}>
+          <View style={styles.ownerRow}>
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarText}>{event.owner?.displayName?.[0] || 'O'}</Text>
             </View>
-
-            {/* Title */}
-            <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
-
-
-            {/* Location */}
-            <View style={styles.locationRow}>
-              <Ionicons name="location-sharp" size={14} color="#FF6B6B" />
-              <Text style={styles.locationText}>{getVenueName()}</Text>
-            </View>
-
-            {/* Bottom Row: Avatars */}
-            <View style={styles.bottomRow}>
-              <View style={styles.avatarStack}>
-                {MOCK_AVATARS.slice(0, 3).map((avatar, idx) => (
-                  <Image
-                    key={idx}
-                    source={avatar}
-                    style={[styles.avatar, { marginLeft: idx === 0 ? 0 : -10 }]}
-                  />
-                ))}
-              </View>
-            </View>
+            <Text style={styles.ownerName}>{event.owner?.displayName || 'Unknown Host'}</Text>
+          </View>
+          <View style={styles.progressBadge}>
+            <Ionicons name="people" size={14} color="#333" />
+            <Text style={styles.progressText}>{event.currentParticipants || 1}/{event.maxParticipants || 10}</Text>
           </View>
         </View>
 
-        {/* Faded border highlight - Glimmering edge */}
-        <LinearGradient
-          colors={['rgba(255,255,255,0.5)', 'rgba(255,255,255,0.05)', 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0.8, y: 0.8 }}
-          style={[StyleSheet.absoluteFillObject, { borderRadius: CARD_RADIUS, borderWidth: 1, borderColor: 'transparent', borderTopColor: 'rgba(255,255,255,0.3)', borderLeftColor: 'rgba(255,255,255,0.1)' }]}
-          pointerEvents="none"
-        />
-      </Animated.View>
-    </GestureDetector >
+        <View style={styles.centerSection}>
+          <Text style={styles.title} numberOfLines={1}>{event.title}</Text>
+          <Text style={styles.subtitle}>{formatDateTime(eventDate)}</Text>
+          <Text style={styles.locationText}>{getVenueName()} • {getFieldName()}</Text>
+
+          {event.description ? (
+            <Text style={styles.description} numberOfLines={2}>{event.description}</Text>
+          ) : null}
+        </View>
+
+        <View style={styles.footerSection}>
+          {joinStatus === 'joined' ? (
+            <View style={styles.joinedBadge}>
+              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+              <Text style={styles.joinedText}>Joined</Text>
+            </View>
+          ) : joinStatus === 'pending' ? (
+            <View style={styles.pendingBadge}>
+              <Ionicons name="time" size={16} color="#FF9800" />
+              <Text style={styles.pendingText}>Pending</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.joinButton}
+              onPress={(e) => {
+                e.stopPropagation(); // Try to prevent card navigation
+                handleJoin();
+              }}
+              disabled={isJoining}
+            >
+              {isJoining ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.joinButtonText}>Join</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+    </TouchableOpacity >
   );
 }
 
@@ -197,124 +230,144 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: CARD_RADIUS,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    marginBottom: 32,
+    marginBottom: 20,
     overflow: 'hidden',
     alignSelf: 'center',
-
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.22,
-        shadowRadius: 24,
-      },
-      android: {
-        elevation: 12
-      }
-    })
+    // shadowColor: '#000',
+    // shadowOpacity: 0.3,
+    // shadowRadius: 10,
+    // elevation: 5,
+    backgroundColor: 'rgba(255,255,255,0.02)', // Subtle fill for when blur isn't enough
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)', // Fallback border
   },
-  bgImage: {
+  contentOverlay: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+  },
+  topSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
-    height: '100%',
   },
-  glassContainer: {
-    flex: 1,
-    borderRadius: CARD_RADIUS,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
-  },
-  contentPadding: {
-    flex: 1,
-    padding: 28,
-    justifyContent: 'space-between',
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateBadge: {
+  ownerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    gap: 8,
   },
-  dateText: {
-    color: '#8B1538',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  timeDivider: {
-    width: 1,
-    height: 12,
-    backgroundColor: 'rgba(139,21,56,0.3)',
-    marginHorizontal: 8,
-  },
-  timeText: {
-    color: '#8B1538',
+  ownerName: {
+    fontSize: 14,
     fontWeight: '600',
-    fontSize: 12,
+    color: '#333',
   },
-  statusBadge: {
+  progressBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    gap: 6,
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  statusText: {
-    fontSize: 12,
+  progressText: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#8B1538',
+    color: '#333',
   },
-  title: {
-    fontSize: 32,
-    fontFamily: 'NotoSansTC_700Bold',
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginTop: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-  },
-  locationText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textShadowColor: 'rgba(139,21,56,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  avatarStack: {
-    flexDirection: 'row',
-  },
-  avatar: {
+  avatarContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)'
   },
+  avatarText: {
+    color: '#333',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  centerSection: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  locationText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#555',
+    textAlign: 'center',
+  },
+  description: {
+    fontSize: 13,
+    color: '#444',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 4,
+    paddingHorizontal: 12,
+  },
+  footerSection: {
+    marginTop: 10,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  joinButton: {
+    backgroundColor: '#1A1A1A',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  joinButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  joinedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  joinedText: {
+    color: '#388E3C', // darker green
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  pendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  pendingText: {
+    color: '#F57C00', // darker orange
+    fontWeight: 'bold',
+    fontSize: 14,
+  }
 });

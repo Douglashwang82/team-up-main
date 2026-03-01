@@ -56,6 +56,7 @@ export interface Event {
   duration_type: EventDurationType;
   created_at: string;
   updated_at?: string;
+  user_join_status?: "none" | "pending" | "joined";
 }
 
 export interface EventDetails extends Event {

@@ -3,18 +3,27 @@ import {
   StyleSheet,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Alert,
   Modal,
   ScrollView,
+  FlatList,
   Platform,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { GlassView } from "expo-glass-effect";
+
 import { Colors } from "../../constants/Colors";
+import { apis } from "../../lib/api";
+import LiquidSearchBar from "../../components/LiquidSearchBar";
+import EventFilterModal, { EventFilterState } from "../../components/EventFilterModal";
+
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Venue interface matching API response
 interface Venue {
@@ -33,203 +42,16 @@ interface PlacePrediction {
   place_id: string;
 }
 
-import { apis } from "../../lib/api";
-
-// Sport type options
-const SPORT_TYPES = [
-  "All",
-  "Basketball",
-  "Soccer",
-  "Tennis",
-  "Baseball",
-  "Volleyball",
-  "Multi-sport",
-  "Track & Field",
-  "Fitness",
-];
-
-// Sport type labels for display
-const SPORT_TYPE_LABELS: Record<string, string> = {
-  All: "全部",
-  Basketball: "籃球",
-  Soccer: "足球",
-  Tennis: "網球",
-  Baseball: "棒球",
-  Volleyball: "排球",
-  "Multi-sport": "綜合運動",
-  "Track & Field": "田徑",
-  Fitness: "健身",
-};
-
-// Function to get sport type icon emoji
-const getSportTypeIcon = (sportType: string): string => {
-  const iconMap: { [key: string]: string } = {
-    Basketball: "🏀",
-    Soccer: "⚽",
-    Tennis: "🎾",
-    Baseball: "⚾",
-    Volleyball: "🏐",
-    "Multi-sport": "🏟️",
-    "Track & Field": "🏃",
-    Fitness: "💪",
-  };
-
-  return iconMap[sportType] || "📍";
-};
-
 // IMPORTANT: Replace with your actual Google Maps API Key
-// Get it from: https://console.cloud.google.com/google/maps-apis
 const GOOGLE_MAPS_API_KEY = "AIzaSyCQpRkPBlpr47iTciS2-3IEjzRD57XCA8I";
 
 const DEFAULT_LAT = 25.013958087753082;
 const DEFAULT_LNG = 121.53783024593216;
 
-// Helper function to lighten a hex color
-const lightenColor = (hex: string, percent: number): string => {
-  const num = parseInt(hex.replace("#", ""), 16);
-  const r = Math.min(
-    255,
-    Math.floor((num >> 16) + ((255 - (num >> 16)) * percent) / 100),
-  );
-  const g = Math.min(
-    255,
-    Math.floor(
-      ((num >> 8) & 0x00ff) + ((255 - ((num >> 8) & 0x00ff)) * percent) / 100,
-    ),
-  );
-  const b = Math.min(
-    255,
-    Math.floor((num & 0x0000ff) + ((255 - (num & 0x0000ff)) * percent) / 100),
-  );
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-};
-
-// Map colors based on design requirements
-const MAP_COLORS = {
-  primary: Colors.primary, // #FB5631 - for markers
-  lighter1: lightenColor(Colors.primary, 40), // Lighter 1 level for blocks
-  lighter2: lightenColor(Colors.primary, 60), // Lighter 2 level for blocks
-  road: "#ffffff", // White for roads
-};
-
-// Custom map style with design requirements
-const darkMapStyle = [
-  {
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.lighter2 }], // Background/base geometry - lighter 2
-  },
-  {
-    elementType: "labels.icon",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#666666" }],
-  },
-  {
-    elementType: "labels.text.stroke",
-    stylers: [{ color: MAP_COLORS.lighter2 }],
-  },
-  {
-    featureType: "administrative",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.lighter1 }], // Administrative areas - lighter 1
-  },
-  {
-    featureType: "administrative.country",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#888888" }],
-  },
-  {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#666666" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.lighter1 }], // POI blocks - lighter 1
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#888888" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.lighter2 }], // Parks - lighter 2
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#999999" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.fill",
-    stylers: [{ color: MAP_COLORS.road }], // Roads - white
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.stroke",
-    stylers: [{ color: MAP_COLORS.lighter1 }, { weight: 0.5 }], // Road borders
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#666666" }],
-  },
-  {
-    featureType: "road.arterial",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.road }], // Arterial roads - white
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.road }], // Highways - white
-  },
-  {
-    featureType: "road.highway.controlled_access",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.road }], // Controlled access highways - white
-  },
-  {
-    featureType: "road.local",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.road }], // Local roads - white
-  },
-  {
-    featureType: "road.local",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#888888" }],
-  },
-  {
-    featureType: "transit",
-    elementType: "geometry",
-    stylers: [{ color: MAP_COLORS.lighter1 }], // Transit - lighter 1
-  },
-  {
-    featureType: "transit",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#888888" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: lightenColor(Colors.primary, 80) }], // Water - very light primary
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#999999" }],
-  },
-];
-
 export default function MapScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
 
   const [location, setLocation] = useState<Location.LocationObject | null>({
     coords: {
@@ -244,51 +66,58 @@ export default function MapScreen() {
     timestamp: Date.now(),
   });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const [searchAddress, setSearchAddress] = useState<string>("");
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
   const [searchResult, setSearchResult] = useState<{
     latitude: number;
     longitude: number;
     address: string;
   } | null>(null);
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [selectedSportType, setSelectedSportType] = useState<string>("All");
-  const [showSportTypeModal, setShowSportTypeModal] = useState<boolean>(false);
-  const [placePredictions, setPlacePredictions] = useState<PlacePrediction[]>(
-    [],
-  );
-  const [showAutocomplete, setShowAutocomplete] = useState<boolean>(false);
-  const [searchFocused, setSearchFocused] = useState<boolean>(false);
 
-  // Fetch venues when location changes or on mount
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [placePredictions, setPlacePredictions] = useState<PlacePrediction[]>([]);
+  const [showAutocomplete, setShowAutocomplete] = useState<boolean>(false);
+
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<EventFilterState>({});
+
+  // Map Chinese UI categories to English DB fields
+  const CATEGORY_MAP: Record<string, string> = {
+    '籃球': 'basketball',
+    '羽球': 'badminton',
+    '排球': 'volleyball',
+    '網球': 'tennis',
+    '桌球': 'table_tennis',
+    '撞球': 'billiards',
+    '游泳': 'swimming',
+    '健身': 'fitness'
+  };
+
+  // Fetch venues
   useEffect(() => {
     const fetchVenues = async () => {
       try {
         const lat = location?.coords.latitude || DEFAULT_LAT;
         const lng = location?.coords.longitude || DEFAULT_LNG;
 
+        const sportType = activeFilters.category ? CATEGORY_MAP[activeFilters.category] || activeFilters.category : undefined;
+
         const response = await apis.venues.searchVenues({
           lat: lat,
           lng: lng,
           distance: 10000, // 10km radius
-          sportType:
-            selectedSportType === "All" ? undefined : selectedSportType,
+          sportType: sportType,
         });
 
-        // Map API response to Venue interface
-        // Note: The API response structure depends on the backend.
-        // Based on routes/venues.py, it returns a list of objects with "venue" and "time_slots" keys
-        // or just a list of venues if we update the client.
-        // Let's assume the generated client returns what the backend sends.
-
-        // @ts-ignore - The generated client types might not be fully up to date with our backend changes yet
+        // @ts-ignore
         const mappedVenues = response
           .map((item: any) => {
-            // Handle both structure with distance (from search) and direct list
             const v = item.venue || item;
             return {
               id: v.id,
               name: v.name,
-              latitude: v.latitude || lat, // Fallback to center if missing (shouldn't happen with our backend fix)
+              latitude: v.latitude || lat,
               longitude: v.longitude || lng,
               address: v.address,
               city: v.city,
@@ -304,12 +133,11 @@ export default function MapScreen() {
     };
 
     fetchVenues();
-  }, [location, selectedSportType]);
+  }, [location, activeFilters]);
 
   // Initialize location on mount
   useEffect(() => {
     (async () => {
-      // Request location permissions
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Permission to access location was denied");
@@ -317,30 +145,10 @@ export default function MapScreen() {
       }
 
       try {
-        // Get current location
         const currentLocation = await Location.getCurrentPositionAsync({});
         setLocation(currentLocation);
       } catch (error) {
         console.error("Error getting location:", error);
-        // Fallback to default location is already set in initial state
-        // But we can reset it here if needed, or just log the error
-
-        // We don't need to do anything here since we initialized with default values
-        // But if we want to be explicit:
-        const mockLocation: Location.LocationObject = {
-          coords: {
-            latitude: DEFAULT_LAT,
-            longitude: DEFAULT_LNG,
-            altitude: null,
-            accuracy: null,
-            altitudeAccuracy: null,
-            heading: null,
-            speed: null,
-          },
-          timestamp: Date.now(),
-        };
-
-        setLocation(mockLocation);
       }
     })();
   }, []);
@@ -350,11 +158,8 @@ export default function MapScreen() {
     const delayDebounceFn = setTimeout(async () => {
       if (searchAddress.trim() && searchAddress.length > 2) {
         try {
-          // Call Google Places Autocomplete API
           const response = await fetch(
-            `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-              searchAddress,
-            )}&key=${GOOGLE_MAPS_API_KEY}`,
+            `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(searchAddress)}&key=${GOOGLE_MAPS_API_KEY}`
           );
 
           const data = await response.json();
@@ -380,16 +185,15 @@ export default function MapScreen() {
         setPlacePredictions([]);
         setShowAutocomplete(false);
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchAddress]);
 
-  // Get place details from place_id using Google Places Details API
   const getPlaceDetails = async (placeId: string, description: string) => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${GOOGLE_MAPS_API_KEY}`,
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${GOOGLE_MAPS_API_KEY}`
       );
 
       const data = await response.json();
@@ -397,40 +201,22 @@ export default function MapScreen() {
       if (data.status === "OK" && data.result?.geometry?.location) {
         const { lat, lng } = data.result.geometry.location;
 
-        setSearchResult({
-          latitude: lat,
-          longitude: lng,
-          address: description,
-        });
-
+        setSearchResult({ latitude: lat, longitude: lng, address: description });
         setSearchAddress(description);
         setShowAutocomplete(false);
         setPlacePredictions([]);
 
-        // Animate map to new location
         if (mapRef.current) {
-          mapRef.current.animateToRegion(
-            {
-              latitude: lat,
-              longitude: lng,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            },
-            1000,
-          );
-        }
-
-        // Update location to trigger venue fetch
-        setLocation({
-          coords: {
+          mapRef.current.animateToRegion({
             latitude: lat,
             longitude: lng,
-            altitude: null,
-            accuracy: null,
-            altitudeAccuracy: null,
-            heading: null,
-            speed: null,
-          },
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }, 1000);
+        }
+
+        setLocation({
+          coords: { latitude: lat, longitude: lng, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null },
           timestamp: Date.now(),
         });
       } else {
@@ -442,31 +228,26 @@ export default function MapScreen() {
     }
   };
 
-  // Handler for selecting an autocomplete suggestion
   const handleSelectSuggestion = (prediction: PlacePrediction) => {
     getPlaceDetails(prediction.place_id, prediction.description);
   };
 
-  // Function to clear search
-  const handleClearSearch = () => {
+  const clearSearch = () => {
     setSearchAddress("");
     setSearchResult(null);
     setPlacePredictions([]);
     setShowAutocomplete(false);
   };
 
-  // Function to search for address using Google Geocoding API
   const searchLocation = async () => {
     if (!searchAddress.trim()) {
-      Alert.alert("錯誤", "請輸入搜尋地址");
+      clearSearch();
       return;
     }
 
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-          searchAddress,
-        )}&key=${GOOGLE_MAPS_API_KEY}`,
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchAddress)}&key=${GOOGLE_MAPS_API_KEY}`
       );
 
       const data = await response.json();
@@ -475,39 +256,25 @@ export default function MapScreen() {
         const result = data.results[0];
         const { lat, lng } = result.geometry.location;
 
-        const newSearchResult = {
+        setSearchResult({
           latitude: lat,
           longitude: lng,
           address: result.formatted_address,
-        };
-
-        setSearchResult(newSearchResult);
+        });
         setSearchAddress(result.formatted_address);
+        setShowAutocomplete(false);
 
-        // Animate map to new location
         if (mapRef.current) {
-          mapRef.current.animateToRegion(
-            {
-              latitude: lat,
-              longitude: lng,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            },
-            1000,
-          );
-        }
-
-        // Update location to trigger venue fetch
-        setLocation({
-          coords: {
+          mapRef.current.animateToRegion({
             latitude: lat,
             longitude: lng,
-            altitude: null,
-            accuracy: null,
-            altitudeAccuracy: null,
-            heading: null,
-            speed: null,
-          },
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }, 1000);
+        }
+
+        setLocation({
+          coords: { latitude: lat, longitude: lng, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null },
           timestamp: Date.now(),
         });
       } else {
@@ -519,7 +286,6 @@ export default function MapScreen() {
     }
   };
 
-  // Default initial region
   const initialRegion = {
     latitude: location?.coords.latitude || DEFAULT_LAT,
     longitude: location?.coords.longitude || DEFAULT_LNG,
@@ -527,15 +293,10 @@ export default function MapScreen() {
     longitudeDelta: 0.0421,
   };
 
-  // Filter fields based on selected sport type
-  // We are now doing server-side filtering, so this client-side filter might be redundant
-  // or we can keep it for immediate feedback if we don't want to refetch on every filter change.
-  // But the useEffect above refetches on sportType change, so 'venues' should already be filtered.
-  const filteredFields = venues;
-
   if (errorMsg) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Ionicons name="location-outline" size={48} color={Colors.error[500]} />
         <Text style={styles.errorText}>{errorMsg}</Text>
       </View>
     );
@@ -543,18 +304,17 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Map View */}
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={initialRegion}
         showsUserLocation={true}
-        showsMyLocationButton={true}
+        showsMyLocationButton={false} // We will use a custom overlay instead to match modern design
         showsCompass={true}
-        showsScale={true}
-        customMapStyle={darkMapStyle}
+        showsScale={false}
       >
-        {/* Current location marker */}
         {location && (
           <Marker
             coordinate={{
@@ -563,11 +323,10 @@ export default function MapScreen() {
             }}
             title="您的位置"
             description="目前位置"
-            pinColor="blue"
+            pinColor={Colors.primary}
           />
         )}
 
-        {/* Search result marker */}
         {searchResult && (
           <Marker
             coordinate={{
@@ -576,12 +335,11 @@ export default function MapScreen() {
             }}
             title="搜尋結果"
             description={searchResult.address}
-            pinColor="red"
+            pinColor={Colors.tertiary}
           />
         )}
 
-        {/* Mock field markers */}
-        {filteredFields.map((field) => (
+        {venues.map((field) => (
           <Marker
             key={field.id}
             coordinate={{
@@ -590,23 +348,20 @@ export default function MapScreen() {
             }}
           >
             <View style={styles.customMarker}>
-              <View style={styles.customMarker}>
-                <Text style={styles.markerIcon}>📍</Text>
-              </View>
+              <Ionicons name="location" size={20} color={Colors.white} />
             </View>
             <Callout
+              tooltip
               onPress={() => router.push(`/field/${field.id}`)}
-              style={styles.callout}
             >
               <View style={styles.calloutContainer}>
                 <Text style={styles.calloutTitle}>{field.name}</Text>
-                {/* <Text style={styles.calloutSportType}>{field.sportType}</Text> */}
                 <Text style={styles.calloutDescription} numberOfLines={2}>
                   {field.address}
                 </Text>
                 <View style={styles.calloutFooter}>
                   <Text style={styles.calloutLink}>點擊查看詳情</Text>
-                  <Text style={styles.calloutArrow}>→</Text>
+                  <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
                 </View>
               </View>
             </Callout>
@@ -614,131 +369,95 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      {/* Search input overlay */}
-      <View style={styles.searchSection}>
-        <View
-          style={[
-            styles.searchContainer,
-            searchFocused && styles.searchContainerFocused,
-          ]}
-        >
-          <Ionicons
-            name="search"
-            size={20}
-            color={searchFocused ? Colors.gray[400] : Colors.white}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={[
-              styles.searchInput,
-              searchFocused && styles.searchInputFocused,
-            ]}
-            placeholder="搜尋地點..."
-            placeholderTextColor={
-              searchFocused ? Colors.gray[400] : Colors.white
-            }
+      {/* Floating Header Actions - Matches index.tsx */}
+      <View style={[styles.searchSection, { paddingTop: insets.top + 8 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <LiquidSearchBar
             value={searchAddress}
-            onChangeText={setSearchAddress}
+            onChangeText={(text) => {
+              setSearchAddress(text);
+              if (!searchFocused) setSearchFocused(true);
+            }}
             onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
             onSubmitEditing={searchLocation}
-            returnKeyType="search"
+            onClear={clearSearch}
+            onCancel={() => {
+              setSearchFocused(false);
+              setShowAutocomplete(false);
+            }}
+            isFocused={searchFocused}
+            glassColor="rgba(255, 255, 255, 0.9)"
+            placeholder="搜尋地址..."
           />
-          {searchAddress ? (
-            <TouchableOpacity
-              onPress={handleClearSearch}
-              style={styles.clearButton}
-            >
-              <Ionicons
-                name="close-circle"
-                size={20}
-                color={Colors.gray[400]}
-              />
-            </TouchableOpacity>
-          ) : null}
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setFilterModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.filterButtonGlass}>
+              {/* Show indicator if any filter is active */}
+              {(activeFilters.category || activeFilters.division || activeFilters.datetime_after) && (
+                <View style={styles.activeFilterDot} />
+              )}
+              <Ionicons name="options-outline" size={24} color={Colors.gray[600]} />
+            </View>
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Google Places Autocomplete dropdown */}
-      {showAutocomplete && placePredictions.length > 0 && (
-        <View style={styles.autocompleteContainer}>
-          <ScrollView style={styles.autocompleteScrollView}>
-            {placePredictions.map((prediction, index) => (
-              <TouchableOpacity
-                key={prediction.place_id}
-                style={styles.autocompleteSuggestion}
-                onPress={() => handleSelectSuggestion(prediction)}
-              >
-                <Text style={styles.autocompleteSuggestionText}>
-                  {prediction.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Sport type filter dropdown */}
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowSportTypeModal(true)}
-        >
-          <Text style={styles.filterButtonText}>
-            {selectedSportType === "All"
-              ? "依運動類型篩選"
-              : SPORT_TYPE_LABELS[selectedSportType] || selectedSportType}
-          </Text>
-          <Text style={styles.filterButtonIcon}>▼</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Sport type selection modal */}
-      <Modal
-        visible={showSportTypeModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowSportTypeModal(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowSportTypeModal(false)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>選擇運動類型</Text>
-            <ScrollView style={styles.modalScrollView}>
-              {SPORT_TYPES.map((sportType) => (
+        {/* Autocomplete dropdown styled as index.tsx SuggestionsList */}
+        {showAutocomplete && placePredictions.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" />
+            <FlatList
+              data={placePredictions}
+              keyExtractor={(item) => item.place_id}
+              keyboardShouldPersistTaps="handled"
+              style={styles.suggestionsList}
+              renderItem={({ item }) => (
                 <TouchableOpacity
-                  key={sportType}
-                  style={[
-                    styles.sportTypeOption,
-                    selectedSportType === sportType &&
-                    styles.sportTypeOptionSelected,
-                  ]}
-                  onPress={() => {
-                    setSelectedSportType(sportType);
-                    setShowSportTypeModal(false);
-                  }}
+                  style={styles.suggestionItem}
+                  onPress={() => handleSelectSuggestion(item)}
                 >
-                  <Text
-                    style={[
-                      styles.sportTypeOptionText,
-                      selectedSportType === sportType &&
-                      styles.sportTypeOptionTextSelected,
-                    ]}
-                  >
-                    {SPORT_TYPE_LABELS[sportType] || sportType}
-                  </Text>
-                  {selectedSportType === sportType && (
-                    <Text style={styles.checkmark}>✓</Text>
-                  )}
+                  <Ionicons name="location-outline" size={20} color={Colors.gray[500]} />
+                  <View style={styles.suggestionContent}>
+                    <Text style={styles.suggestionTitle} numberOfLines={1}>{item.description}</Text>
+                  </View>
+                  <Ionicons name="arrow-up-left-box" size={16} color={Colors.gray[400]} />
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+              )}
+            />
           </View>
-        </TouchableOpacity>
-      </Modal>
+        )}
+      </View>
+
+      {/* Filter Modal */}
+      <EventFilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        currentFilters={activeFilters}
+        onApply={(filters) => {
+          setActiveFilters(filters);
+        }}
+      />
+
+      {/* Current Location Button Bottom Right */}
+      <TouchableOpacity
+        style={[styles.myLocationButton, { bottom: insets.bottom + 100 }]}
+        onPress={() => {
+          if (location && mapRef.current) {
+            mapRef.current.animateToRegion({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }, 1000);
+          }
+        }}
+        activeOpacity={0.8}
+      >
+        <GlassView style={StyleSheet.absoluteFillObject} glassEffectStyle="regular" />
+        <Ionicons name="locate" size={24} color={Colors.gray[800]} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -746,235 +465,150 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fbf5e2ff',
+    backgroundColor: '#fff',
   },
   map: {
-    width: "100%",
-    height: "100%",
+    ...StyleSheet.absoluteFillObject,
   },
   searchSection: {
-    position: "absolute",
-    top: 60,
-    left: 10,
-    right: 10,
-    zIndex: 1001,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    zIndex: 100,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 2,
-    borderColor: "transparent",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchContainerFocused: {
-    backgroundColor: Colors.white,
-    borderColor: Colors.primary,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: Colors.white,
-    padding: 0,
-  },
-  searchInputFocused: {
-    color: Colors.gray[900],
-  },
-  clearButton: {
-    padding: 4,
-    marginLeft: 8,
-  },
-  autocompleteContainer: {
-    position: "absolute",
-    top: 118,
-    left: 10,
-    right: 10,
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    maxHeight: 200,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 5,
-    zIndex: 1000,
-  },
-  autocompleteScrollView: {
-    maxHeight: 200,
-  },
-  autocompleteSuggestion: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[200],
-  },
-  autocompleteSuggestionText: {
-    fontSize: 14,
-    color: Colors.gray[900],
-  },
-  errorText: {
-    flex: 1,
-    textAlign: "center",
-    textAlignVertical: "center",
-    fontSize: 16,
-    color: Colors.error[500],
-    padding: 20,
-  },
-  filterContainer: {
-    position: "absolute",
-    top: 110,
-    left: 10,
-    right: 10,
   },
   filterButton: {
-    backgroundColor: Colors.white,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
+    width: 52,
+    height: 52,
+  },
+  filterButtonGlass: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 26,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // We add a subtle white background so it looks good on a map map
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  activeFilterDot: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+    borderWidth: 1,
+    borderColor: Colors.base,
+    zIndex: 2,
+  },
+  suggestionsContainer: {
+    marginTop: 10,
+    maxHeight: 250,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     elevation: 5,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
   },
-  filterButtonText: {
-    fontSize: 16,
-    color: Colors.gray[900],
-    fontWeight: "500",
+  suggestionsList: {
+    flexGrow: 0,
   },
-  filterButtonIcon: {
-    fontSize: 12,
-    color: Colors.gray[400],
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: Colors.white,
-    borderRadius: 10,
-    padding: 20,
-    width: "80%",
-    maxHeight: "70%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 10,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-    color: Colors.gray[900],
-  },
-  modalScrollView: {
-    maxHeight: 400,
-  },
-  sportTypeOption: {
-    paddingVertical: 15,
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[200],
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    gap: 14,
   },
-  sportTypeOptionSelected: {
-    backgroundColor: lightenColor(Colors.primary, 80), // Very light primary background
+  suggestionContent: {
+    flex: 1,
   },
-  sportTypeOptionText: {
-    fontSize: 16,
+  suggestionTitle: {
+    fontSize: 15,
+    fontWeight: '500',
     color: Colors.gray[900],
-  },
-  sportTypeOptionTextSelected: {
-    color: Colors.primary,
-    fontWeight: "bold",
-  },
-  checkmark: {
-    fontSize: 18,
-    color: Colors.primary,
-    fontWeight: "bold",
   },
   customMarker: {
-    backgroundColor: "white",
+    backgroundColor: Colors.primary,
     borderRadius: 20,
-    padding: 8,
-    borderWidth: 2,
-    borderColor: Colors.primary, // Use primary color for marker border
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: Colors.white,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  markerIcon: {
-    fontSize: 24,
-  },
-  callout: {
-    width: 250,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6,
   },
   calloutContainer: {
-    padding: 12,
-    width: 250,
-    borderRadius: 12,
+    padding: 16,
+    width: 220,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.gray[200],
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   calloutTitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-  },
-  calloutSportType: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: Colors.primary,
+    fontWeight: "700",
+    color: Colors.gray[900],
     marginBottom: 6,
   },
   calloutDescription: {
     fontSize: 13,
-    color: "#666",
+    color: Colors.gray[600],
     lineHeight: 18,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   calloutFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 8,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: "rgba(0, 0, 0, 0.05)",
   },
   calloutLink: {
-    fontSize: 13,
+    fontSize: 14,
     color: Colors.primary,
-    fontWeight: "500",
+    fontWeight: "600",
   },
-  calloutArrow: {
-    fontSize: 16,
-    color: Colors.primary,
+  myLocationButton: {
+    position: 'absolute',
+    right: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
+  errorText: {
+    marginTop: 16,
+    fontSize: 15,
+    color: Colors.gray[600],
+    fontWeight: '500',
+  }
 });

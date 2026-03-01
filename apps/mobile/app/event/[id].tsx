@@ -11,8 +11,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import Card from "../../components/Card";
+import { LinearGradient } from "expo-linear-gradient";
+
 import Button from "../../components/Button";
+import Card from "../../components/Card";
 import { Colors } from "../../constants/Colors";
 import { api } from "../../lib/apiClient";
 import { useAuth } from "../../lib/AuthContext";
@@ -26,10 +28,19 @@ export default function EventDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [joinStatus, setJoinStatus] = useState<'none' | 'pending' | 'joined'>('none');
 
   useEffect(() => {
     loadEvent();
   }, [id]);
+
+  useEffect(() => {
+    if (event) {
+      const status = (event.user_join_status as 'none' | 'pending' | 'joined' | undefined) ||
+        (event.participants?.some(p => p.user_id === user?.id) ? 'joined' : 'none');
+      setJoinStatus(status);
+    }
+  }, [event, user]);
 
   const loadEvent = async () => {
     try {
@@ -53,18 +64,26 @@ export default function EventDetailScreen() {
         message: "我想加入這個活動！",
       });
 
-      Alert.alert("成功", response.message, [
-        {
-          text: "確定",
-          onPress: () => loadEvent(), // Reload to get updated data
-        },
-      ]);
+      if (response.status === 'approved') {
+        Alert.alert("成功", "您已加入此活動！", [{ text: "確定", onPress: () => loadEvent() }]);
+        setJoinStatus('joined');
+      } else if (response.status === 'submitted') {
+        Alert.alert("已送出", "您的加入請求已送出，等待主辦人審核。", [{ text: "確定", onPress: () => loadEvent() }]);
+        setJoinStatus('pending');
+      }
     } catch (err) {
       console.error("Failed to join event:", err);
-      Alert.alert(
-        "錯誤",
-        err instanceof Error ? err.message : "加入活動失敗，請重試。",
-      );
+      const errorMessage = err instanceof Error ? err.message.toLowerCase() : "";
+
+      if (errorMessage.includes("pending") || errorMessage.includes("already requested") || errorMessage.includes("already_applied")) {
+        setJoinStatus('pending');
+        Alert.alert("提示", "您已經送出過請求，請等待審核。");
+      } else if (errorMessage.includes("already joined") || errorMessage.includes("participant")) {
+        setJoinStatus('joined');
+        Alert.alert("提示", "您已經是參加者了。");
+      } else {
+        Alert.alert("錯誤", err instanceof Error ? err.message : "加入活動失敗，請重試。");
+      }
     } finally {
       setIsJoining(false);
     }
@@ -73,48 +92,53 @@ export default function EventDetailScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "open":
-        return { bg: Colors.success[700], text: Colors.success[500] };
+        return { bg: "rgba(76, 175, 80, 0.15)", text: "#388E3C" }; // Match EventCard
       case "closed":
-        return { bg: Colors.secondary, text: Colors.tertiary };
+        return { bg: "rgba(255, 152, 0, 0.15)", text: "#F57C00" };
       default:
-        return { bg: Colors.gray[800], text: Colors.gray[400] };
+        return { bg: "rgba(0, 0, 0, 0.05)", text: Colors.gray[600] };
     }
   };
 
   const isOwner = user && event && event.owner_user_id === user.id;
-  const hasJoined =
-    user && event && event.participants.some((p) => p.user_id === user.id);
-  const canJoin = event && event.status === "open" && !hasJoined && !isOwner;
+  const canJoin = event && event.status === "open" && joinStatus === "none" && !isOwner;
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>正在載入活動...</Text>
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>正在載入活動...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   if (error || !event) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.errorContainer}>
-          <Ionicons
-            name="alert-circle-outline"
-            size={80}
-            color={Colors.error[500]}
-          />
-          <Text style={styles.errorTitle}>糟糕！</Text>
-          <Text style={styles.errorSubtitle}>{error || "找不到活動"}</Text>
-          <Button
-            title="返回"
-            onPress={() => router.back()}
-            style={styles.errorButton}
-          />
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <View style={styles.iconButtonGlass}>
+                <Ionicons name="arrow-back" size={24} color={Colors.gray[900]} />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={80} color={Colors.error[500]} />
+            <Text style={styles.errorTitle}>糟糕！</Text>
+            <Text style={styles.errorSubtitle}>{error || "找不到活動"}</Text>
+            <Button
+              title="返回"
+              onPress={() => router.back()}
+              style={styles.errorButton}
+            />
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
@@ -122,165 +146,182 @@ export default function EventDetailScreen() {
   const progress = (event.current_participants / event.max_participants) * 100;
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color={Colors.gray[900]} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>活動詳情</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <View style={styles.iconButtonGlass}>
+              <Ionicons name="arrow-back" size={24} color={Colors.gray[900]} />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>活動詳情</Text>
+          <View style={styles.headerRight} />
+        </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-      >
-        <Card style={styles.mainCard}>
-          <View style={styles.badges}>
-            <View style={[styles.badge, { backgroundColor: statusColor.bg }]}>
-              <Text style={[styles.badgeText, { color: statusColor.text }]}>
-                {event.status.toUpperCase()}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Main Info */}
+          <Card style={styles.mainCard}>
+            <View style={styles.badges}>
+              <View style={[styles.badge, { backgroundColor: statusColor.bg }]}>
+                <Text style={[styles.badgeText, { color: statusColor.text }]}>
+                  {event.status.toUpperCase()}
+                </Text>
+              </View>
+              {event.visibility === "private" && (
+                <View style={[styles.badge, { backgroundColor: "rgba(0,0,0,0.05)" }]}>
+                  <Text style={[styles.badgeText, { color: Colors.gray[600] }]}>
+                    私人
+                  </Text>
+                </View>
+              )}
+              {event.duration_type === "permanent" && (
+                <View style={[styles.badge, { backgroundColor: "rgba(0,0,0,0.05)" }]}>
+                  <Text style={[styles.badgeText, { color: Colors.gray[600] }]}>
+                    定期
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={styles.title}>{event.title}</Text>
+            {event.description ? (
+              <Text style={styles.description}>{event.description}</Text>
+            ) : null}
+          </Card>
+
+          {/* Participants Info */}
+          <Card style={styles.participantsCard}>
+            <Text style={styles.sectionTitle}>參加者</Text>
+            <View style={styles.participantsInfo}>
+              <Text style={styles.participantsCount}>
+                {event.current_participants} / {event.max_participants} 已加入
+              </Text>
+              <Text style={styles.participantsPercentage}>
+                {Math.round(progress)}%
               </Text>
             </View>
-            {event.visibility === "private" && (
+            <View style={styles.progressBar}>
               <View
-                style={[styles.badge, { backgroundColor: Colors.gray[200] }]}
-              >
-                <Text style={[styles.badgeText, { color: Colors.gray[600] }]}>
-                  私人
-                </Text>
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.min(100, progress)}%`,
+                    backgroundColor: progress >= 90 ? Colors.error[500] : Colors.primary,
+                  },
+                ]}
+              />
+            </View>
+
+            {event.participants.length > 0 && (
+              <View style={styles.participantsList}>
+                {event.participants.map((participant) => (
+                  <View key={participant.id} style={styles.participantItem}>
+                    <View style={styles.participantAvatarContainer}>
+                      <Text style={styles.participantAvatarText}>
+                        {participant.display_name?.[0] || 'U'}
+                      </Text>
+                    </View>
+                    <View style={styles.participantInfo}>
+                      <Text style={styles.participantName}>
+                        {participant.display_name}
+                      </Text>
+                      {participant.role === "owner" && (
+                        <View style={styles.ownerBadge}>
+                          <Text style={styles.ownerBadgeText}>主辦人</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ))}
               </View>
             )}
-            {event.duration_type === "permanent" && (
-              <View
-                style={[styles.badge, { backgroundColor: Colors.secondary }]}
-              >
-                <Text style={[styles.badgeText, { color: Colors.tertiary }]}>
-                  定期
-                </Text>
-              </View>
-            )}
-          </View>
+          </Card>
 
-          <Text style={styles.title}>{event.title}</Text>
-          {event.description && (
-            <Text style={styles.description}>{event.description}</Text>
-          )}
-        </Card>
-
-        <Card style={styles.participantsCard}>
-          <Text style={styles.sectionTitle}>參加者</Text>
-          <View style={styles.participantsInfo}>
-            <Text style={styles.participantsCount}>
-              {event.current_participants} / {event.max_participants} 已加入
-            </Text>
-            <Text style={styles.participantsPercentage}>
-              {Math.round(progress)}%
-            </Text>
-          </View>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${progress}%`,
-                  backgroundColor:
-                    progress >= 90 ? Colors.error[500] : Colors.primary,
-                },
-              ]}
-            />
-          </View>
-
-          {event.participants.length > 0 && (
-            <View style={styles.participantsList}>
-              {event.participants.map((participant) => (
-                <View key={participant.id} style={styles.participantItem}>
-                  <View style={styles.participantAvatar}>
-                    <Ionicons
-                      name="person"
-                      size={16}
-                      color={Colors.gray[400]}
-                    />
+          {/* Location/Booking Info */}
+          {event.bookings && event.bookings.length > 0 && (
+            <Card style={styles.bookingsCard}>
+              <Text style={styles.sectionTitle}>場地資訊</Text>
+              {event.bookings.map((booking, index) => (
+                <View key={booking.id} style={[styles.bookingItem, index > 0 && { borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 12 }]}>
+                  <View style={styles.bookingHeader}>
+                    <View style={styles.locationIconContainer}>
+                      <Ionicons name="location" size={20} color={Colors.white} />
+                    </View>
+                    <Text style={styles.bookingVenue}>{booking.venue.name}</Text>
                   </View>
-                  <View style={styles.participantInfo}>
-                    <Text style={styles.participantName}>
-                      {participant.display_name}
-                    </Text>
-                    {participant.role === "owner" && (
-                      <View style={styles.ownerBadge}>
-                        <Text style={styles.ownerBadgeText}>主辦人</Text>
-                      </View>
-                    )}
-                  </View>
+                  <Text style={styles.bookingCourt}>
+                    {booking.court.name} - {booking.court.sport_type}
+                  </Text>
+                  <Text style={styles.bookingTime}>
+                    {new Date(booking.time_slot.starts_at).toLocaleString()} -{" "}
+                    {new Date(booking.time_slot.ends_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                  <Text style={styles.bookingAddress}>
+                    {booking.venue.address}, {booking.venue.city}
+                  </Text>
                 </View>
               ))}
-            </View>
+            </Card>
           )}
-        </Card>
+        </ScrollView>
 
-        {event.bookings && event.bookings.length > 0 && (
-          <Card style={styles.bookingsCard}>
-            <Text style={styles.sectionTitle}>場地預訂</Text>
-            {event.bookings.map((booking) => (
-              <View key={booking.id} style={styles.bookingItem}>
-                <View style={styles.bookingHeader}>
-                  <Ionicons name="location" size={20} color={Colors.tertiary} />
-                  <Text style={styles.bookingVenue}>{booking.venue.name}</Text>
-                </View>
-                <Text style={styles.bookingCourt}>
-                  {booking.court.name} - {booking.court.sport_type}
-                </Text>
-                <Text style={styles.bookingTime}>
-                  {new Date(booking.time_slot.starts_at).toLocaleString()} -{" "}
-                  {new Date(booking.time_slot.ends_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Text>
-                <Text style={styles.bookingAddress}>
-                  {booking.venue.address}, {booking.venue.city}
-                </Text>
-              </View>
-            ))}
-          </Card>
-        )}
-      </ScrollView>
-
-      {canJoin && (
-        <View style={styles.footer}>
-          <Button
-            title="加入活動"
-            onPress={handleJoin}
-            fullWidth
-            size="large"
-            loading={isJoining}
-          />
-        </View>
-      )}
-
-      {hasJoined && !isOwner && (
-        <View style={styles.footer}>
-          <View style={styles.joinedMessage}>
-            <Ionicons
-              name="checkmark-circle"
-              size={24}
-              color={Colors.success[500]}
-            />
-            <Text style={styles.joinedText}>您已加入此活動！</Text>
+        {/* Footer Actions */}
+        {joinStatus === 'none' && canJoin && (
+          <View style={styles.footer}>
+            <TouchableOpacity onPress={handleJoin} disabled={isJoining} activeOpacity={0.8}>
+              <LinearGradient
+                colors={Colors.gradients.warmTech as [string, string]}
+                style={styles.joinButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                {isJoining ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.joinButtonText}>加入活動</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-        </View>
-      )}
-    </SafeAreaView>
+        )}
+
+        {joinStatus === 'joined' && !isOwner && (
+          <View style={styles.footer}>
+            <View style={styles.joinedMessage}>
+              <Ionicons name="checkmark-circle" size={24} color="#388E3C" />
+              <Text style={styles.joinedText}>您已加入此活動！</Text>
+            </View>
+          </View>
+        )}
+
+        {joinStatus === 'pending' && !isOwner && (
+          <View style={styles.footer}>
+            <View style={[styles.joinedMessage, { backgroundColor: 'rgba(255, 152, 0, 0.1)', borderRadius: 16 }]}>
+              <Ionicons name="time" size={24} color="#F57C00" />
+              <Text style={[styles.joinedText, { color: '#F57C00' }]}>請求審核中</Text>
+            </View>
+          </View>
+        )}
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.base,
+    backgroundColor: '#fff',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -288,27 +329,37 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: Colors.base,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[800],
+    zIndex: 10,
+    backgroundColor: '#fff',
   },
   backButton: {
     padding: 4,
   },
+  iconButtonGlass: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: Colors.gray[900],
+    letterSpacing: 0.5,
   },
   headerRight: {
-    width: 32,
+    width: 40,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    backgroundColor: Colors.base,
     padding: 20,
+    paddingBottom: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -317,8 +368,9 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
-    color: Colors.gray[600],
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.gray[800],
   },
   errorContainer: {
     flex: 1,
@@ -327,15 +379,15 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 24,
+    fontWeight: "700",
     color: Colors.gray[900],
     marginTop: 16,
     marginBottom: 8,
   },
   errorSubtitle: {
-    fontSize: 14,
-    color: Colors.gray[400],
+    fontSize: 15,
+    color: Colors.gray[600],
     textAlign: "center",
     marginBottom: 24,
   },
@@ -344,6 +396,8 @@ const styles = StyleSheet.create({
   },
   mainCard: {
     marginBottom: 16,
+    borderWidth: 0,
+    backgroundColor: Colors.gray[50],
   },
   badges: {
     flexDirection: "row",
@@ -353,29 +407,33 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "800",
     color: Colors.gray[900],
     marginBottom: 12,
+    letterSpacing: -0.5,
   },
   description: {
-    fontSize: 16,
-    color: Colors.gray[600],
+    fontSize: 15,
+    color: Colors.gray[700],
     lineHeight: 24,
   },
   participantsCard: {
     marginBottom: 16,
+    borderWidth: 0,
+    backgroundColor: Colors.gray[50],
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: Colors.gray[900],
     marginBottom: 16,
   },
@@ -387,16 +445,17 @@ const styles = StyleSheet.create({
   },
   participantsCount: {
     fontSize: 14,
-    fontWeight: "600",
-    color: Colors.gray[700],
+    fontWeight: "700",
+    color: Colors.gray[800],
   },
   participantsPercentage: {
     fontSize: 14,
-    color: Colors.gray[400],
+    fontWeight: "600",
+    color: Colors.gray[500],
   },
   progressBar: {
     height: 8,
-    backgroundColor: Colors.gray[200],
+    backgroundColor: 'rgba(0,0,0,0.05)',
     borderRadius: 4,
     overflow: "hidden",
     marginBottom: 16,
@@ -412,14 +471,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  participantAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.gray[200],
+  participantAvatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.1)',
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
+  },
+  participantAvatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.gray[800],
   },
   participantInfo: {
     flex: 1,
@@ -428,48 +494,56 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   participantName: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: "600",
     color: Colors.gray[900],
   },
   ownerBadge: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: 'rgba(0,0,0,0.05)',
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   ownerBadgeText: {
     fontSize: 11,
-    fontWeight: "600",
-    color: Colors.tertiary,
+    fontWeight: "700",
+    color: Colors.gray[700],
   },
   bookingsCard: {
     marginBottom: 16,
+    borderWidth: 0,
+    backgroundColor: Colors.gray[50],
   },
   bookingItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[800],
+    paddingVertical: 8,
   },
   bookingHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
+    gap: 10,
+    marginBottom: 8,
+  },
+  locationIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bookingVenue: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     color: Colors.gray[900],
   },
   bookingCourt: {
-    fontSize: 14,
-    color: Colors.gray[300],
+    fontSize: 15,
+    color: Colors.gray[700],
     marginBottom: 4,
   },
   bookingTime: {
     fontSize: 14,
-    color: Colors.gray[400],
+    color: Colors.gray[600],
     marginBottom: 4,
   },
   bookingAddress: {
@@ -478,9 +552,22 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
-    backgroundColor: Colors.base,
+    position: 'relative',
     borderTopWidth: 1,
-    borderTopColor: Colors.gray[800],
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: '#fff',
+  },
+  joinButtonGradient: {
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  joinButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   joinedMessage: {
     flexDirection: "row",
@@ -491,7 +578,7 @@ const styles = StyleSheet.create({
   },
   joinedText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: Colors.success[500],
+    fontWeight: "700",
+    color: "#388E3C",
   },
 });

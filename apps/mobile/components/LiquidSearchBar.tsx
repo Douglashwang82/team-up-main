@@ -17,6 +17,8 @@ interface LiquidSearchBarProps {
     onCancel?: () => void;
     isFocused?: boolean;
     inputRef?: React.RefObject<TextInput | null>;
+    glassColor?: string;
+    placeholder?: string;
 }
 
 export default function LiquidSearchBar({
@@ -28,13 +30,16 @@ export default function LiquidSearchBar({
     onCancel,
     isFocused,
     inputRef,
-}: LiquidSearchBarProps) {
+    style,
+    glassColor,
+    placeholder = "搜尋活動...",
+}: LiquidSearchBarProps & { style?: any }) {
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, style]}>
             {/* Glass Background */}
             <GlassView
-                style={styles.canvasContainer}
-                glassEffectStyle="clear"
+                style={[styles.canvasContainer, glassColor ? { backgroundColor: glassColor } : null]}
+                glassEffectStyle="regular"
             />
 
             {/* Search Input Overlay */}
@@ -43,14 +48,14 @@ export default function LiquidSearchBar({
                     <Ionicons
                         name="search"
                         size={18}
-                        color="rgba(255,255,255,0.9)"
+                        color={Colors.gray[500]}
                     />
                 </View>
                 <TextInput
                     ref={inputRef}
                     style={styles.input}
-                    placeholder="搜尋活動..."
-                    placeholderTextColor="rgba(255,255,255,0.6)"
+                    placeholder={placeholder}
+                    placeholderTextColor={Colors.gray[400]}
                     value={value}
                     onChangeText={onChangeText}
                     onFocus={onFocus}
@@ -63,7 +68,7 @@ export default function LiquidSearchBar({
                         style={styles.clearButton}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.9)" />
+                        <Ionicons name="close-circle" size={18} color={Colors.gray[500]} />
                     </TouchableOpacity>
                 ) : null}
                 {isFocused && (
@@ -82,7 +87,7 @@ export default function LiquidSearchBar({
 
 const styles = StyleSheet.create({
     container: {
-        width: SEARCH_BAR_WIDTH,
+        flex: 1,
         height: SEARCH_BAR_HEIGHT,
         position: 'relative',
         // Premium glass shadow
@@ -97,8 +102,8 @@ const styles = StyleSheet.create({
         borderRadius: 26,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
-        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+        borderColor: 'rgba(0, 0, 0, 0.08)',
+        backgroundColor: 'rgba(0, 0, 0, 0.05)',
     },
     inputContainer: {
         ...StyleSheet.absoluteFillObject,
@@ -110,7 +115,7 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backgroundColor: 'rgba(0, 0, 0, 0.05)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 10,
@@ -118,7 +123,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 15,
-        color: '#FFFFFF',
+        color: Colors.gray[900],
         fontWeight: '500',
         padding: 0,
         letterSpacing: 0.2,
@@ -127,7 +132,7 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backgroundColor: 'rgba(0, 0, 0, 0.08)',
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
@@ -136,12 +141,12 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         paddingHorizontal: 12,
         marginLeft: 8,
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backgroundColor: 'rgba(0, 0, 0, 0.05)',
         borderRadius: 12,
     },
     cancelText: {
         fontSize: 14,
-        color: '#FFFFFF',
+        color: "black",
         fontWeight: '600',
     },
 });

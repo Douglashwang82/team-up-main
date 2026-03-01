@@ -90,7 +90,7 @@ function TabButton({
                 <Ionicons
                     name={iconName}
                     size={isTicketTab ? 40 : 30}
-                    color={isFocused ? isTicketTab ? "white" : Colors.primary : Colors.gray[400]}
+                    color={isFocused ? isTicketTab ? "white" : "black" : Colors.gray[400]}
                 />
             </Animated.View>
             {/* {
@@ -141,7 +141,7 @@ export default function GlassTabBar({ state, descriptors, navigation }: BottomTa
             {/* Glass Background */}
             <GlassView
                 style={styles.canvasContainer}
-                glassEffectStyle="clear"
+                glassEffectStyle="regular"
             />
 
             {/* Tab Buttons */}
@@ -187,7 +187,7 @@ export default function GlassTabBar({ state, descriptors, navigation }: BottomTa
 const styles = StyleSheet.create({
     container: {
         position: "absolute",
-        bottom: 0,
+        bottom: -20,
         left: 0,
         right: 0,
         alignItems: "center",
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
         height: "100%",
     },
     fabButton: {
-        backgroundColor: Colors.gray[200],
+        // backgroundColor: Colors.gray[200],
         borderRadius: 24,
         width: 48,
         height: 48,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
         marginTop: 0,
         ...Platform.select({
             ios: {
-                shadowColor: Colors.primary,
+                shadowColor: "black",
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.4,
                 shadowRadius: 8,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
         }),
     },
     focusedFabButton: {
-        backgroundColor: Colors.primary,
+        backgroundColor: 'black',
     },
     fabGlassBacking: {
         position: 'absolute',
