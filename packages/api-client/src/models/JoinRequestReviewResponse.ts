@@ -27,7 +27,7 @@ export interface JoinRequestReviewResponse {
     ok: boolean;
     /**
      * 
-     * @type {string}
+     * @type {JoinRequestReviewResponseStatusEnum}
      * @memberof JoinRequestReviewResponse
      */
     status: JoinRequestReviewResponseStatusEnum;
@@ -44,9 +44,9 @@ export interface JoinRequestReviewResponse {
  * @export
  */
 export const JoinRequestReviewResponseStatusEnum = {
-    submitted: 'submitted',
-    approved: 'approved',
-    rejected: 'rejected'
+    Submitted: 'submitted',
+    Approved: 'approved',
+    Rejected: 'rejected'
 } as const;
 export type JoinRequestReviewResponseStatusEnum = typeof JoinRequestReviewResponseStatusEnum[keyof typeof JoinRequestReviewResponseStatusEnum];
 

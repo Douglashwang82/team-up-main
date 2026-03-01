@@ -45,7 +45,7 @@ export interface MatchedEventSummary {
     sportType?: string;
     /**
      * 
-     * @type {string}
+     * @type {MatchedEventSummaryStatusEnum}
      * @memberof MatchedEventSummary
      */
     status: MatchedEventSummaryStatusEnum;
@@ -62,8 +62,8 @@ export interface MatchedEventSummary {
  * @export
  */
 export const MatchedEventSummaryStatusEnum = {
-    open: 'open',
-    closed: 'closed'
+    Open: 'open',
+    Closed: 'closed'
 } as const;
 export type MatchedEventSummaryStatusEnum = typeof MatchedEventSummaryStatusEnum[keyof typeof MatchedEventSummaryStatusEnum];
 

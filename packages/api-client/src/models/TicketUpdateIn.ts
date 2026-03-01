@@ -45,7 +45,7 @@ export interface TicketUpdateIn {
     sportType?: string;
     /**
      * 
-     * @type {string}
+     * @type {TicketUpdateInIntensityEnum}
      * @memberof TicketUpdateIn
      */
     intensity?: TicketUpdateInIntensityEnum;

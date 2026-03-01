@@ -9,7 +9,7 @@ Name | Type
 `id` | string
 `ownerUserId` | string
 `timeSlotId` | string
-`teamupId` | string
+`eventId` | string
 `status` | string
 `paymentStatus` | string
 `timeSlot` | [TimeSlotOut](TimeSlotOut.md)
@@ -29,7 +29,7 @@ const example = {
   "id": null,
   "ownerUserId": null,
   "timeSlotId": null,
-  "teamupId": null,
+  "eventId": null,
   "status": null,
   "paymentStatus": null,
   "timeSlot": null,

@@ -51,7 +51,7 @@ export interface TicketOut {
     intensity?: string;
     /**
      * 
-     * @type {string}
+     * @type {TicketOutStatusEnum}
      * @memberof TicketOut
      */
     status: TicketOutStatusEnum;
@@ -74,9 +74,9 @@ export interface TicketOut {
  * @export
  */
 export const TicketOutStatusEnum = {
-    open: 'open',
-    matched: 'matched',
-    expired: 'expired'
+    Open: 'open',
+    Matched: 'matched',
+    Expired: 'expired'
 } as const;
 export type TicketOutStatusEnum = typeof TicketOutStatusEnum[keyof typeof TicketOutStatusEnum];
 

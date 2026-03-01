@@ -28,9 +28,9 @@ import {
 export class HealthApi extends runtime.BaseAPI {
 
     /**
-     * Health check
+     * Creates request options for healthCheck without sending the request
      */
-    async healthCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HealthCheck200Response>> {
+    async healthCheckRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -38,12 +38,20 @@ export class HealthApi extends runtime.BaseAPI {
 
         let urlPath = `/health`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Health check
+     */
+    async healthCheckRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HealthCheck200Response>> {
+        const requestOptions = await this.healthCheckRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => HealthCheck200ResponseFromJSON(jsonValue));
     }

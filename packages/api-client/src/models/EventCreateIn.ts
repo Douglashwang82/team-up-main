@@ -38,20 +38,32 @@ export interface EventCreateIn {
      */
     maxParticipants: number;
     /**
-     * 
+     * Optional Venue association
      * @type {string}
+     * @memberof EventCreateIn
+     */
+    venueId?: string | null;
+    /**
+     * Optional Court association
+     * @type {string}
+     * @memberof EventCreateIn
+     */
+    courtId?: string | null;
+    /**
+     * 
+     * @type {EventCreateInVisibilityEnum}
      * @memberof EventCreateIn
      */
     visibility?: EventCreateInVisibilityEnum;
     /**
      * 
-     * @type {string}
+     * @type {EventCreateInDurationTypeEnum}
      * @memberof EventCreateIn
      */
     durationType?: EventCreateInDurationTypeEnum;
     /**
      * 
-     * @type {string}
+     * @type {EventCreateInStatusEnum}
      * @memberof EventCreateIn
      */
     status?: EventCreateInStatusEnum;
@@ -62,8 +74,8 @@ export interface EventCreateIn {
  * @export
  */
 export const EventCreateInVisibilityEnum = {
-    public: 'public',
-    private: 'private'
+    Public: 'public',
+    Private: 'private'
 } as const;
 export type EventCreateInVisibilityEnum = typeof EventCreateInVisibilityEnum[keyof typeof EventCreateInVisibilityEnum];
 
@@ -71,8 +83,8 @@ export type EventCreateInVisibilityEnum = typeof EventCreateInVisibilityEnum[key
  * @export
  */
 export const EventCreateInDurationTypeEnum = {
-    temporary: 'temporary',
-    permanent: 'permanent'
+    Temporary: 'temporary',
+    Permanent: 'permanent'
 } as const;
 export type EventCreateInDurationTypeEnum = typeof EventCreateInDurationTypeEnum[keyof typeof EventCreateInDurationTypeEnum];
 
@@ -80,8 +92,8 @@ export type EventCreateInDurationTypeEnum = typeof EventCreateInDurationTypeEnum
  * @export
  */
 export const EventCreateInStatusEnum = {
-    open: 'open',
-    closed: 'closed'
+    Open: 'open',
+    Closed: 'closed'
 } as const;
 export type EventCreateInStatusEnum = typeof EventCreateInStatusEnum[keyof typeof EventCreateInStatusEnum];
 
@@ -108,6 +120,8 @@ export function EventCreateInFromJSONTyped(json: any, ignoreDiscriminator: boole
         'title': json['title'],
         'description': json['description'] == null ? undefined : json['description'],
         'maxParticipants': json['max_participants'],
+        'venueId': json['venue_id'] == null ? undefined : json['venue_id'],
+        'courtId': json['court_id'] == null ? undefined : json['court_id'],
         'visibility': json['visibility'] == null ? undefined : json['visibility'],
         'durationType': json['duration_type'] == null ? undefined : json['duration_type'],
         'status': json['status'] == null ? undefined : json['status'],
@@ -128,6 +142,8 @@ export function EventCreateInToJSONTyped(value?: EventCreateIn | null, ignoreDis
         'title': value['title'],
         'description': value['description'],
         'max_participants': value['maxParticipants'],
+        'venue_id': value['venueId'],
+        'court_id': value['courtId'],
         'visibility': value['visibility'],
         'duration_type': value['durationType'],
         'status': value['status'],

@@ -127,9 +127,9 @@ export interface UpdateVenueRequest {
 export class VenuesApi extends runtime.BaseAPI {
 
     /**
-     * Create new timeslot(s)
+     * Creates request options for createTimeSlot without sending the request
      */
-    async createTimeSlotRaw(requestParameters: CreateTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeSlotOut>> {
+    async createTimeSlotRequestOpts(requestParameters: CreateTimeSlotRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -170,13 +170,21 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: TimeSlotCreateInToJSON(requestParameters['timeSlotCreateIn']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Create new timeslot(s)
+     */
+    async createTimeSlotRaw(requestParameters: CreateTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeSlotOut>> {
+        const requestOptions = await this.createTimeSlotRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TimeSlotOutFromJSON(jsonValue));
     }
@@ -190,9 +198,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create venue
+     * Creates request options for createVenue without sending the request
      */
-    async createVenueRaw(requestParameters: CreateVenueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VenueDetail>> {
+    async createVenueRequestOpts(requestParameters: CreateVenueRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueCreateIn'] == null) {
             throw new runtime.RequiredError(
                 'venueCreateIn',
@@ -217,13 +225,21 @@ export class VenuesApi extends runtime.BaseAPI {
 
         let urlPath = `/venues`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: VenueCreateInToJSON(requestParameters['venueCreateIn']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Create venue
+     */
+    async createVenueRaw(requestParameters: CreateVenueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VenueDetail>> {
+        const requestOptions = await this.createVenueRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VenueDetailFromJSON(jsonValue));
     }
@@ -237,9 +253,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete court
+     * Creates request options for deleteCourt without sending the request
      */
-    async deleteCourtRaw(requestParameters: DeleteCourtRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+    async deleteCourtRequestOpts(requestParameters: DeleteCourtRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -271,12 +287,20 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Delete court
+     */
+    async deleteCourtRaw(requestParameters: DeleteCourtRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+        const requestOptions = await this.deleteCourtRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }
@@ -290,9 +314,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete timeslot
+     * Creates request options for deleteTimeSlot without sending the request
      */
-    async deleteTimeSlotRaw(requestParameters: DeleteTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+    async deleteTimeSlotRequestOpts(requestParameters: DeleteTimeSlotRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -332,12 +356,20 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
         urlPath = urlPath.replace(`{${"time_slot_id"}}`, encodeURIComponent(String(requestParameters['timeSlotId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Delete timeslot
+     */
+    async deleteTimeSlotRaw(requestParameters: DeleteTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+        const requestOptions = await this.deleteTimeSlotRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }
@@ -351,9 +383,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete venue
+     * Creates request options for deleteVenue without sending the request
      */
-    async deleteVenueRaw(requestParameters: DeleteVenueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+    async deleteVenueRequestOpts(requestParameters: DeleteVenueRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -377,12 +409,20 @@ export class VenuesApi extends runtime.BaseAPI {
         let urlPath = `/venues/{venue_id}`;
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Delete venue
+     */
+    async deleteVenueRaw(requestParameters: DeleteVenueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+        const requestOptions = await this.deleteVenueRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }
@@ -396,9 +436,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get court detail
+     * Creates request options for getCourt without sending the request
      */
-    async getCourtRaw(requestParameters: GetCourtRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CourtOut>> {
+    async getCourtRequestOpts(requestParameters: GetCourtRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -422,12 +462,20 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get court detail
+     */
+    async getCourtRaw(requestParameters: GetCourtRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CourtOut>> {
+        const requestOptions = await this.getCourtRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CourtOutFromJSON(jsonValue));
     }
@@ -441,9 +489,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get available time slots for a court
+     * Creates request options for getCourtTimeSlots without sending the request
      */
-    async getCourtTimeSlotsRaw(requestParameters: GetCourtTimeSlotsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimeSlotOut>>> {
+    async getCourtTimeSlotsRequestOpts(requestParameters: GetCourtTimeSlotsRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -471,12 +519,20 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get available time slots for a court
+     */
+    async getCourtTimeSlotsRaw(requestParameters: GetCourtTimeSlotsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimeSlotOut>>> {
+        const requestOptions = await this.getCourtTimeSlotsRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TimeSlotOutFromJSON));
     }
@@ -490,9 +546,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get timeslot details
+     * Creates request options for getTimeSlot without sending the request
      */
-    async getTimeSlotRaw(requestParameters: GetTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeSlotOut>> {
+    async getTimeSlotRequestOpts(requestParameters: GetTimeSlotRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -524,12 +580,20 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
         urlPath = urlPath.replace(`{${"time_slot_id"}}`, encodeURIComponent(String(requestParameters['timeSlotId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get timeslot details
+     */
+    async getTimeSlotRaw(requestParameters: GetTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeSlotOut>> {
+        const requestOptions = await this.getTimeSlotRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TimeSlotOutFromJSON(jsonValue));
     }
@@ -543,9 +607,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get venue details
+     * Creates request options for getVenueById without sending the request
      */
-    async getVenueByIdRaw(requestParameters: GetVenueByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VenueDetail>> {
+    async getVenueByIdRequestOpts(requestParameters: GetVenueByIdRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -561,12 +625,20 @@ export class VenuesApi extends runtime.BaseAPI {
         let urlPath = `/venues/{venue_id}`;
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get venue details
+     */
+    async getVenueByIdRaw(requestParameters: GetVenueByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VenueDetail>> {
+        const requestOptions = await this.getVenueByIdRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VenueDetailFromJSON(jsonValue));
     }
@@ -580,10 +652,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search venues based on location, datetime, and sport type. Supports geolocation-based search with distance filtering. 
-     * Search venues with available time slots
+     * Creates request options for searchVenues without sending the request
      */
-    async searchVenuesRaw(requestParameters: SearchVenuesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VenueSearchResult>>> {
+    async searchVenuesRequestOpts(requestParameters: SearchVenuesRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['lat'] != null) {
@@ -611,12 +682,21 @@ export class VenuesApi extends runtime.BaseAPI {
 
         let urlPath = `/venues`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Search venues based on location, datetime, and sport type. Supports geolocation-based search with distance filtering. 
+     * Search venues with available time slots
+     */
+    async searchVenuesRaw(requestParameters: SearchVenuesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VenueSearchResult>>> {
+        const requestOptions = await this.searchVenuesRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(VenueSearchResultFromJSON));
     }
@@ -631,9 +711,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update court
+     * Creates request options for updateCourt without sending the request
      */
-    async updateCourtRaw(requestParameters: UpdateCourtRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CourtOut>> {
+    async updateCourtRequestOpts(requestParameters: UpdateCourtRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -674,13 +754,21 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: CourtUpdateInToJSON(requestParameters['courtUpdateIn']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Update court
+     */
+    async updateCourtRaw(requestParameters: UpdateCourtRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CourtOut>> {
+        const requestOptions = await this.updateCourtRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CourtOutFromJSON(jsonValue));
     }
@@ -694,9 +782,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update timeslot
+     * Creates request options for updateTimeSlot without sending the request
      */
-    async updateTimeSlotRaw(requestParameters: UpdateTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeSlotOut>> {
+    async updateTimeSlotRequestOpts(requestParameters: UpdateTimeSlotRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -745,13 +833,21 @@ export class VenuesApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"court_id"}}`, encodeURIComponent(String(requestParameters['courtId'])));
         urlPath = urlPath.replace(`{${"time_slot_id"}}`, encodeURIComponent(String(requestParameters['timeSlotId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: TimeSlotUpdateInToJSON(requestParameters['timeSlotUpdateIn']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Update timeslot
+     */
+    async updateTimeSlotRaw(requestParameters: UpdateTimeSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeSlotOut>> {
+        const requestOptions = await this.updateTimeSlotRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TimeSlotOutFromJSON(jsonValue));
     }
@@ -765,9 +861,9 @@ export class VenuesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update venue
+     * Creates request options for updateVenue without sending the request
      */
-    async updateVenueRaw(requestParameters: UpdateVenueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VenueDetail>> {
+    async updateVenueRequestOpts(requestParameters: UpdateVenueRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['venueId'] == null) {
             throw new runtime.RequiredError(
                 'venueId',
@@ -800,13 +896,21 @@ export class VenuesApi extends runtime.BaseAPI {
         let urlPath = `/venues/{venue_id}`;
         urlPath = urlPath.replace(`{${"venue_id"}}`, encodeURIComponent(String(requestParameters['venueId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: VenueUpdateInToJSON(requestParameters['venueUpdateIn']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Update venue
+     */
+    async updateVenueRaw(requestParameters: UpdateVenueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VenueDetail>> {
+        const requestOptions = await this.updateVenueRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VenueDetailFromJSON(jsonValue));
     }

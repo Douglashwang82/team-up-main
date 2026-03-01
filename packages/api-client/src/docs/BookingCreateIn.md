@@ -7,7 +7,7 @@
 Name | Type
 ------------ | -------------
 `timeSlotId` | string
-`teamupId` | string
+`eventId` | string
 
 ## Example
 
@@ -17,7 +17,7 @@ import type { BookingCreateIn } from ''
 // TODO: Update the object below with actual values
 const example = {
   "timeSlotId": null,
-  "teamupId": null,
+  "eventId": null,
 } satisfies BookingCreateIn
 
 console.log(example)

@@ -30,7 +30,7 @@ export interface BookingCreateIn {
      * @type {string}
      * @memberof BookingCreateIn
      */
-    teamupId?: string | null;
+    eventId?: string | null;
 }
 
 /**
@@ -52,7 +52,7 @@ export function BookingCreateInFromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'timeSlotId': json['time_slot_id'],
-        'teamupId': json['teamup_id'] == null ? undefined : json['teamup_id'],
+        'eventId': json['event_id'] == null ? undefined : json['event_id'],
     };
 }
 
@@ -68,7 +68,7 @@ export function BookingCreateInToJSONTyped(value?: BookingCreateIn | null, ignor
     return {
         
         'time_slot_id': value['timeSlotId'],
-        'teamup_id': value['teamupId'],
+        'event_id': value['eventId'],
     };
 }
 

@@ -9,6 +9,8 @@ Name | Type
 `title` | string
 `description` | string
 `maxParticipants` | number
+`venueId` | string
+`courtId` | string
 `visibility` | string
 `durationType` | string
 `status` | string
@@ -23,6 +25,8 @@ const example = {
   "title": Weekend Basketball Game,
   "description": Looking for players for a friendly game,
   "maxParticipants": 10,
+  "venueId": null,
+  "courtId": null,
   "visibility": null,
   "durationType": null,
   "status": null,

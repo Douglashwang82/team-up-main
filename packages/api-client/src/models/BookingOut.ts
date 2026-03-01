@@ -42,16 +42,16 @@ export interface BookingOut {
      * @type {string}
      * @memberof BookingOut
      */
-    teamupId?: string | null;
+    eventId?: string | null;
     /**
      * 
-     * @type {string}
+     * @type {BookingOutStatusEnum}
      * @memberof BookingOut
      */
     status: BookingOutStatusEnum;
     /**
      * 
-     * @type {string}
+     * @type {BookingOutPaymentStatusEnum}
      * @memberof BookingOut
      */
     paymentStatus: BookingOutPaymentStatusEnum;
@@ -74,9 +74,9 @@ export interface BookingOut {
  * @export
  */
 export const BookingOutStatusEnum = {
-    pending: 'pending',
-    confirmed: 'confirmed',
-    cancelled: 'cancelled'
+    Pending: 'pending',
+    Confirmed: 'confirmed',
+    Cancelled: 'cancelled'
 } as const;
 export type BookingOutStatusEnum = typeof BookingOutStatusEnum[keyof typeof BookingOutStatusEnum];
 
@@ -84,10 +84,10 @@ export type BookingOutStatusEnum = typeof BookingOutStatusEnum[keyof typeof Book
  * @export
  */
 export const BookingOutPaymentStatusEnum = {
-    none: 'none',
-    pending: 'pending',
-    succeeded: 'succeeded',
-    failed: 'failed'
+    None: 'none',
+    Pending: 'pending',
+    Succeeded: 'succeeded',
+    Failed: 'failed'
 } as const;
 export type BookingOutPaymentStatusEnum = typeof BookingOutPaymentStatusEnum[keyof typeof BookingOutPaymentStatusEnum];
 
@@ -119,7 +119,7 @@ export function BookingOutFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'id': json['id'],
         'ownerUserId': json['owner_user_id'],
         'timeSlotId': json['time_slot_id'],
-        'teamupId': json['teamup_id'] == null ? undefined : json['teamup_id'],
+        'eventId': json['event_id'] == null ? undefined : json['event_id'],
         'status': json['status'],
         'paymentStatus': json['payment_status'],
         'createdAt': (new Date(json['created_at'])),
@@ -141,7 +141,7 @@ export function BookingOutToJSONTyped(value?: BookingOut | null, ignoreDiscrimin
         'id': value['id'],
         'owner_user_id': value['ownerUserId'],
         'time_slot_id': value['timeSlotId'],
-        'teamup_id': value['teamupId'],
+        'event_id': value['eventId'],
         'status': value['status'],
         'payment_status': value['paymentStatus'],
         'created_at': value['createdAt'].toISOString(),

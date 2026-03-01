@@ -94,6 +94,65 @@ paths:
         '401':
           description: Invalid credentials
 
+  /auth/delete_account: 
+    delete:
+      tags: [Auth]
+      summary: Delete account
+      operationId: deleteAccount
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+
+  /auth/update_password:
+    post:
+      tags: [Auth]
+      summary: Update password
+      operationId: updatePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [old_password, new_password]
+              properties:
+                old_password:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Password updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input or old password incorrect
+        '401':
+          description: Unauthorized
+  
   /auth/me:
     get:
       tags: [Auth]
@@ -166,6 +225,30 @@ paths:
                 items:
                   $ref: '#/components/schemas/VenueSearchResult'
 
+    post:
+      tags: [Venues]
+      summary: Create venue
+      operationId: createVenue
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VenueCreateIn'
+      responses:
+        '201':
+          description: Venue created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueDetail'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+
   /venues/{venue_id}:
     get:
       tags: [Venues]
@@ -187,6 +270,172 @@ paths:
                 $ref: '#/components/schemas/VenueDetail'
         '404':
           description: Venue not found
+    put:
+      tags: [Venues]
+      summary: Update venue
+      operationId: updateVenue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VenueUpdateIn'
+      responses:
+        '200':
+          description: Venue updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueDetail'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Venue not found
+    delete:
+      tags: [Venues]
+      summary: Delete venue
+      operationId: deleteVenue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Venue deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Venue not found
+
+  # crud court
+  /venues/{venue_id}/courts/{court_id}:
+    # get court detail
+    get:
+      tags: [Venues]
+      summary: Get court detail
+      operationId: getCourt
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Court detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourtOut'
+    put:
+      tags: [Venues]
+      summary: Update court
+      operationId: updateCourt
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourtUpdateIn'
+      responses:
+        '200':
+          description: Court updated
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/CourtOut'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Venue or court not found
+    delete:
+      tags: [Venues]
+      summary: Delete court
+      operationId: deleteCourt
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Court deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Venue or court not found
 
   /venues/{venue_id}/courts/{court_id}/time_slots:
     get:
@@ -224,6 +473,166 @@ paths:
                   $ref: '#/components/schemas/TimeSlotOut'
         '404':
           description: Venue or court not found
+    
+    post:
+      tags: [Venues]
+      summary: Create new timeslot(s)
+      operationId: createTimeSlot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlotCreateIn'
+      responses:
+        '201':
+          description: Time slot created
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/TimeSlotOut'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Venue or court not found
+  
+  /venues/{venue_id}/courts/{court_id}/time_slots/{time_slot_id}:
+    get:
+      tags: [Venues]
+      summary: Get timeslot details
+      operationId: getTimeSlot
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: time_slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Time slot details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSlotOut'
+        '404':
+          description: Time slot not found
+    put:
+      tags: [Venues]
+      summary: Update timeslot
+      operationId: updateTimeSlot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: time_slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlotUpdateIn'
+      responses:
+        '200':
+          description: Time slot updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSlotOut'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Time slot not found
+    delete:
+      tags: [Venues]
+      summary: Delete timeslot
+      operationId: deleteTimeSlot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: time_slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Time slot deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Time slot not found
 
   # ============================================================================
   # BOOKING ROUTES
@@ -318,6 +727,39 @@ paths:
         '404':
           description: Booking not found
 
+    put:
+      tags: [Bookings]
+      summary: Update booking fully (admin)
+      operationId: updateBookingFully
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingUpdateIn'
+      responses:
+        '200':
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingOut'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Booking not found
+
     patch:
       tags: [Bookings]
       summary: Update booking status
@@ -390,6 +832,9 @@ paths:
         List Events with optional filtering and search.
         Supports filtering by status, visibility, and keyword search on title.
       operationId: listEvents
+      security:
+        - bearerAuth: []
+        - {}
       parameters:
         - name: status
           in: query
@@ -407,6 +852,22 @@ paths:
         - name: keyword
           in: query
           description: Search keyword (searches in title)
+          schema:
+            type: string
+        - name: datetime_after
+          in: query
+          description: Filter events that have time slots starting after this datetime
+          schema:
+            type: string
+            format: date-time
+        - name: division
+          in: query
+          description: Filter events by venue city/division
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter events by sport category
           schema:
             type: string
         - name: limit
@@ -475,6 +936,69 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDetailOut'
+        '404':
+          description: Event not found
+    put:
+      tags: [Events]
+      summary: Update Event
+      operationId: updateEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdateIn'
+      responses:
+        '200':
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetailOut'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Event not found
+    delete:
+      tags: [Events]
+      summary: Delete Event
+      operationId: deleteEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
         '404':
           description: Event not found
 
@@ -641,6 +1165,7 @@ paths:
         '404':
           description: Event or request not found
 
+  # start deprecated 
   /events/my/created:
     get:
       tags: [Events]
@@ -700,7 +1225,138 @@ paths:
                   $ref: '#/components/schemas/EventOut'
         '401':
           description: Unauthorized
+  # end deprecated 
+  
+  # ============================================================================
+  # USER ROUTES
+  # ============================================================================
+  /user/events:
+    # get all events: created, joined, requested 
+    get:
+      tags: [User]
+      summary: Get user events (created, joined, requested)
+      operationId: getUserEvents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of events
+          content: 
+            application/json:
+              schema:
+                type: array
+                items:
+                   $ref: '#/components/schemas/EventOut'
+                   
+  /user/events/join_requests:
+    # get all join requests
+    get:
+      tags: [User]
+      summary: Get user join requests
+      operationId: getUserJoinRequests
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of join requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JoinRequestOut'
 
+  /user/events/join_requests/{join_request_id}:
+    get:
+      tags: [User]
+      summary: Get single join request
+      operationId: getUserJoinRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: join_request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Join request detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequestOut'
+    delete:
+      tags: [User]
+      summary: Cancel join request
+      operationId: cancelUserJoinRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: join_request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request cancelled
+
+  /user/bookings:
+    # get all bookings
+    get:
+      tags: [User]
+      summary: Get user bookings
+      operationId: getUserBookings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingOut'
+    
+  /user/info:
+    get:
+      tags: [User]
+      summary: Get user info
+      operationId: getUserInfo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+    put:
+      tags: [User]
+      summary: Update user info
+      operationId: updateUserInfo
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name: 
+                  type: string
+      responses:
+        '200':
+          description: Updated user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
 
   # ============================================================================
   # TICKET ROUTES
@@ -775,6 +1431,69 @@ paths:
           description: Not the ticket owner
         '404':
           description: Ticket not found
+    put:
+      tags: [Tickets]
+      summary: Update ticket
+      operationId: updateTicket
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketUpdateIn'
+      responses:
+        '200':
+          description: Ticket updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetailOut'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Ticket not found
+    delete:
+      tags: [Tickets]
+      summary: Delete ticket
+      operationId: deleteTicket
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Ticket not found
 
   # ============================================================================
   # NOTIFICATION ROUTES
@@ -826,7 +1545,61 @@ paths:
           description: Notification not found
         '401':
           description: Unauthorized
-
+    # delete:
+  /notifications/{notification_id}:
+    get:
+      tags: [Notifications]
+      summary: Get notification detail
+      operationId: getNotification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationOut'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Notification not found
+    delete:
+      tags: [Notifications]
+      summary: Delete notification
+      operationId: deleteNotification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Notification not found
 # ==============================================================================
 # COMPONENTS
 # ==============================================================================
@@ -901,6 +1674,57 @@ components:
     # ========================================================================
     # VENUE SCHEMAS
     # ========================================================================
+    VenueCreateIn:
+      type: object
+      required: [name, address]
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: float
+          nullable: true
+        longitude:
+          type: number
+          format: float
+          nullable: true
+        contact_phone:
+          type: string
+          nullable: true
+        partner_code:
+          type: string
+          nullable: true
+
+    VenueUpdateIn:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: float
+          nullable: true
+        longitude:
+          type: number
+          format: float
+          nullable: true
+        contact_phone:
+          type: string
+          nullable: true
+        partner_code:
+          type: string
+          nullable: true
+
     VenueSearchResult:
       type: object
       required: [venue, time_slots]
@@ -979,6 +1803,15 @@ components:
           type: string
           format: date-time
 
+    CourtUpdateIn:
+      type: object
+      properties:
+        name:
+          type: string
+        sport_type:
+          type: string
+          nullable: true
+
     CourtOut:
       type: object
       required: [id, name]
@@ -991,6 +1824,42 @@ components:
         sport_type:
           type: string
           nullable: true
+
+    TimeSlotCreateIn:
+      type: object
+      required: [starts_at, ends_at, is_bookable]
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        price_cents:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+          example: TWD
+        is_bookable:
+          type: boolean
+
+    TimeSlotUpdateIn:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        price_cents:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+        is_bookable:
+          type: boolean
 
     TimeSlotOut:
       type: object
@@ -1035,7 +1904,7 @@ components:
         time_slot_id:
           type: string
           format: uuid
-        teamup_id:
+        event_id:
           type: string
           format: uuid
           nullable: true
@@ -1064,7 +1933,7 @@ components:
         time_slot_id:
           type: string
           format: uuid
-        teamup_id:
+        event_id:
           type: string
           format: uuid
           nullable: true
@@ -1094,7 +1963,7 @@ components:
         time_slot_id:
           type: string
           format: uuid
-        teamup_id:
+        event_id:
           type: string
           format: uuid
           nullable: true
@@ -1138,6 +2007,16 @@ components:
           type: integer
           minimum: 1
           example: 10
+        venue_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional Venue association
+        court_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional Court association
         visibility:
           type: string
           enum: [public, private]
@@ -1150,6 +2029,27 @@ components:
           type: string
           enum: [open, closed]
           default: open
+
+    EventUpdateIn:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        max_participants:
+          type: integer
+          minimum: 1
+        visibility:
+          type: string
+          enum: [public, private]
+        duration_type:
+          type: string
+          enum: [temporary, permanent]
+        status:
+          type: string
+          enum: [open, closed]
 
     OwnerOut:
       type: object
@@ -1198,6 +2098,19 @@ components:
         created_at:
           type: string
           format: date-time
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventParticipantOut'
+          nullable: true
+        bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventBookingDetail'
+          nullable: true
+        user_join_status:
+          type: string
+          enum: [none, pending, joined]
 
     EventDetailOut:
       type: object
@@ -1245,6 +2158,9 @@ components:
         updated_at:
           type: string
           format: date-time
+        user_join_status:
+          type: string
+          enum: [none, pending, joined]
 
     EventParticipantOut:
       type: object
@@ -1265,6 +2181,9 @@ components:
         role:
           type: string
           enum: [owner, member]
+        avatar_url:
+          type: string
+          nullable: true
         joined_at:
           type: string
           format: date-time
@@ -1449,6 +2368,35 @@ components:
         currency:
           type: string
           default: USD
+
+    TicketUpdateIn:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+        duration_minutes:
+          type: integer
+        sport_type:
+          type: string
+        intensity:
+          type: string
+          enum: [Low, Medium, High]
+        venue_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        price_min:
+          type: integer
+          nullable: true
+        price_max:
+          type: integer
+          nullable: true
+        currency:
+          type: string
 
     TicketOut:
       type: object

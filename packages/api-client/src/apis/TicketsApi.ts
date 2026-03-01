@@ -57,9 +57,9 @@ export interface UpdateTicketRequest {
 export class TicketsApi extends runtime.BaseAPI {
 
     /**
-     * Create a new ticket
+     * Creates request options for createTicket without sending the request
      */
-    async createTicketRaw(requestParameters: CreateTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TicketOut>> {
+    async createTicketRequestOpts(requestParameters: CreateTicketRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['ticketCreateIn'] == null) {
             throw new runtime.RequiredError(
                 'ticketCreateIn',
@@ -84,13 +84,21 @@ export class TicketsApi extends runtime.BaseAPI {
 
         let urlPath = `/tickets`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: TicketCreateInToJSON(requestParameters['ticketCreateIn']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Create a new ticket
+     */
+    async createTicketRaw(requestParameters: CreateTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TicketOut>> {
+        const requestOptions = await this.createTicketRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TicketOutFromJSON(jsonValue));
     }
@@ -104,9 +112,9 @@ export class TicketsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete ticket
+     * Creates request options for deleteTicket without sending the request
      */
-    async deleteTicketRaw(requestParameters: DeleteTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+    async deleteTicketRequestOpts(requestParameters: DeleteTicketRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['ticketId'] == null) {
             throw new runtime.RequiredError(
                 'ticketId',
@@ -130,12 +138,20 @@ export class TicketsApi extends runtime.BaseAPI {
         let urlPath = `/tickets/{ticket_id}`;
         urlPath = urlPath.replace(`{${"ticket_id"}}`, encodeURIComponent(String(requestParameters['ticketId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Delete ticket
+     */
+    async deleteTicketRaw(requestParameters: DeleteTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
+        const requestOptions = await this.deleteTicketRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }
@@ -149,9 +165,9 @@ export class TicketsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get ticket details with matched events
+     * Creates request options for getTicket without sending the request
      */
-    async getTicketRaw(requestParameters: GetTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TicketDetailOut>> {
+    async getTicketRequestOpts(requestParameters: GetTicketRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['ticketId'] == null) {
             throw new runtime.RequiredError(
                 'ticketId',
@@ -175,12 +191,20 @@ export class TicketsApi extends runtime.BaseAPI {
         let urlPath = `/tickets/{ticket_id}`;
         urlPath = urlPath.replace(`{${"ticket_id"}}`, encodeURIComponent(String(requestParameters['ticketId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get ticket details with matched events
+     */
+    async getTicketRaw(requestParameters: GetTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TicketDetailOut>> {
+        const requestOptions = await this.getTicketRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TicketDetailOutFromJSON(jsonValue));
     }
@@ -194,9 +218,9 @@ export class TicketsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List user\'s tickets
+     * Creates request options for listTickets without sending the request
      */
-    async listTicketsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TicketOut>>> {
+    async listTicketsRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -212,12 +236,20 @@ export class TicketsApi extends runtime.BaseAPI {
 
         let urlPath = `/tickets`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * List user\'s tickets
+     */
+    async listTicketsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TicketOut>>> {
+        const requestOptions = await this.listTicketsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TicketOutFromJSON));
     }
@@ -231,9 +263,9 @@ export class TicketsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update ticket
+     * Creates request options for updateTicket without sending the request
      */
-    async updateTicketRaw(requestParameters: UpdateTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TicketDetailOut>> {
+    async updateTicketRequestOpts(requestParameters: UpdateTicketRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['ticketId'] == null) {
             throw new runtime.RequiredError(
                 'ticketId',
@@ -266,13 +298,21 @@ export class TicketsApi extends runtime.BaseAPI {
         let urlPath = `/tickets/{ticket_id}`;
         urlPath = urlPath.replace(`{${"ticket_id"}}`, encodeURIComponent(String(requestParameters['ticketId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: TicketUpdateInToJSON(requestParameters['ticketUpdateIn']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Update ticket
+     */
+    async updateTicketRaw(requestParameters: UpdateTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TicketDetailOut>> {
+        const requestOptions = await this.updateTicketRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TicketDetailOutFromJSON(jsonValue));
     }

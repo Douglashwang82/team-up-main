@@ -89,7 +89,7 @@ export interface TicketDetailOut {
     currency?: string;
     /**
      * 
-     * @type {string}
+     * @type {TicketDetailOutStatusEnum}
      * @memberof TicketDetailOut
      */
     status: TicketDetailOutStatusEnum;
@@ -112,9 +112,9 @@ export interface TicketDetailOut {
  * @export
  */
 export const TicketDetailOutStatusEnum = {
-    open: 'open',
-    matched: 'matched',
-    expired: 'expired'
+    Open: 'open',
+    Matched: 'matched',
+    Expired: 'expired'
 } as const;
 export type TicketDetailOutStatusEnum = typeof TicketDetailOutStatusEnum[keyof typeof TicketDetailOutStatusEnum];
 

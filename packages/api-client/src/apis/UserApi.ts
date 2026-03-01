@@ -52,9 +52,9 @@ export interface UpdateUserInfoOperationRequest {
 export class UserApi extends runtime.BaseAPI {
 
     /**
-     * Cancel join request
+     * Creates request options for cancelUserJoinRequest without sending the request
      */
-    async cancelUserJoinRequestRaw(requestParameters: CancelUserJoinRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async cancelUserJoinRequestRequestOpts(requestParameters: CancelUserJoinRequestRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['joinRequestId'] == null) {
             throw new runtime.RequiredError(
                 'joinRequestId',
@@ -78,12 +78,20 @@ export class UserApi extends runtime.BaseAPI {
         let urlPath = `/user/events/join_requests/{join_request_id}`;
         urlPath = urlPath.replace(`{${"join_request_id"}}`, encodeURIComponent(String(requestParameters['joinRequestId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Cancel join request
+     */
+    async cancelUserJoinRequestRaw(requestParameters: CancelUserJoinRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.cancelUserJoinRequestRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -96,9 +104,9 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user bookings
+     * Creates request options for getUserBookings without sending the request
      */
-    async getUserBookingsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<BookingOut>>> {
+    async getUserBookingsRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -114,12 +122,20 @@ export class UserApi extends runtime.BaseAPI {
 
         let urlPath = `/user/bookings`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get user bookings
+     */
+    async getUserBookingsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<BookingOut>>> {
+        const requestOptions = await this.getUserBookingsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BookingOutFromJSON));
     }
@@ -133,9 +149,9 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user events (created, joined, requested)
+     * Creates request options for getUserEvents without sending the request
      */
-    async getUserEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
+    async getUserEventsRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -151,12 +167,20 @@ export class UserApi extends runtime.BaseAPI {
 
         let urlPath = `/user/events`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get user events (created, joined, requested)
+     */
+    async getUserEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
+        const requestOptions = await this.getUserEventsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventOutFromJSON));
     }
@@ -170,9 +194,9 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user info
+     * Creates request options for getUserInfo without sending the request
      */
-    async getUserInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserOut>> {
+    async getUserInfoRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -188,12 +212,20 @@ export class UserApi extends runtime.BaseAPI {
 
         let urlPath = `/user/info`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get user info
+     */
+    async getUserInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserOut>> {
+        const requestOptions = await this.getUserInfoRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserOutFromJSON(jsonValue));
     }
@@ -207,9 +239,9 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get single join request
+     * Creates request options for getUserJoinRequest without sending the request
      */
-    async getUserJoinRequestRaw(requestParameters: GetUserJoinRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JoinRequestOut>> {
+    async getUserJoinRequestRequestOpts(requestParameters: GetUserJoinRequestRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['joinRequestId'] == null) {
             throw new runtime.RequiredError(
                 'joinRequestId',
@@ -233,12 +265,20 @@ export class UserApi extends runtime.BaseAPI {
         let urlPath = `/user/events/join_requests/{join_request_id}`;
         urlPath = urlPath.replace(`{${"join_request_id"}}`, encodeURIComponent(String(requestParameters['joinRequestId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get single join request
+     */
+    async getUserJoinRequestRaw(requestParameters: GetUserJoinRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JoinRequestOut>> {
+        const requestOptions = await this.getUserJoinRequestRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => JoinRequestOutFromJSON(jsonValue));
     }
@@ -252,9 +292,9 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user join requests
+     * Creates request options for getUserJoinRequests without sending the request
      */
-    async getUserJoinRequestsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<JoinRequestOut>>> {
+    async getUserJoinRequestsRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -270,12 +310,20 @@ export class UserApi extends runtime.BaseAPI {
 
         let urlPath = `/user/events/join_requests`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Get user join requests
+     */
+    async getUserJoinRequestsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<JoinRequestOut>>> {
+        const requestOptions = await this.getUserJoinRequestsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(JoinRequestOutFromJSON));
     }
@@ -289,9 +337,9 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update user info
+     * Creates request options for updateUserInfo without sending the request
      */
-    async updateUserInfoRaw(requestParameters: UpdateUserInfoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserOut>> {
+    async updateUserInfoRequestOpts(requestParameters: UpdateUserInfoOperationRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -309,13 +357,21 @@ export class UserApi extends runtime.BaseAPI {
 
         let urlPath = `/user/info`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: UpdateUserInfoRequestToJSON(requestParameters['updateUserInfoRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Update user info
+     */
+    async updateUserInfoRaw(requestParameters: UpdateUserInfoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserOut>> {
+        const requestOptions = await this.updateUserInfoRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserOutFromJSON(jsonValue));
     }

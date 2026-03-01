@@ -71,16 +71,16 @@ export interface BookingDetailOut {
      * @type {string}
      * @memberof BookingDetailOut
      */
-    teamupId?: string | null;
+    eventId?: string | null;
     /**
      * 
-     * @type {string}
+     * @type {BookingDetailOutStatusEnum}
      * @memberof BookingDetailOut
      */
     status: BookingDetailOutStatusEnum;
     /**
      * 
-     * @type {string}
+     * @type {BookingDetailOutPaymentStatusEnum}
      * @memberof BookingDetailOut
      */
     paymentStatus: BookingDetailOutPaymentStatusEnum;
@@ -127,9 +127,9 @@ export interface BookingDetailOut {
  * @export
  */
 export const BookingDetailOutStatusEnum = {
-    pending: 'pending',
-    confirmed: 'confirmed',
-    cancelled: 'cancelled'
+    Pending: 'pending',
+    Confirmed: 'confirmed',
+    Cancelled: 'cancelled'
 } as const;
 export type BookingDetailOutStatusEnum = typeof BookingDetailOutStatusEnum[keyof typeof BookingDetailOutStatusEnum];
 
@@ -137,10 +137,10 @@ export type BookingDetailOutStatusEnum = typeof BookingDetailOutStatusEnum[keyof
  * @export
  */
 export const BookingDetailOutPaymentStatusEnum = {
-    none: 'none',
-    pending: 'pending',
-    succeeded: 'succeeded',
-    failed: 'failed'
+    None: 'none',
+    Pending: 'pending',
+    Succeeded: 'succeeded',
+    Failed: 'failed'
 } as const;
 export type BookingDetailOutPaymentStatusEnum = typeof BookingDetailOutPaymentStatusEnum[keyof typeof BookingDetailOutPaymentStatusEnum];
 
@@ -175,7 +175,7 @@ export function BookingDetailOutFromJSONTyped(json: any, ignoreDiscriminator: bo
         'id': json['id'],
         'ownerUserId': json['owner_user_id'],
         'timeSlotId': json['time_slot_id'],
-        'teamupId': json['teamup_id'] == null ? undefined : json['teamup_id'],
+        'eventId': json['event_id'] == null ? undefined : json['event_id'],
         'status': json['status'],
         'paymentStatus': json['payment_status'],
         'timeSlot': TimeSlotOutFromJSON(json['time_slot']),
@@ -201,7 +201,7 @@ export function BookingDetailOutToJSONTyped(value?: BookingDetailOut | null, ign
         'id': value['id'],
         'owner_user_id': value['ownerUserId'],
         'time_slot_id': value['timeSlotId'],
-        'teamup_id': value['teamupId'],
+        'event_id': value['eventId'],
         'status': value['status'],
         'payment_status': value['paymentStatus'],
         'time_slot': TimeSlotOutToJSON(value['timeSlot']),
