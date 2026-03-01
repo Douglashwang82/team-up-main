@@ -52,3 +52,32 @@ def mark_as_read(notification_id):
         s.commit()
         
         return jsonify({"message": "Marked as read"})
+
+@bp.get("/<uuid:notification_id>")
+@require_auth
+def get_notification(notification_id):
+    with SessionLocal() as s:
+        n = s.get(Notification, notification_id)
+        if not n or str(n.user_id) != str(g.user_id):
+            return jsonify({"error": "notification_not_found"}), 404
+            
+        return jsonify({
+            "id": str(n.id),
+            "message": n.message,
+            "type": n.type,
+            "is_read": n.is_read,
+            "related_event_ids": [str(eid) for eid in n.related_event_ids] if n.related_event_ids else [],
+            "created_at": n.created_at.isoformat()
+        })
+
+@bp.delete("/<uuid:notification_id>")
+@require_auth
+def delete_notification(notification_id):
+    with SessionLocal() as s:
+        n = s.get(Notification, notification_id)
+        if not n or str(n.user_id) != str(g.user_id):
+            return jsonify({"error": "notification_not_found"}), 404
+            
+        s.delete(n)
+        s.commit()
+        return jsonify({"ok": True, "message": "Notification deleted successfully"})

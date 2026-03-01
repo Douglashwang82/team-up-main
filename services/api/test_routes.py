@@ -27,6 +27,11 @@ def print_section(title):
     print(f"  {title}")
     print("=" * 80)
 
+def print_sub_section(title):
+    print("-" * 60)
+    print(f"  {title}")
+    print("-" * 60)
+
 def print_test(name, passed, details=""):
     """Print test result"""
     status = "✅ PASS" if passed else "❌ FAIL"
@@ -143,6 +148,47 @@ def test_venues():
             print_test("Get court time slots", True, f"Found {len(time_slots)} time slots")
         else:
             print_test("Get court time slots", False, f"Status: {response.status_code}")
+
+    # Test 2.6: Detailed Court Operations
+    if test_data.get('venue_detail'):
+        print_sub_section("Detailed Court & TimeSlot Ops")
+        venue_id = test_data['venue_detail']['venue']['id']
+        court_id = test_data['venue_detail']['courts'][0]['id']
+        
+        # Get single court
+        response = make_request("GET", f"/venues/{venue_id}/courts/{court_id}")
+        passed = response.status_code == 200
+        print_test("Get single court", passed, f"Status: {response.status_code}")
+
+        # Update court (we won't actually change values to avoid breaking things, or just update safely)
+        # Assuming we can update fields safely. Let's just PUT with same data for test.
+        court_data = response.json() if passed else {}
+        if court_data:
+             update_data = {"name": court_data["name"] + " (Updated)"}
+             response = make_request("PUT", f"/venues/{venue_id}/courts/{court_id}", json=update_data)
+             passed = response.status_code == 200
+             print_test("Update court", passed, f"New Name: {response.json().get('name')}" if passed else "")
+
+             # Revert name
+             make_request("PUT", f"/venues/{venue_id}/courts/{court_id}", json={"name": court_data["name"]})
+
+        # Test 2.7: Single TimeSlot Ops
+        if test_data.get('time_slots') and len(test_data['time_slots']) > 0:
+            ts_id = test_data['time_slots'][0]['id']
+            # Get single time slot
+            response = make_request("GET", f"/venues/{venue_id}/courts/{court_id}/time_slots/{ts_id}")
+            passed = response.status_code == 200
+            print_test("Get single time slot", passed, f"Status: {response.status_code}")
+            
+            # Update time slot
+            if passed:
+                ts_data = response.json()
+                update_payload = {"price_cents": (ts_data.get("price_cents") or 0) + 100}
+                response = make_request("IDEMPOTENT", f"/venues/{venue_id}/courts/{court_id}/time_slots/{ts_id}", json=update_payload)
+                # Note: IDEMPOTENT isn't a valid method, use PATCH or PUT
+                response = make_request("PATCH", f"/venues/{venue_id}/courts/{court_id}/time_slots/{ts_id}", json=update_payload)
+                passed = response.status_code == 200
+                print_test("Update time slot (PATCH)", passed, f"New Price: {response.json().get('price_cents')}" if passed else "")
 
 # =============================================================================
 # BOOKING ROUTES
@@ -320,6 +366,125 @@ def test_events():
         print_test("Approve join request", passed, f"Status: {response.status_code}")
 
 # =============================================================================
+# USER ROUTES
+# =============================================================================
+def test_user_routes():
+    print_section("5. USER DATA AGGREGATION ROUTES")
+    headers = {"Authorization": f"Bearer {auth_tokens['alice']}"}
+
+    # Test 5.1: Get User Events (Created, Joined, Requested)
+    response = make_request("GET", "/user/events", headers=headers)
+    passed = response.status_code == 200
+    if passed:
+        events = response.json()
+        print_test("Get aggregated user events", True, f"Found {len(events)} events")
+        # Verify structure
+        if len(events) > 0:
+            print(f"      Sample event role: {events[0].get('role')}")
+    else:
+        print_test("Get aggregated user events", False, f"Status: {response.status_code}")
+
+    # Test 5.2: Get User Join Requests
+    response = make_request("GET", "/user/events/join_requests", headers=headers)
+    passed = response.status_code == 200
+    if passed:
+        reqs = response.json()
+        print_test("Get user join requests", True, f"Found {len(reqs)} requests")
+        if len(reqs) > 0:
+            req_id = reqs[0]['id']
+            # Test 5.3: Get Single Join Request
+            resp_detail = make_request("GET", f"/user/events/join_requests/{req_id}", headers=headers)
+            print_test("Get single join request", resp_detail.status_code == 200)
+    else:
+        print_test("Get user join requests", False, f"Status: {response.status_code}")
+
+    # Test 5.4: Get User Bookings
+    response = make_request("GET", "/user/bookings", headers=headers)
+    passed = response.status_code == 200
+    if passed:
+        bookings = response.json()
+        print_test("Get user bookings", True, f"Found {len(bookings)} bookings")
+    else:
+        print_test("Get user bookings", False, f"Status: {response.status_code}")
+
+    # Test 5.5: User Info
+    response = make_request("GET", "/user/info", headers=headers)
+    passed = response.status_code == 200
+    if passed:
+        info = response.json()
+        print_test("Get user info", True, f"Email: {info.get('email')}")
+        
+        # Update Info
+        new_name = info.get('display_name', '') + " (Updated)"
+        resp_update = make_request("PUT", "/user/info", headers=headers, json={"display_name": new_name})
+        passed_update = resp_update.status_code == 200
+        print_test("Update user info", passed_update, f"New Name: {resp_update.json().get('display_name')}" if passed_update else "")
+    else:
+        print_test("Get user info", False, f"Status: {response.status_code}")
+
+# =============================================================================
+# TICKET ROUTES
+# =============================================================================
+def test_tickets():
+    print_section("6. TICKET ROUTES")
+    headers = {"Authorization": f"Bearer {auth_tokens['alice']}"}
+    
+    # 6.1 Create Ticket
+    new_ticket = {
+        "date": (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d"),
+        "start_time": "18:00",
+        "duration_minutes": 60,
+        "sport_type": "basketball",
+        "intensity": "mid",
+        "venue_ids": [test_data['venues'][0]['venue']['id']] if test_data.get('venues') else []
+    }
+    response = make_request("POST", "/tickets", headers=headers, json=new_ticket)
+    passed = response.status_code in [200, 201]
+    if passed:
+        ticket = response.json()
+        test_data['ticket'] = ticket
+        print_test("Create ticket", True, f"ID: {ticket.get('id')}")
+    else:
+        print_test("Create ticket", False, f"Status: {response.status_code} {response.text}")
+
+    # 6.2 List Tickets
+    response = make_request("GET", "/tickets", headers=headers)
+    passed = response.status_code == 200
+    print_test("List tickets", passed, f"Status: {response.status_code}")
+
+    # 6.3 Get Ticket Details
+    if test_data.get('ticket'):
+        t_id = test_data['ticket']['id']
+        response = make_request("GET", f"/tickets/{t_id}", headers=headers)
+        passed = response.status_code == 200
+        print_test("Get ticket details", passed, f"Status: {response.status_code}")
+
+# =============================================================================
+# NOTIFICATION ROUTES
+# =============================================================================
+def test_notifications():
+    print_section("7. NOTIFICATION ROUTES")
+    headers = {"Authorization": f"Bearer {auth_tokens['alice']}"}
+
+    # 7.1 List Notifications
+    response = make_request("GET", "/notifications", headers=headers)
+    passed = response.status_code == 200
+    if passed:
+        notifs = response.json()
+        test_data['notifications'] = notifs
+        print_test("List notifications", True, f"Found {len(notifs)} notifications")
+    else:
+        print_test("List notifications", False, f"Status: {response.status_code}")
+
+    # 7.2 Mark as Read
+    if test_data.get('notifications') and len(test_data['notifications']) > 0:
+        n_id = test_data['notifications'][0]['id']
+        response = make_request("POST", f"/notifications/{n_id}/read", headers=headers)
+        passed = response.status_code == 200
+        print_test("Mark as read", passed, f"Status: {response.status_code}")
+
+
+# =============================================================================
 # SUMMARY
 # =============================================================================
 def print_summary():
@@ -347,6 +512,9 @@ def main():
         test_venues()
         test_bookings()
         test_events()
+        test_user_routes()
+        test_tickets()
+        test_notifications()
         print_summary()
     except KeyboardInterrupt:
         print("\n\n⚠️  Tests interrupted by user")

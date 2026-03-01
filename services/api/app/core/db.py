@@ -4,7 +4,7 @@ from .config import settings
 
 # Create engine with pool_pre_ping to handle disconnections
 # and connect_args to make connection more resilient
-app.logger.info(f"DATABASE_URL: {settings.DATABASE_URL}")
+# app.logger.info(f"DATABASE_URL: {settings.DATABASE_URL}")
 engine = create_engine(
     settings.DATABASE_URL,
     future=True,

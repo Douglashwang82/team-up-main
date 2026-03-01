@@ -261,6 +261,9 @@ def list_events():
     status = request.args.get("status", "open")
     visibility = request.args.get("visibility")
     keyword = request.args.get("keyword", "").strip()
+    datetime_after_str = request.args.get("datetime_after")
+    division = request.args.get("division")
+    category = request.args.get("category")
     limit = min(int(request.args.get("limit", 20)), 100)
     offset = max(int(request.args.get("offset", 0)), 0)
 
@@ -273,6 +276,27 @@ def list_events():
             query = query.where(Event.visibility == visibility)
         if keyword:
             query = query.where(Event.title.ilike(f"%{keyword}%"))
+
+        if datetime_after_str or division or category:
+            query = query.join(Booking, Booking.event_id == Event.id)\
+                         .join(TimeSlot, Booking.time_slot_id == TimeSlot.id)\
+                         .join(Court, TimeSlot.court_id == Court.id)\
+                         .join(Venue, Court.venue_id == Venue.id)
+
+            if datetime_after_str:
+                try:
+                    dt = _parse_dt(datetime_after_str)
+                    query = query.where(TimeSlot.starts_at >= dt)
+                except ValueError:
+                    pass
+            
+            if division:
+                query = query.where(Venue.address.ilike(f"%{division}%"))
+            
+            if category:
+                query = query.where(Court.sport_type == category)
+
+            query = query.distinct()
 
         results = s.execute(
             query.order_by(desc(Event.created_at)).offset(offset).limit(limit)
@@ -296,6 +320,83 @@ def list_events():
                     "avatar_url": owner.avatar_url,
                 }
 
+            # Get participants list
+            participants = s.execute(
+                select(EventParticipant, User).outerjoin(
+                    User, EventParticipant.user_id == User.id
+                ).where(EventParticipant.event_id == event.id)
+            ).all()
+
+            participant_list = []
+            for participant, user in participants:
+                participant_list.append({
+                    "id": str(participant.id),
+                    "user_id": str(participant.user_id) if participant.user_id else None,
+                    "display_name": participant.display_name or (user.display_name if user else None),
+                    "email": participant.email or (user.email if user else None),
+                    "phone": participant.phone,
+                    "role": participant.role,
+                    "avatar_url": user.avatar_url if user else None,
+                    "joined_at": participant.created_at.isoformat(),
+                })
+
+            # Get associated bookings
+            bookings = s.execute(
+                select(Booking, TimeSlot, Court, Venue).join(
+                    TimeSlot, Booking.time_slot_id == TimeSlot.id
+                ).join(
+                    Court, TimeSlot.court_id == Court.id
+                ).join(
+                    Venue, Court.venue_id == Venue.id
+                ).where(
+                    Booking.event_id == event.id
+                ).order_by(TimeSlot.starts_at)
+            ).all()
+
+            booking_list = []
+            for booking, time_slot, court, venue in bookings:
+                booking_list.append({
+                    "id": str(booking.id),
+                    "status": booking.status,
+                    "payment_status": booking.payment_status,
+                    "time_slot": {
+                        "id": str(time_slot.id),
+                        "starts_at": time_slot.starts_at.isoformat(),
+                        "ends_at": time_slot.ends_at.isoformat(),
+                        "price_cents": time_slot.price_cents,
+                        "currency": time_slot.currency,
+                    },
+                    "court": {
+                        "id": str(court.id),
+                        "name": court.name,
+                        "sport_type": court.sport_type,
+                    },
+                    "venue": {
+                        "id": str(venue.id),
+                        "name": venue.name,
+                        "address": venue.address,
+                        "city": venue.city,
+                    },
+                    "created_at": booking.created_at.isoformat(),
+                })
+
+            user_join_status = "none"
+            if hasattr(g, 'user_id') and g.user_id:
+                if any(str(p.user_id) == str(g.user_id) for p, _ in participants):
+                    user_join_status = "joined"
+                else:
+                    jr = s.execute(
+                        select(JoinRequest).where(
+                            and_(
+                                JoinRequest.event_id == event.id,
+                                JoinRequest.applicant_user_id == g.user_id,
+                                JoinRequest.status == "submitted"
+                            )
+                        )
+                    ).scalar_one_or_none()
+                    if jr:
+                        user_join_status = "pending"
+
             event_list.append({
                 "id": str(event.id),
                 "title": event.title,
@@ -308,6 +409,9 @@ def list_events():
                 "visibility": event.visibility,
                 "duration_type": event.duration_type,
                 "created_at": event.created_at.isoformat(),
+                "participants": participant_list,
+                "bookings": booking_list,
+                "user_join_status": user_join_status,
             })
 
         return jsonify(event_list)
@@ -343,6 +447,7 @@ def get_event(event_id):
                 "display_name": participant.display_name or (user.display_name if user else None),
                 "email": participant.email or (user.email if user else None),
                 "role": participant.role,
+                "avatar_url": user.avatar_url if user else None,
                 "joined_at": participant.created_at.isoformat(),
             })
 
@@ -385,6 +490,23 @@ def get_event(event_id):
                 },
             })
 
+        user_join_status = "none"
+        if hasattr(g, 'user_id') and g.user_id:
+            if any(str(p.user_id) == str(g.user_id) for p, _ in participants):
+                user_join_status = "joined"
+            else:
+                jr = s.execute(
+                    select(JoinRequest).where(
+                        and_(
+                            JoinRequest.event_id == event.id,
+                            JoinRequest.applicant_user_id == g.user_id,
+                            JoinRequest.status == "submitted"
+                        )
+                    )
+                ).scalar_one_or_none()
+                if jr:
+                    user_join_status = "pending"
+
         return jsonify({
             "id": str(event.id),
             "title": event.title,
@@ -398,6 +520,7 @@ def get_event(event_id):
             "duration_type": event.duration_type,
             "participants": participant_list,
             "bookings": booking_list,
+            "user_join_status": user_join_status,
             "created_at": event.created_at.isoformat(),
             "updated_at": event.updated_at.isoformat(),
         })

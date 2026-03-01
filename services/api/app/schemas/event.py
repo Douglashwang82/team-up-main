@@ -93,6 +93,7 @@ class EventOut(BaseModel):
     visibility: Visibility
     duration_type: DurationType
     created_at: datetime
+    user_join_status: Optional[Literal["none", "pending", "joined"]] = "none"
 
 class EventJoinRequestOut(BaseModel):
     """Join request response"""
@@ -124,6 +125,7 @@ class EventDetailOut(BaseModel):
     join_requests: list[EventJoinRequestOut]
     created_at: datetime
     updated_at: datetime
+    user_join_status: Optional[Literal["none", "pending", "joined"]] = "none"
 
 class EventJoinRequestSubmitResponse(BaseModel):
     """Response when submitting a join request"""

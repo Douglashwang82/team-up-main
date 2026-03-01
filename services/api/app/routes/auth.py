@@ -113,3 +113,34 @@ def update_me():
             "avatar_url": u.avatar_url,
             "phone": u.phone
         })
+
+@bp.delete("/delete_account")
+@require_auth
+def delete_account():
+    with SessionLocal() as s:
+        u = s.get(User, g.user_id)
+        if not u:
+            return jsonify({"error": "not_found"}), 404
+        
+        s.delete(u)
+        s.commit()
+        return jsonify({"ok": True, "message": "Account deleted successfully"})
+
+@bp.post("/update_password")
+@require_auth
+def update_password():
+    data = request.get_json() or {}
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+    
+    if not old_password or not new_password or len(new_password) < 6:
+        return jsonify({"error": "Invalid input or new password too short"}), 400
+        
+    with SessionLocal() as s:
+        u = s.get(User, g.user_id)
+        if not u or not bcrypt.verify(old_password, u.password_hash):
+            return jsonify({"error": "Invalid old password"}), 400
+            
+        u.password_hash = bcrypt.hash(new_password)
+        s.commit()
+        return jsonify({"ok": True, "message": "Password updated successfully"})

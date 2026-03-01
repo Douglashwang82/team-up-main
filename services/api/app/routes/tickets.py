@@ -130,3 +130,75 @@ def get_ticket(ticket_id):
                 "start_time": e.bookings[0].time_slot.starts_at.isoformat() if e.bookings else None
             } for e in matched_events]
         })
+
+@bp.put("/<uuid:ticket_id>")
+@require_auth
+def update_ticket(ticket_id):
+    data = request.get_json() or {}
+    with SessionLocal() as s:
+        ticket = s.get(Ticket, ticket_id)
+        if not ticket:
+            return jsonify({"error": "Ticket not found"}), 404
+        if str(ticket.user_id) != str(g.user_id):
+            return jsonify({"error": "Unauthorized"}), 403
+            
+        try:
+            if "date" in data:
+                date_str = data["date"]
+                if "T" in date_str:
+                    date_str = date_str.split("T")[0]
+                ticket.date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            if "start_time" in data:
+                time_str = data["start_time"]
+                if len(time_str.split(":")) == 2:
+                    ticket.start_time = datetime.strptime(time_str, "%H:%M").time()
+                else:
+                    ticket.start_time = datetime.strptime(time_str, "%H:%M:%S").time()
+                    
+            for field in ["duration_minutes", "sport_type", "intensity", "venue_ids", "price_min", "price_max", "currency"]:
+                if field in data:
+                    setattr(ticket, field, data[field])
+                    
+            s.commit()
+            
+            process_ticket(s, ticket)
+            matched_events = find_existing_events(s, ticket)
+            
+            return jsonify({
+                "id": str(ticket.id),
+                "date": ticket.date.isoformat(),
+                "start_time": ticket.start_time.isoformat(),
+                "duration_minutes": ticket.duration_minutes,
+                "sport_type": ticket.sport_type,
+                "intensity": ticket.intensity,
+                "venue_ids": ticket.venue_ids,
+                "price_min": ticket.price_min,
+                "price_max": ticket.price_max,
+                "currency": ticket.currency,
+                "status": ticket.status,
+                "created_at": ticket.created_at.isoformat(),
+                "matched_events": [{
+                    "id": str(e.id),
+                    "title": e.title,
+                    "description": e.description,
+                    "status": e.status,
+                    "start_time": e.bookings[0].time_slot.starts_at.isoformat() if e.bookings else None
+                } for e in matched_events]
+            })
+        except ValueError:
+            return jsonify({"error": "Invalid date or time format"}), 400
+
+
+@bp.delete("/<uuid:ticket_id>")
+@require_auth
+def delete_ticket(ticket_id):
+    with SessionLocal() as s:
+        ticket = s.get(Ticket, ticket_id)
+        if not ticket:
+            return jsonify({"error": "Ticket not found"}), 404
+        if str(ticket.user_id) != str(g.user_id):
+            return jsonify({"error": "Unauthorized"}), 403
+            
+        s.delete(ticket)
+        s.commit()
+        return jsonify({"ok": True, "message": "Ticket deleted successfully"})

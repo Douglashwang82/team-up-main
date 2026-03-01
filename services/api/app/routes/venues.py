@@ -5,11 +5,11 @@ from uuid import UUID
 from flask import Blueprint, request, jsonify
 from sqlalchemy import and_, select, func
 from app.core.db import SessionLocal
+from app.core.auth import require_auth
 from app.models.venue import Venue, Court, TimeSlot
 from geoalchemy2.functions import ST_DWithin, ST_Distance
 from geoalchemy2.elements import WKTElement
 from geoalchemy2.shape import to_shape
-import shapely.wkb
 
 bp = Blueprint("venues", __name__)
 
@@ -32,6 +32,8 @@ def _serialize_venue(v: Venue) -> dict:
         "city": v.city,
         "latitude": v.latitude,
         "longitude": v.longitude,
+        "contact_phone": v.contact_phone,
+        "partner_code": v.partner_code,
     }
 
 @bp.get("")
@@ -194,6 +196,35 @@ def get_venues():
         return jsonify(results), 200
 
 
+@bp.post("")
+@require_auth
+def create_venue():
+    data = request.get_json() or {}
+    required = ["name", "address"]
+    missing = [k for k in required if k not in data]
+    if missing:
+        return jsonify({"error": "missing_fields", "fields": missing}), 400
+        
+    with SessionLocal() as s:
+        venue = Venue(
+            name=data["name"],
+            address=data["address"],
+            city=data.get("city"),
+            latitude=data.get("latitude"),
+            longitude=data.get("longitude"),
+            contact_phone=data.get("contact_phone"),
+            partner_code=data.get("partner_code"),
+        )
+        s.add(venue)
+        s.commit()
+        s.refresh(venue)
+        
+        return jsonify({
+            "venue": _serialize_venue(venue),
+            "courts": []
+        }), 201
+
+
 @bp.get("/<uuid:venue_id>")
 def get_venue_by_id(venue_id):
     """Get venue details by its id"""
@@ -220,6 +251,120 @@ def get_venue_by_id(venue_id):
             "venue": _serialize_venue(venue),
             "courts": court_list
         }), 200
+
+
+@bp.put("/<uuid:venue_id>")
+@require_auth
+def update_venue(venue_id):
+    data = request.get_json() or {}
+    with SessionLocal() as s:
+        venue = s.get(Venue, venue_id)
+        if not venue:
+            return jsonify({"error": "Venue not found"}), 404
+            
+        for field in ["name", "address", "city", "latitude", "longitude", "contact_phone", "partner_code"]:
+            if field in data:
+                setattr(venue, field, data[field])
+                
+        s.commit()
+        s.refresh(venue)
+        
+        courts = s.execute(select(Court).where(Court.venue_id == venue_id)).scalars().all()
+        court_list = [{
+            "id": str(c.id),
+            "name": c.name,
+            "sport_type": c.sport_type,
+            "venue_id": str(c.venue_id)
+        } for c in courts]
+            
+        return jsonify({
+            "venue": _serialize_venue(venue),
+            "courts": court_list
+        }), 200
+
+
+@bp.delete("/<uuid:venue_id>")
+@require_auth
+def delete_venue(venue_id):
+    with SessionLocal() as s:
+        venue = s.get(Venue, venue_id)
+        if not venue:
+            return jsonify({"error": "Venue not found"}), 404
+            
+        has_courts = s.execute(select(func.count()).select_from(Court).where(Court.venue_id == venue_id)).scalar()
+        if has_courts > 0:
+            return jsonify({"error": "Cannot delete venue with existing courts"}), 400
+            
+        s.delete(venue)
+        s.commit()
+        return jsonify({"ok": True, "message": "Venue deleted successfully"}), 200
+
+
+@bp.get("/<uuid:venue_id>/courts/<uuid:court_id>")
+def get_court(venue_id, court_id):
+    """Get court details"""
+    with SessionLocal() as s:
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+
+        return jsonify({
+            "id": str(court.id),
+            "name": court.name,
+            "sport_type": court.sport_type,
+            "venue_id": str(court.venue_id)
+        }), 200
+
+
+@bp.put("/<uuid:venue_id>/courts/<uuid:court_id>")
+def update_court(venue_id, court_id):
+    """Update court details"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    with SessionLocal() as s:
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+
+        if "name" in data:
+            court.name = data["name"]
+        if "sport_type" in data:
+            court.sport_type = data["sport_type"]
+
+        s.commit()
+        s.refresh(court)
+
+        return jsonify({
+            "id": str(court.id),
+            "name": court.name,
+            "sport_type": court.sport_type,
+            "venue_id": str(court.venue_id)
+        }), 200
+
+
+@bp.delete("/<uuid:venue_id>/courts/<uuid:court_id>")
+def delete_court(venue_id, court_id):
+    """Delete a court"""
+    with SessionLocal() as s:
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+
+        # Check if court has time slots
+        has_slots = s.execute(
+            select(func.count()).select_from(TimeSlot).where(TimeSlot.court_id == court_id)
+        ).scalar()
+        
+        if has_slots > 0:
+             return jsonify({"error": "Cannot delete court with existing time slots"}), 400
+
+        s.delete(court)
+        s.commit()
+
+        return jsonify({"message": "Court deleted successfully"}), 200
 
 
 @bp.get("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots")
@@ -353,6 +498,24 @@ def create_time_slots(venue_id, court_id):
         else:
             return jsonify(created_slots[0]), 201
 
+@bp.get("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots/<uuid:time_slot_id>")
+def get_time_slot(venue_id, court_id, time_slot_id):
+    """Get a single time slot"""
+    with SessionLocal() as s:
+        # Verify court exists and belongs to venue
+        court = s.get(Court, court_id)
+        if not court or court.venue_id != venue_id:
+            return jsonify({"error": "Court not found"}), 404
+        
+        # Get time slot
+        time_slot = s.get(TimeSlot, time_slot_id)
+        if not time_slot or time_slot.court_id != court_id:
+            return jsonify({"error": "Time slot not found"}), 404
+
+        return jsonify(_serialize_time_slot(time_slot)), 200
+
+
+@bp.put("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots/<uuid:time_slot_id>")
 @bp.patch("/<uuid:venue_id>/courts/<uuid:court_id>/time_slots/<uuid:time_slot_id>")
 def update_time_slot(venue_id, court_id, time_slot_id):
     """Update a time slot"""
