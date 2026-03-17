@@ -17,8 +17,8 @@ export default function SearchBar({ defaultCity="", defaultDate="", defaultSport
       <input type="date" name="date" defaultValue={defaultDate} className="border px-3 py-2 rounded"/>
       <select name="sport" defaultValue={defaultSport} className="border px-3 py-2 rounded">
         <option value="">全部運動</option>
-        <option value="basketball">Basketball</option>
-        <option value="badminton">Badminton</option>
+        <option value="basketball">籃球</option>
+        <option value="badminton">羽球</option>
       </select>
       <button className="px-4 py-2 rounded bg-black text-white">搜尋</button>
     </form>

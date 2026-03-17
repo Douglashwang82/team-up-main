@@ -5,18 +5,18 @@ export default function Footer() {
 
   const footerLinks = {
     product: [
-      { href: '/teamups', label: 'Find TeamUps' },
-      { href: '/venues', label: 'Browse Venues' },
-      { href: '/events', label: 'Events' },
+      { href: '/teamups', label: '探索活動' },
+      { href: '/venues', label: '場館瀏覽' },
+      { href: '/events', label: '體育賽事' },
     ],
     company: [
-      { href: '/about', label: 'About Us' },
-      { href: '/contact', label: 'Contact' },
-      { href: '/help', label: 'Help Center' },
+      { href: '/about', label: '關於我們' },
+      { href: '/contact', label: '聯絡我們' },
+      { href: '/help', label: '說明中心' },
     ],
     legal: [
-      { href: '/privacy', label: 'Privacy Policy' },
-      { href: '/terms', label: 'Terms of Service' },
+      { href: '/privacy', label: '隱私權政策' },
+      { href: '/terms', label: '服務條款' },
     ],
   };
 
@@ -33,13 +33,13 @@ export default function Footer() {
               <span className="text-xl font-bold text-gray-900">TeamUp</span>
             </div>
             <p className="text-sm text-gray-600">
-              Connect with sports enthusiasts and book courts together. Find your perfect team today.
+              與運動愛好者建立聯繫，共同預約球場。立即尋找您的完美團隊。
             </p>
           </div>
 
           {/* Product Links */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Product</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">產品</h3>
             <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
@@ -56,7 +56,7 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Company</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">公司</h3>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
@@ -73,7 +73,7 @@ export default function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Legal</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">法律</h3>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
@@ -93,7 +93,7 @@ export default function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-gray-600">
-              © {currentYear} TeamUp. All rights reserved.
+              © {currentYear} TeamUp. 保留所有權利。
             </p>
             <div className="flex space-x-6">
               <a

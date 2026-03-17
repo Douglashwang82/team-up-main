@@ -39,7 +39,7 @@ export default function BookingsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-t-4 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading your bookings...</p>
+          <p className="text-gray-600">正在載入您的預約...</p>
         </div>
       </div>
     );
@@ -52,8 +52,8 @@ export default function BookingsPage() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">My Bookings</h1>
-              <p className="text-lg text-gray-600">Manage your court reservations</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">我的預約</h1>
+              <p className="text-lg text-gray-600">管理您的球場預約</p>
             </div>
             <Link
               href="/venues"
@@ -62,7 +62,7 @@ export default function BookingsPage() {
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              New Booking
+              新增預約
             </Link>
           </div>
 
@@ -76,7 +76,7 @@ export default function BookingsPage() {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              All
+              全部
             </button>
             <button
               onClick={() => setStatusFilter('pending')}
@@ -86,7 +86,7 @@ export default function BookingsPage() {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              Pending
+              待處理
             </button>
             <button
               onClick={() => setStatusFilter('confirmed')}
@@ -96,7 +96,7 @@ export default function BookingsPage() {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              Confirmed
+              已確認
             </button>
             <button
               onClick={() => setStatusFilter('cancelled')}
@@ -106,7 +106,7 @@ export default function BookingsPage() {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              Cancelled
+              已取消
             </button>
           </div>
         </div>
@@ -127,9 +127,9 @@ export default function BookingsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">No Bookings Found</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">找不到預約</h3>
             <p className="text-gray-600 mb-8">
-              {statusFilter ? `You don't have any ${statusFilter} bookings.` : "You haven't made any court bookings yet."}
+              {statusFilter ? `您目前沒有 ${statusFilter === 'pending' ? '待處理' : statusFilter === 'confirmed' ? '已確認' : '已取消'} 的預約。` : "您目前還沒有任何球場預約。"}
             </p>
             <Link
               href="/venues"
@@ -138,7 +138,7 @@ export default function BookingsPage() {
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              Find a Venue
+              尋找場館
             </Link>
           </div>
         )}
@@ -162,7 +162,7 @@ export default function BookingsPage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        Booking #{booking.id.slice(0, 8)}
+                        預約單號 #{booking.id.slice(0, 8)}
                       </h2>
                       <p className="text-sm text-gray-500">
                         {new Date(booking.createdAt).toLocaleDateString()}
@@ -193,18 +193,18 @@ export default function BookingsPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       )}
-                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      {booking.status === 'pending' ? '待處理' : booking.status === 'confirmed' ? '已確認' : '已取消'}
                     </span>
                   </span>
                   <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getPaymentStatusColor(booking.paymentStatus)}`}>
-                    Payment: {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
+                    付款狀態: {booking.paymentStatus === 'succeeded' ? '成功' : booking.paymentStatus === 'pending' ? '待付款' : '失敗'}
                   </span>
                 </div>
 
                 {/* View Details Link */}
                 <div className="pt-3 border-t border-gray-100">
                   <span className="text-blue-600 font-semibold group-hover:underline inline-flex items-center gap-2">
-                    View Details
+                    查看詳情
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>

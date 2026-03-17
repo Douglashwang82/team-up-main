@@ -1,3 +1,20 @@
+# Plan: Web Application Feature Parity
+
+- [x] Auth: Implement signup and login pages in `apps/web/app/(auth)`.
+- [x] Auth: Add `me` profile view and update.
+- [/] Events: Implement `teamups` listing page with filters.
+- [x] Events: Implement event creation flow.
+- [/] Events: Implement event detail page (`/teamups/[id]`).
+- [/] Events: Implement join request flow and owner review logic.
+- [x] Venues: Implement venue discovery page (`/venues`).
+- [x] Venues: Implement venue details and court time slot selection.
+- [x] Bookings: Implement booking flow for event owners.
+- [x] Notifications: Add a notification hub or dropdown to view messages/alerts.
+- [x] UI/UX Polish: Enhance layout structure and navigation.
+- [/] Final Review: Verify all requirements against `API_DOCUMENTATION.md` and check for responsive design issues.
+
+
+---
 # Plan: Smart Schedule - Calendar View
 
 - [x] Add `react-native-calendars` dependency to `apps/mobile/package.json`.

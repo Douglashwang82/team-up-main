@@ -16,7 +16,7 @@ export default function ProfilePage() {
   }, [user, isLoading, router]);
 
   function handleLogout() {
-    if (confirm('Are you sure you want to sign out?')) {
+    if (confirm('您確定要登出嗎？')) {
       logout();
     }
   }
@@ -26,7 +26,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-t-4 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <p className="text-gray-600">正在載入個人資料...</p>
         </div>
       </div>
     );
@@ -39,8 +39,8 @@ export default function ProfilePage() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">My Profile</h1>
-              <p className="text-lg text-gray-600">Manage your account and preferences</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">我的個人資料</h1>
+              <p className="text-lg text-gray-600">管理您的帳號與偏好設定</p>
             </div>
             <Link
               href="/profile/edit"
@@ -49,7 +49,7 @@ export default function ProfilePage() {
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Edit Profile
+              編輯個人資料
             </Link>
           </div>
         </div>
@@ -64,12 +64,12 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 text-center sm:text-left">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                {user.displayName || 'Anonymous User'}
+                {user.displayName || '匿名使用者'}
               </h2>
               <p className="text-gray-600 text-lg mb-3">{user.email}</p>
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                 <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
-                  Active Member
+                  活躍會員
                 </span>
               </div>
             </div>
@@ -83,7 +83,7 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">User ID</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">使用者 ID</label>
                 <p className="text-gray-700 font-mono text-xs break-all">{user.id.slice(0, 24)}...</p>
               </div>
             </div>
@@ -95,7 +95,7 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Email Address</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">電子郵件地址</label>
                 <p className="text-gray-700">{user.email}</p>
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Display Name</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">顯示名稱</label>
                   <p className="text-gray-700">{user.displayName}</p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export default function ProfilePage() {
 
         {/* Quick Actions */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 mb-6 shadow-sm">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">快速操作</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <Link
               href="/teamups/my"
@@ -131,8 +131,8 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-lg">My TeamUps</p>
-                  <p className="text-sm text-gray-600">View and manage activities</p>
+                  <p className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-lg">我的 TeamUp 活動</p>
+                  <p className="text-sm text-gray-600">查看並管理活動</p>
                 </div>
                 <svg className="w-6 h-6 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -151,8 +151,8 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900 group-hover:text-green-600 transition-colors text-lg">My Bookings</p>
-                  <p className="text-sm text-gray-600">View court reservations</p>
+                  <p className="font-bold text-gray-900 group-hover:text-green-600 transition-colors text-lg">我的預約</p>
+                  <p className="text-sm text-gray-600">查看球場預約</p>
                 </div>
                 <svg className="w-6 h-6 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -171,8 +171,8 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-lg">Create TeamUp</p>
-                  <p className="text-sm text-gray-600">Start a new activity</p>
+                  <p className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-lg">發起活動</p>
+                  <p className="text-sm text-gray-600">發起新的運動活動</p>
                 </div>
                 <svg className="w-6 h-6 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -192,8 +192,8 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-lg">Find Venues</p>
-                  <p className="text-sm text-gray-600">Search for courts</p>
+                  <p className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-lg">尋找場館</p>
+                  <p className="text-sm text-gray-600">搜尋球場</p>
                 </div>
                 <svg className="w-6 h-6 text-gray-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -205,7 +205,7 @@ export default function ProfilePage() {
 
         {/* Account Actions */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Account Settings</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">帳號設定</h3>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-red-50 border-2 border-red-200 rounded-xl">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -214,15 +214,15 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <p className="font-bold text-gray-900 text-lg">Sign Out</p>
-                <p className="text-sm text-gray-600">Sign out from your account</p>
+                <p className="font-bold text-gray-900 text-lg">登出</p>
+                <p className="text-sm text-gray-600">從您的帳號登出</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all shadow-lg"
             >
-              Sign Out
+              登出
             </button>
           </div>
         </div>

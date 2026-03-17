@@ -3,3 +3,14 @@
 node_modules/
 .DS_Store
 .vscode/
+.claude/
+.claire/
+.next/
+dist/
+out/
+.env*
+*.log
+.expo/
+web-build/
+.pytest_cache/
+__pycache__/

@@ -10,8 +10,8 @@ import ToastContainer from '@/components/ToastContainer';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'TeamUp - Find Your Sports Partners',
-  description: 'Connect with other sports enthusiasts and book courts together',
+  title: 'TeamUp - 尋找你的運動夥伴',
+  description: '與其他運動愛好者建立聯繫，共同預約球場',
 };
 
 export default function RootLayout({
@@ -20,9 +20,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="zh-TW">
       <body className={`${inter.className} flex flex-col min-h-screen`}>
-        {/* <AuthProvider> */}
+        <AuthProvider>
         <ToastProvider>
           <Navigation />
           <main className="flex-1">
@@ -31,7 +31,7 @@ export default function RootLayout({
           <Footer />
           <ToastContainer />
         </ToastProvider>
-        {/* </AuthProvider> */}
+        </AuthProvider>
       </body>
     </html>
   );

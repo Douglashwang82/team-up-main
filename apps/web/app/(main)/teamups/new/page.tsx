@@ -61,7 +61,7 @@ export default function CreateTeamUpPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-t-4 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
+          <p className="text-gray-600">正在檢查身分驗證...</p>
         </div>
       </div>
     );
@@ -79,11 +79,11 @@ export default function CreateTeamUpPage() {
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back
+            返回
           </button>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Create New TeamUp</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">發起新的 TeamUp</h1>
           <p className="text-lg text-gray-600">
-            Organize a sports activity and invite others to join your team.
+            組織一項運動活動，並邀請其他人加入您的團隊。
           </p>
         </div>
 
@@ -105,20 +105,20 @@ export default function CreateTeamUpPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Basic Information</h2>
+              <h2 className="text-xl font-bold text-gray-900">基本資訊</h2>
             </div>
 
             <div className="space-y-5">
               <div>
                 <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Title <span className="text-red-600">*</span>
+                  標題 <span className="text-red-600">*</span>
                 </label>
                 <input
                   id="title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Weekend Basketball Game"
+                  placeholder="例如：週末籃球賽"
                   required
                   className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
@@ -126,17 +126,17 @@ export default function CreateTeamUpPage() {
 
               <div>
                 <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Description
+                  描述
                 </label>
                 <textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Tell people what this TeamUp is about, when and where it will happen..."
+                  placeholder="告訴大家這個 TeamUp 的內容，以及何時何地舉行..."
                   rows={5}
                   className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical transition-all"
                 />
-                <p className="text-sm text-gray-500 mt-2">Optional but recommended for better engagement</p>
+                <p className="text-sm text-gray-500 mt-2">選填，但建議填寫以提高參與率</p>
               </div>
             </div>
           </div>
@@ -149,13 +149,13 @@ export default function CreateTeamUpPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-gray-900">TeamUp Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900">TeamUp 設定</h2>
             </div>
 
             <div className="space-y-5">
               <div>
                 <label htmlFor="maxParticipants" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Maximum Participants <span className="text-red-600">*</span>
+                  最高參與人數 <span className="text-red-600">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -175,13 +175,13 @@ export default function CreateTeamUpPage() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  Maximum number of participants (2-100, including you as owner)
+                  最高參與人數（2-100 人，包含您這位發起人）
                 </p>
               </div>
 
               <div>
                 <label htmlFor="visibility" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Visibility
+                  公開範圍
                 </label>
                 <select
                   id="visibility"
@@ -189,14 +189,14 @@ export default function CreateTeamUpPage() {
                   onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
                   className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 >
-                  <option value="public">🌍 Public - Anyone can see and request to join</option>
-                  <option value="private">🔒 Private - Only invited users can see</option>
+                  <option value="public">🌍 公開 - 任何人都能看見並申請加入</option>
+                  <option value="private">🔒 私人 - 僅限受邀使用者看見</option>
                 </select>
               </div>
 
               <div>
                 <label htmlFor="durationType" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Activity Type
+                  活動類型
                 </label>
                 <select
                   id="durationType"
@@ -204,13 +204,13 @@ export default function CreateTeamUpPage() {
                   onChange={(e) => setDurationType(e.target.value as 'temporary' | 'permanent')}
                   className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 >
-                  <option value="temporary">📅 Temporary - One-time event</option>
-                  <option value="permanent">🔄 Permanent - Ongoing activity</option>
+                  <option value="temporary">📅 臨時 - 單次活動</option>
+                  <option value="permanent">🔄 長期 - 持續性活動</option>
                 </select>
                 <p className="text-sm text-gray-500 mt-2">
                   {durationType === 'permanent'
-                    ? 'Perfect for ongoing activities or long-term projects'
-                    : 'Great for special events or one-off activities'}
+                    ? '適合持續性的活動或長期項目'
+                    : '適合特殊事件或單次活動'}
                 </p>
               </div>
             </div>
@@ -223,7 +223,7 @@ export default function CreateTeamUpPage() {
               onClick={() => router.back()}
               className="flex-1 px-6 py-3.5 border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-xl font-semibold transition-all"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
@@ -236,14 +236,14 @@ export default function CreateTeamUpPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Creating TeamUp...
+                  正在發起 TeamUp...
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Create TeamUp
+                  發起 TeamUp
                 </span>
               )}
             </button>

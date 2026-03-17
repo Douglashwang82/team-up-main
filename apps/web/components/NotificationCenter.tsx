@@ -61,11 +61,11 @@ export default function NotificationCenter() {
                 <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
                     <div className="py-2">
                         <div className="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">
-                            Notifications
+                            通知
                         </div>
                         {notifications.length === 0 ? (
                             <div className="px-4 py-4 text-sm text-gray-500 text-center">
-                                No notifications
+                                尚無通知
                             </div>
                         ) : (
                             <div className="max-h-96 overflow-y-auto">

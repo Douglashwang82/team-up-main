@@ -15,9 +15,9 @@ import {
   // 如果你的類名不同，改成實際輸出的名稱即可。
   AuthApi, HealthApi,
   VenuesApi,
-  TeamUpsApi,
-  TicketsApi,
+  EventsApi,
   NotificationsApi,
+  UserApi,
 } from '@team-up-main/api-client';
 
 const basePath =
@@ -127,9 +127,9 @@ export const apis = {
   auth: new AuthApi(config),
   health: new HealthApi(config),
   venues: new VenuesApi(config),
-  teamups: new TeamUpsApi(config),
-  tickets: new TicketsApi(config),
+  events: new EventsApi(config),
   notifications: new NotificationsApi(config),
+  user: new UserApi(config),
 };
 
 // 若你偏好與先前相似的用法，也可包一層別名（依實際方法名調整或直接用 apis.* 即可）
