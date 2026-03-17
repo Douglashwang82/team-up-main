@@ -42,6 +42,8 @@ class ParticipantOut(BaseModel):
     display_name: Optional[str] = None
     email: Optional[str] = None
     role: ParticipantRole
+    amount_due: int
+    payment_status: str
     joined_at: datetime
 
 class TimeSlotOut(BaseModel):
@@ -93,6 +95,7 @@ class EventOut(BaseModel):
     visibility: Visibility
     duration_type: DurationType
     created_at: datetime
+    user_join_status: Optional[Literal["none", "pending", "joined"]] = "none"
 
 class EventJoinRequestOut(BaseModel):
     """Join request response"""
@@ -124,6 +127,7 @@ class EventDetailOut(BaseModel):
     join_requests: list[EventJoinRequestOut]
     created_at: datetime
     updated_at: datetime
+    user_join_status: Optional[Literal["none", "pending", "joined"]] = "none"
 
 class EventJoinRequestSubmitResponse(BaseModel):
     """Response when submitting a join request"""
@@ -145,3 +149,13 @@ class EventBookingResponse(BaseModel):
     status: str
     payment_status: str
     created_at: datetime
+
+class SplitBillRequestIn(BaseModel):
+    """Schema for splitting a bill among participants"""
+    total_amount: int
+    # Optional list of participant IDs to split among. If None, split among all joined members.
+    participant_ids: Optional[list[UUID]] = None
+
+class ParticipantPaymentUpdateIn(BaseModel):
+    """Schema for updating a participant's payment status"""
+    payment_status: Literal["unpaid", "paid"]

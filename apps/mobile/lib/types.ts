@@ -31,10 +31,20 @@ export interface User {
   id: string;
   email: string;
   display_name: string;
+  preferred_sports?: string[] | null;
+  skill_levels?: Record<string, string> | null;
+  preferred_time_slots?: string[] | null;
+  preferred_language?: string | null;
+  custom_preferences?: string | null;
 }
 
 export interface UpdateUserRequest {
   display_name?: string;
+  preferred_sports?: string[] | null;
+  skill_levels?: Record<string, string> | null;
+  preferred_time_slots?: string[] | null;
+  preferred_language?: string | null;
+  custom_preferences?: string | null;
 }
 
 // ===[ Event Types ]===
@@ -56,6 +66,7 @@ export interface Event {
   duration_type: EventDurationType;
   created_at: string;
   updated_at?: string;
+  user_join_status?: "none" | "pending" | "joined";
 }
 
 export interface EventDetails extends Event {
@@ -87,6 +98,8 @@ export interface EventParticipant {
   display_name: string;
   email: string;
   role: "owner" | "member";
+  amount_due: number;
+  payment_status: "unpaid" | "paid";
   joined_at: string;
 }
 
@@ -216,45 +229,7 @@ export interface BookTimeSlotRequest {
   time_slot_id: string;
 }
 
-// ===[ Ticket Types ]===
 
-export interface Ticket {
-  id: string;
-  date: string;
-  start_time: string;
-  sport_type: string;
-  status: string;
-  created_at: string;
-}
-
-export interface TicketDetails extends Ticket {
-  duration_minutes: number;
-  intensity: string;
-  venue_ids?: string[];
-  price_min?: number;
-  price_max?: number;
-  currency?: string;
-  matched_events: {
-    id: string;
-    title: string;
-    description?: string;
-    sport_type: string;
-    status: string;
-    start_time?: string;
-  }[];
-}
-
-export interface CreateTicketRequest {
-  date: string; // YYYY-MM-DD
-  start_time: string; // HH:MM or HH:MM:SS
-  duration_minutes: number;
-  sport_type: string;
-  intensity: string;
-  venue_ids?: string[];
-  price_min?: number;
-  price_max?: number;
-  currency?: string;
-}
 
 // ===[ Notification Types ]===
 

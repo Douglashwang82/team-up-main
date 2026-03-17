@@ -10,10 +10,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
 import { Colors } from "../../constants/Colors";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -56,11 +57,12 @@ export default function LoginScreen() {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>揪團</Text>
-          </View>
+          <Animated.View entering={FadeInDown.springify().damping(15).delay(100)} style={styles.header}>
+            <Text style={styles.title}>Welcome Back 👋</Text>
+            <Text style={styles.subtitle}>登入以尋找您的下一個球場神隊友</Text>
+          </Animated.View>
 
-          <View style={styles.form}>
+          <Animated.View entering={FadeInDown.springify().damping(15).delay(300)} style={styles.form}>
             <Input
               label="電子郵件"
               placeholder="請輸入您的電子郵件"
@@ -99,7 +101,7 @@ export default function LoginScreen() {
                 <Text style={styles.signupLink}>立即註冊</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -128,13 +130,24 @@ const styles = StyleSheet.create({
     color: Colors.gray[900],
     marginBottom: 8,
     textAlign: "center",
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.gray[600],
+    color: Colors.gray[500],
+    textAlign: "center",
+    marginBottom: 16,
   },
   form: {
     width: "100%",
+    backgroundColor: "white",
+    padding: 24,
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
   forgotPassword: {
     alignSelf: "flex-end",

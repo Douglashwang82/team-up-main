@@ -4,15 +4,15 @@ import {
   HealthApi,
   VenuesApi,
   EventsApi,
-  TicketsApi,
   NotificationsApi,
+  ChatApi,
 } from "@team-up-main/api-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
 // Use localhost for iOS simulator, 10.0.2.2 for Android emulator
 const localhost = Platform.select({
-  ios: "http://localhost:8080",
+  ios: "http://127.0.0.1:8080",
   android: "http://10.0.2.2:8080",
 });
 
@@ -117,6 +117,6 @@ export const apis = {
   health: new HealthApi(config),
   venues: new VenuesApi(config),
   events: new EventsApi(config),
-  tickets: new TicketsApi(config),
   notifications: new NotificationsApi(config),
+  chat: new ChatApi(config),
 };

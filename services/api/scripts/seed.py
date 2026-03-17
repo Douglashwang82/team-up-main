@@ -26,7 +26,7 @@ from app.models.event import Event
 from app.models.event_participant import EventParticipant
 from app.models.event_join_request import EventJoinRequest
 from app.models.booking import Booking
-from app.models.ticket import Ticket
+
 from app.models.notification import Notification
 from app.core.types import Visibility, BookingStatus, PaymentStatus, joinRequestStatus
 from app.core.constants import (
@@ -40,18 +40,20 @@ from app.core.constants import (
 def clear_all_data(session: Session):
     """Clear all existing data from tables"""
     print("🗑️  Clearing existing data...")
+    from sqlalchemy.exc import ProgrammingError
 
     # Delete in reverse order of dependencies
-    session.query(Notification).delete()
-    session.query(Ticket).delete()
-    session.query(EventParticipant).delete()
-    session.query(EventJoinRequest).delete()
-    session.query(Booking).delete()
-    session.query(Event).delete()
-    session.query(TimeSlot).delete()
-    session.query(Court).delete()
-    session.query(Venue).delete()
-    session.query(User).delete()
+    models_to_clear = [
+        Notification, EventParticipant, EventJoinRequest, Booking,
+        Event, TimeSlot, Court, Venue, User
+    ]
+
+    for model in models_to_clear:
+        try:
+            with session.begin_nested():
+                session.query(model).delete()
+        except ProgrammingError:
+            pass  # Table might not exist yet
 
     session.commit()
     print("✅ All data cleared")
@@ -67,42 +69,54 @@ def create_users(session: Session) -> list[User]:
             "password": "password123",
             "display_name": "陳小美",
             "phone": "+886-912-345-678",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball", "badminton"],
+            "skill_levels": {"basketball": "intermediate", "badminton": "beginner"},
         },
         {
             "email": "bob@example.com",
             "password": "password123",
             "display_name": "王大明",
             "phone": "+886-923-456-789",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["badminton", "table_tennis"],
+            "skill_levels": {"badminton": "advanced", "table_tennis": "intermediate"},
         },
         {
             "email": "charlie@example.com",
             "password": "password123",
             "display_name": "林小華",
             "phone": "+886-934-567-890",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball", "badminton"],
+            "skill_levels": {"basketball": "advanced", "badminton": "intermediate"},
         },
         {
             "email": "diana@example.com",
             "password": "password123",
             "display_name": "吳雅婷",
             "phone": "+886-945-678-901",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["tennis", "badminton"],
+            "skill_levels": {"tennis": "beginner", "badminton": "beginner"},
         },
         {
             "email": "evan@example.com",
             "password": "password123",
             "display_name": "李志偉",
             "phone": "+886-956-789-012",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball", "tennis"],
+            "skill_levels": {"basketball": "intermediate", "tennis": "advanced"},
         },
         {
             "email": "fiona@example.com",
             "password": "password123",
             "display_name": "張心怡",
             "phone": "+886-967-890-123",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["badminton", "table_tennis"],
+            "skill_levels": {"badminton": "intermediate", "table_tennis": "beginner"},
         },
         # Additional users
         {
@@ -110,70 +124,90 @@ def create_users(session: Session) -> list[User]:
             "password": "password123",
             "display_name": "黃建宏",
             "phone": "+886-978-901-234",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball"],
+            "skill_levels": {"basketball": "advanced"},
         },
         {
             "email": "helen@example.com",
             "password": "password123",
             "display_name": "許佳玲",
             "phone": "+886-989-012-345",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["badminton", "tennis"],
+            "skill_levels": {"badminton": "advanced", "tennis": "intermediate"},
         },
         {
             "email": "ivan@example.com",
             "password": "password123",
             "display_name": "劉俊傑",
             "phone": "+886-990-123-456",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball", "badminton", "table_tennis"],
+            "skill_levels": {"basketball": "beginner", "badminton": "intermediate", "table_tennis": "advanced"},
         },
         {
             "email": "jenny@example.com",
             "password": "password123",
             "display_name": "楊雅琪",
             "phone": "+886-901-234-567",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["tennis"],
+            "skill_levels": {"tennis": "intermediate"},
         },
         {
             "email": "kevin@example.com",
             "password": "password123",
             "display_name": "周柏翰",
             "phone": "+886-912-345-001",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball", "table_tennis"],
+            "skill_levels": {"basketball": "intermediate", "table_tennis": "intermediate"},
         },
         {
             "email": "linda@example.com",
             "password": "password123",
             "display_name": "蔡宜庭",
             "phone": "+886-923-456-002",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["badminton"],
+            "skill_levels": {"badminton": "beginner"},
         },
         {
             "email": "mike@example.com",
             "password": "password123",
             "display_name": "鄭書豪",
             "phone": "+886-934-567-003",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball", "badminton"],
+            "skill_levels": {"basketball": "advanced", "badminton": "advanced"},
         },
         {
             "email": "nancy@example.com",
             "password": "password123",
             "display_name": "謝欣妤",
             "phone": "+886-945-678-004",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["tennis", "table_tennis"],
+            "skill_levels": {"tennis": "beginner", "table_tennis": "beginner"},
         },
         {
             "email": "oscar@example.com",
             "password": "password123",
             "display_name": "郭冠廷",
             "phone": "+886-956-789-005",
-            "avatar_url": "mock-ava-1.png"
+            "avatar_url": "mock-ava-1.png",
+            "preferred_sports": ["basketball"],
+            "skill_levels": {"basketball": "intermediate"},
         },
         {
             "email": "peggy@example.com",
             "password": "password123",
             "display_name": "徐詩涵",
             "phone": "+886-967-890-006",
-            "avatar_url": "mock-ava-2.png"
+            "avatar_url": "mock-ava-2.png",
+            "preferred_sports": ["badminton", "tennis"],
+            "skill_levels": {"badminton": "intermediate", "tennis": "advanced"},
         },
     ]
 
@@ -184,7 +218,9 @@ def create_users(session: Session) -> list[User]:
             password_hash=bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
             display_name=data["display_name"],
             phone=data.get("phone"),
-            avatar_url=data.get("avatar_url")
+            avatar_url=data.get("avatar_url"),
+            preferred_sports=data.get("preferred_sports"),
+            skill_levels=data.get("skill_levels"),
         )
         session.add(user)
         users.append(user)
@@ -219,10 +255,12 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2570-2330",
             "partner_code": "TSC001",
             "courts": [
-                {"name": "A場", "sport_type": "basketball"},
-                {"name": "B場", "sport_type": "basketball"},
-                {"name": "C場", "sport_type": "badminton"},
-                {"name": "D場", "sport_type": "badminton"},
+                {"name": "1F 籃球場", "sport_type": "basketball"},
+                {"name": "4F 綜合球場", "sport_type": "basketball"},
+                {"name": "7F 羽球場1", "sport_type": "badminton"},
+                {"name": "7F 羽球場2", "sport_type": "badminton"},
+                {"name": "7F 羽球場3", "sport_type": "badminton"},
+                {"name": "7F 羽球場4", "sport_type": "badminton"},
             ]
         },
         {
@@ -234,9 +272,14 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2723-5200",
             "partner_code": "XSC001",
             "courts": [
-                {"name": "主球場", "sport_type": "basketball"},
-                {"name": "練習場1", "sport_type": "basketball"},
-                {"name": "練習場2", "sport_type": "volleyball"},
+                {"name": "6F 綜合球場", "sport_type": "basketball"},
+                {"name": "6F 羽球場1", "sport_type": "badminton"},
+                {"name": "6F 羽球場2", "sport_type": "badminton"},
+                {"name": "6F 羽球場3", "sport_type": "badminton"},
+                {"name": "6F 羽球場4", "sport_type": "badminton"},
+                {"name": "3F 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "3F 桌球桌2", "sport_type": "table_tennis"},
+                {"name": "3F 壁球室", "sport_type": "squash"},
             ]
         },
         {
@@ -248,10 +291,13 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2362-5566",
             "partner_code": "DFC001",
             "courts": [
-                {"name": "室內球場1", "sport_type": "badminton"},
-                {"name": "室內球場2", "sport_type": "badminton"},
-                {"name": "網球場A", "sport_type": "tennis"},
-                {"name": "網球場B", "sport_type": "tennis"},
+                {"name": "3F 綜合球場", "sport_type": "basketball"},
+                {"name": "3F 羽球場1", "sport_type": "badminton"},
+                {"name": "3F 羽球場2", "sport_type": "badminton"},
+                {"name": "3F 羽球場3", "sport_type": "badminton"},
+                {"name": "2F 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "2F 桌球桌2", "sport_type": "table_tennis"},
+                {"name": "4F 壁球室", "sport_type": "squash"},
             ]
         },
         {
@@ -263,9 +309,16 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2272-8666",
             "partner_code": "BQS001",
             "courts": [
-                {"name": "籃球場1", "sport_type": "basketball"},
-                {"name": "籃球場2", "sport_type": "basketball"},
-                {"name": "排球場", "sport_type": "volleyball"},
+                {"name": "戶外籃球場1", "sport_type": "basketball"},
+                {"name": "戶外籃球場2", "sport_type": "basketball"},
+                {"name": "戶外籃球場3", "sport_type": "basketball"},
+                {"name": "戶外籃球場4", "sport_type": "basketball"},
+                {"name": "5F 羽球場1", "sport_type": "badminton"},
+                {"name": "5F 羽球場2", "sport_type": "badminton"},
+                {"name": "5F 羽球場3", "sport_type": "badminton"},
+                {"name": "3F 綜合球場", "sport_type": "basketball"},
+                {"name": "2F 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "2F 桌球桌2", "sport_type": "table_tennis"},
             ]
         },
         {
@@ -281,7 +334,6 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
                 {"name": "戶外球場2", "sport_type": "basketball"},
             ]
         },
-        # Additional venues
         {
             "name": "內湖運動中心",
             "address": "台北市內湖區洲子街12號",
@@ -291,11 +343,18 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2658-8000",
             "partner_code": "NHC001",
             "courts": [
-                {"name": "籃球場A", "sport_type": "basketball"},
-                {"name": "籃球場B", "sport_type": "basketball"},
-                {"name": "羽球場1", "sport_type": "badminton"},
-                {"name": "羽球場2", "sport_type": "badminton"},
-                {"name": "羽球場3", "sport_type": "badminton"},
+                {"name": "8F 籃球場", "sport_type": "basketball"},
+                {"name": "10F 羽球場1", "sport_type": "badminton"},
+                {"name": "10F 羽球場2", "sport_type": "badminton"},
+                {"name": "10F 羽球場3", "sport_type": "badminton"},
+                {"name": "10F 羽球場4", "sport_type": "badminton"},
+                {"name": "10F 羽球場5", "sport_type": "badminton"},
+                {"name": "10F 羽球場6", "sport_type": "badminton"},
+                {"name": "11F 壁球室1", "sport_type": "squash"},
+                {"name": "11F 壁球室2", "sport_type": "squash"},
+                {"name": "B1 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "B1 桌球桌2", "sport_type": "table_tennis"},
+                {"name": "B1 桌球桌3", "sport_type": "table_tennis"},
             ]
         },
         {
@@ -307,9 +366,14 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2783-1599",
             "partner_code": "NGC001",
             "courts": [
-                {"name": "主場", "sport_type": "basketball"},
-                {"name": "副場", "sport_type": "volleyball"},
-                {"name": "羽球場", "sport_type": "badminton"},
+                {"name": "3F 多功能球場", "sport_type": "basketball"},
+                {"name": "6F 羽球場1", "sport_type": "badminton"},
+                {"name": "6F 羽球場2", "sport_type": "badminton"},
+                {"name": "6F 羽球場3", "sport_type": "badminton"},
+                {"name": "6F 羽球場4", "sport_type": "badminton"},
+                {"name": "6F 壁球室", "sport_type": "squash"},
+                {"name": "6F 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "6F 桌球桌2", "sport_type": "table_tennis"},
             ]
         },
         {
@@ -321,9 +385,14 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2395-2323",
             "partner_code": "CZC001",
             "courts": [
-                {"name": "籃球場", "sport_type": "basketball"},
-                {"name": "羽球場A", "sport_type": "badminton"},
-                {"name": "羽球場B", "sport_type": "badminton"},
+                {"name": "3F 綜合球場", "sport_type": "basketball"},
+                {"name": "7F 羽球場1", "sport_type": "badminton"},
+                {"name": "7F 羽球場2", "sport_type": "badminton"},
+                {"name": "7F 羽球場3", "sport_type": "badminton"},
+                {"name": "7F 羽球場4", "sport_type": "badminton"},
+                {"name": "7F 羽球場5", "sport_type": "badminton"},
+                {"name": "5F 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "5F 桌球桌2", "sport_type": "table_tennis"},
             ]
         },
         {
@@ -336,9 +405,12 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "partner_code": "XZC001",
             "courts": [
                 {"name": "主球場", "sport_type": "basketball"},
-                {"name": "副球場1", "sport_type": "basketball"},
-                {"name": "副球場2", "sport_type": "volleyball"},
-                {"name": "排球訓練場", "sport_type": "volleyball"},
+                {"name": "2F 羽球場1", "sport_type": "badminton"},
+                {"name": "2F 羽球場2", "sport_type": "badminton"},
+                {"name": "2F 羽球場3", "sport_type": "badminton"},
+                {"name": "2F 羽球場4", "sport_type": "badminton"},
+                {"name": "2F 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "2F 桌球桌2", "sport_type": "table_tennis"},
             ]
         },
         {
@@ -350,10 +422,7 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2983-5566",
             "partner_code": "SZC001",
             "courts": [
-                {"name": "籃球場1", "sport_type": "basketball"},
-                {"name": "籃球場2", "sport_type": "basketball"},
-                {"name": "羽球場1", "sport_type": "badminton"},
-                {"name": "羽球場2", "sport_type": "badminton"},
+                {"name": "6F 籃球場", "sport_type": "basketball"},
             ]
         },
         {
@@ -365,9 +434,16 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2929-7799",
             "partner_code": "YHC001",
             "courts": [
-                {"name": "羽球場1", "sport_type": "badminton"},
-                {"name": "羽球場2", "sport_type": "badminton"},
-                {"name": "桌球室", "sport_type": "table_tennis"},
+                {"name": "4F 羽球場1", "sport_type": "badminton"},
+                {"name": "4F 羽球場2", "sport_type": "badminton"},
+                {"name": "4F 羽球場3", "sport_type": "badminton"},
+                {"name": "4F 羽球場4", "sport_type": "badminton"},
+                {"name": "4F 羽球場5", "sport_type": "badminton"},
+                {"name": "4F 羽球場6", "sport_type": "badminton"},
+                {"name": "4F 桌球桌1", "sport_type": "table_tennis"},
+                {"name": "4F 桌球桌2", "sport_type": "table_tennis"},
+                {"name": "5F 壁球室", "sport_type": "squash"},
+                {"name": "6F 綜合球場", "sport_type": "basketball"},
             ]
         },
         {
@@ -379,10 +455,14 @@ def create_venues_and_courts(session: Session) -> tuple[list[Venue], list[Court]
             "contact_phone": "+886-2-2881-8888",
             "partner_code": "TTC001",
             "courts": [
-                {"name": "網球場1", "sport_type": "tennis"},
-                {"name": "網球場2", "sport_type": "tennis"},
-                {"name": "網球場3", "sport_type": "tennis"},
-                {"name": "網球場4", "sport_type": "tennis"},
+                {"name": "室內網球場1", "sport_type": "tennis"},
+                {"name": "室內網球場2", "sport_type": "tennis"},
+                {"name": "室外網球場1", "sport_type": "tennis"},
+                {"name": "室外網球場2", "sport_type": "tennis"},
+                {"name": "室外網球場3", "sport_type": "tennis"},
+                {"name": "室外網球場4", "sport_type": "tennis"},
+                {"name": "羽球場1", "sport_type": "badminton"},
+                {"name": "羽球場2", "sport_type": "badminton"},
             ]
         },
     ]

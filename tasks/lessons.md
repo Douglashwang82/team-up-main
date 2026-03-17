@@ -1,0 +1,4 @@
+# Lessons Learned
+
+- **API Rebuilds**: After modifying backend API schemas or logic (like adding `user_join_status`), the Docker container running the API must be rebuilt (`docker compose up --build`) for the changes to take effect locally. Simply restarting the frontend or regenerating the API client is not enough if the local backend server is running from an outdated Docker image.
+- **Client Mapping After API Refactors**: API endpoints returning composite results (e.g., `VenueSearchResult` vs `VenueOut`) require updates not just in the API client, but also in the variable assignment logic where the data is consumed (like mapping arrays). Failing to do so can result in fields like IDs silently evaluating to `undefined` and breaking downstream flow without explicit crashes if typed as `unknown` midway.

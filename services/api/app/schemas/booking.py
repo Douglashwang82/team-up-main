@@ -49,6 +49,8 @@ class BookingOut(BaseModel):
     event_id: Optional[UUID] = None
     status: str
     payment_status: str
+    amount_paid: Optional[int] = None
+    currency: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -60,6 +62,8 @@ class BookingDetailOut(BaseModel):
     event_id: Optional[UUID] = None
     status: str
     payment_status: str
+    amount_paid: Optional[int] = None
+    currency: Optional[str] = None
     time_slot: TimeSlotOut
     court: CourtOut
     venue: VenueOut

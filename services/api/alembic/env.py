@@ -13,7 +13,7 @@ if BASE_DIR not in sys.path:
 # ---- 匯入 Base 與所有模型（確保 mapper 都被註冊到 Base.metadata）----
 from app.core.db import Base  # ← 你的 Base = declarative_base()
 # Import all models to register them with Base.metadata
-from app.models import user, venue, booking, event, event_join_request, event_participant, ticket, notification  # noqa: F401
+from app.models import user, venue, booking, event, event_join_request, event_participant, notification, chat_message, chat_memory, line_bot  # noqa: F401
 
 # ---- Alembic 既有設定 ----
 config = context.config
@@ -26,13 +26,15 @@ target_metadata = Base.metadata
 def get_url() -> str:
     """
     取得資料庫連線字串優先序：
-    1) alembic.ini 的 sqlalchemy.url（若有）
-    2) 環境變數 DATABASE_URL（Docker Compose/.env）
+    1) 環境變數 DATABASE_URL（Docker Compose/.env）
+    2) alembic.ini 的 sqlalchemy.url（若有）
     3) 預設 sqlite（三擇一）
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = os.getenv("DATABASE_URL")
     if not url:
-        url = os.getenv("DATABASE_URL", "sqlite:///app.db")
+        url = config.get_main_option("sqlalchemy.url")
+    if not url:
+        url = "sqlite:///app.db"
     return url
 
 

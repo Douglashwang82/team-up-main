@@ -40,6 +40,12 @@ from .venue import (
     TimeSlotOut,
 )
 
+# Chat schemas
+from .chat_message import (
+    ChatMessageIn,
+    ChatMessageOut,
+)
+
 __all__ = [
     # Auth
     "SignupIn",
@@ -70,4 +76,7 @@ __all__ = [
     "CourtTimeslotsQueryIn",
     "CourtOut",
     "TimeSlotOut",
+    # Chat
+    "ChatMessageIn",
+    "ChatMessageOut",
 ]

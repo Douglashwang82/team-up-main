@@ -10,9 +10,10 @@ from .routes.auth import bp as auth_bp
 from .routes.venues import bp as venues_bp
 from .routes.events import bp as events_bp
 from .routes.bookings import bp as bookings_bp
-from .routes.tickets import bp as tickets_bp
 from .routes.notifications import bp as notifications_bp
 from .routes.user import bp as user_bp
+from .routes.chat import bp as chat_bp
+from .routes.line import bp as line_bp
 
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -91,9 +92,10 @@ def create_app() -> Flask:
     app.register_blueprint(venues_bp, url_prefix="/venues")
     app.register_blueprint(events_bp, url_prefix="/events")
     app.register_blueprint(bookings_bp, url_prefix="/bookings")
-    app.register_blueprint(tickets_bp)
     app.register_blueprint(notifications_bp)
     app.register_blueprint(user_bp, url_prefix="/user")
+    app.register_blueprint(chat_bp, url_prefix="/chat")
+    app.register_blueprint(line_bp, url_prefix="/line")
 
     @app.errorhandler(PydanticValidationError)
     def handle_validation_error(e):

@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "ed976a1a-41fe-4a12-92af-975b8f90b547"
+      }
+    },
+    "android": {
+      "package": "com.douglashwang.teamupmain"
+    }
+  }
+}

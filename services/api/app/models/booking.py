@@ -22,6 +22,10 @@ class Booking(Base):
     status: Mapped[str] = mapped_column(sa.Text, default=BookingStatus.pending.value, nullable=False)
     payment_status: Mapped[str] = mapped_column(sa.Text, default=PaymentStatus.none.value, nullable=False)
 
+    # Financial snapshots
+    amount_paid: Mapped[int | None] = mapped_column(sa.Integer)
+    currency: Mapped[str | None] = mapped_column(sa.Text, server_default=sa.text("'USD'"))
+
     created_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True), server_default=sa.text("now()"))
     updated_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True), server_default=sa.text("now()"))
 

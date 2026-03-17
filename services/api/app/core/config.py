@@ -19,5 +19,7 @@ class Settings:
     JWT_ACCESS_TTL: int = int(os.getenv("JWT_ACCESS_TTL", "2592000"))
     JWT_REFRESH_TTL: int = int(os.getenv("JWT_REFRESH_TTL", "2592000"))
     DEBUG: bool = os.getenv("FLASK_DEBUG", "1") == "1"
+    LINE_CHANNEL_SECRET: str = os.getenv("LINE_CHANNEL_SECRET", "")
+    LINE_CHANNEL_ACCESS_TOKEN: str = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 
 settings = Settings()

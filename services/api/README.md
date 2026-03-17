@@ -48,3 +48,4 @@ curl -X POST http://localhost:8080/events -H 'Content-Type: application/json'   
   - DELETE /events/{id}/leave (Bearer required)
   - GET /events/{id} (single)
   - GET /events supports limit/offset and returns attending count
+Trigger deploy

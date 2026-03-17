@@ -171,6 +171,32 @@ def get_booking_by_id(booking_id):
         return jsonify(_serialize_booking_detail(booking, time_slot, court, venue, event))
 
 
+@bp.put("/<uuid:booking_id>")
+@require_auth
+def update_booking_fully(booking_id):
+    """Update booking fully (admin or full replace)"""
+    data = request.get_json() or {}
+
+    with SessionLocal() as s:
+        booking = s.get(Booking, booking_id)
+        if not booking:
+            return jsonify({"error": "booking_not_found"}), 404
+
+        # Check ownership
+        if str(booking.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+
+        # Update fields
+        if "status" in data:
+            booking.status = data["status"]
+        if "payment_status" in data:
+            booking.payment_status = data["payment_status"]
+
+        s.commit()
+        s.refresh(booking)
+
+        return jsonify(_serialize_booking(booking))
+
 
 @bp.patch("/<uuid:booking_id>")
 @require_auth
