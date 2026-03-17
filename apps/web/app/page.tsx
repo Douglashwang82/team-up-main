@@ -9,12 +9,12 @@ export default function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
-              Find Your Perfect
-              <span className="block text-blue-200">Sports Partner</span>
+              尋找您完美的
+              <span className="block text-blue-200">運動夥伴</span>
             </h1>
             <p className="text-xl sm:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Connect with local athletes, book courts together, and never play alone again.
-              Join the community that's revolutionizing recreational sports.
+              與當地運動員聯絡，一起預訂場地，再也不必獨自運動。
+              加入正在革新業餘運動的社群。
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -24,13 +24,13 @@ export default function HomePage() {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                Browse TeamUps
+                瀏覽組隊活動
               </Link>
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-xl bg-blue-500 bg-opacity-20 text-white border-2 border-white border-opacity-50 hover:bg-opacity-30 transition-all backdrop-blur-sm"
               >
-                Get Started Free
+                免費開始使用
               </Link>
             </div>
 
@@ -38,15 +38,15 @@ export default function HomePage() {
             <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
               <div>
                 <div className="text-3xl font-bold">500+</div>
-                <div className="text-blue-200 text-sm mt-1">Active Players</div>
+                <div className="text-blue-200 text-sm mt-1">活躍運動員</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">200+</div>
-                <div className="text-blue-200 text-sm mt-1">TeamUps Created</div>
+                <div className="text-blue-200 text-sm mt-1">已建立組隊</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">50+</div>
-                <div className="text-blue-200 text-sm mt-1">Partner Venues</div>
+                <div className="text-blue-200 text-sm mt-1">合作場地</div>
               </div>
             </div>
           </div>
@@ -65,10 +65,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Everything You Need to Play
+              運動所需的一切
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From finding partners to booking courts, we've got you covered
+              從尋找夥伴到預訂場地，我們為您提供全方位服務
             </p>
           </div>
 
@@ -80,9 +80,9 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-900">Discover Venues</h3>
+              <h3 className="text-2xl font-bold mb-3 text-gray-900">探索場地</h3>
               <p className="text-gray-600 leading-relaxed">
-                Browse hundreds of sports facilities in your area. Filter by sport, location, amenities, and availability to find your perfect match.
+                瀏覽您所在地區的數百個運動設施。按運動項目、位置、設施及可用性進行篩選，找到最適合您的場地。
               </p>
             </div>
 
@@ -93,9 +93,9 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-900">Build Your Team</h3>
+              <h3 className="text-2xl font-bold mb-3 text-gray-900">建立您的團隊</h3>
               <p className="text-gray-600 leading-relaxed">
-                Create TeamUps for one-time games or recurring sessions. Connect with players of all skill levels who share your passion.
+                建立單次比賽或定期活動。與各個技術水平、共享熱情的球友聯繫。
               </p>
             </div>
 
@@ -106,9 +106,9 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-900">Book Seamlessly</h3>
+              <h3 className="text-2xl font-bold mb-3 text-gray-900">無縫預訂</h3>
               <p className="text-gray-600 leading-relaxed">
-                Reserve courts with just a few clicks. Split costs with your team and get instant confirmations for all your bookings.
+                只需點擊幾下即可預訂球場。與團隊分攤費用，並獲得所有預訂的即時確認。
               </p>
             </div>
           </div>
@@ -120,10 +120,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Get Started in Minutes
+              幾分鐘內即可開始
             </h2>
             <p className="text-xl text-gray-600">
-              Three simple steps to your next game
+              簡單三個步驟，開啟下一場比賽
             </p>
           </div>
 
@@ -135,9 +135,9 @@ export default function HomePage() {
                   1
                 </div>
                 <div className="mt-4">
-                  <h3 className="text-xl font-bold mb-3 text-gray-900">Create Your Profile</h3>
+                  <h3 className="text-xl font-bold mb-3 text-gray-900">建立個人檔案</h3>
                   <p className="text-gray-600">
-                    Sign up for free and tell us about your favorite sports and skill level.
+                    免費註冊並告訴我們您喜愛的運動和技術水平。
                   </p>
                 </div>
               </div>
@@ -150,9 +150,9 @@ export default function HomePage() {
                   2
                 </div>
                 <div className="mt-4">
-                  <h3 className="text-xl font-bold mb-3 text-gray-900">Find or Create TeamUps</h3>
+                  <h3 className="text-xl font-bold mb-3 text-gray-900">尋找或建立組隊</h3>
                   <p className="text-gray-600">
-                    Browse available games or organize your own. Set your preferences and invite others.
+                    瀏覽可用比賽或自己組織。設定您的偏好並邀請他人。
                   </p>
                 </div>
               </div>
@@ -165,9 +165,9 @@ export default function HomePage() {
                   3
                 </div>
                 <div className="mt-4">
-                  <h3 className="text-xl font-bold mb-3 text-gray-900">Play Together</h3>
+                  <h3 className="text-xl font-bold mb-3 text-gray-900">一起運動</h3>
                   <p className="text-gray-600">
-                    Book your court, show up, and enjoy the game with your new sports community!
+                    預訂球場、準時參加，並與您的新運動社群一起享受比賽！
                   </p>
                 </div>
               </div>
@@ -180,18 +180,18 @@ export default function HomePage() {
       <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Ready to Join the Game?
+            準備好加入比賽了嗎？
           </h2>
           <p className="text-xl text-blue-100 mb-10 leading-relaxed">
-            Join thousands of athletes who've found their perfect sports partners.
-            Start playing today - it's completely free!
+            加入數以千計已找到完美運動夥伴的運動員行列。
+            今天就開始運動 - 完全免費！
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/signup"
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-xl bg-white text-blue-600 hover:bg-blue-50 transition-all transform hover:scale-105 shadow-xl"
             >
-              Sign Up Now
+              立即註冊
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -200,7 +200,7 @@ export default function HomePage() {
               href="/teamups"
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-xl bg-transparent text-white border-2 border-white hover:bg-white hover:text-blue-600 transition-all"
             >
-              Explore TeamUps
+              探索組隊
             </Link>
           </div>
         </div>

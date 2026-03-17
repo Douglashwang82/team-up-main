@@ -68,7 +68,7 @@ export default function EditProfilePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-t-4 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">載入中...</p>
         </div>
       </div>
     );
@@ -86,7 +86,7 @@ export default function EditProfilePage() {
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Profile
+            返回個人資料
           </Link>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -95,8 +95,8 @@ export default function EditProfilePage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">Edit Profile</h1>
-              <p className="text-lg text-gray-600 mt-1">Update your profile information</p>
+              <h1 className="text-4xl font-bold text-gray-900">編輯個人資料</h1>
+              <p className="text-lg text-gray-600 mt-1">更新您的個人帳號資訊</p>
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function EditProfilePage() {
             <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-green-800 flex-1">Profile updated successfully! Redirecting...</p>
+            <p className="text-sm text-green-800 flex-1">個人資料已成功更新！正在跳轉...</p>
           </div>
         )}
 
@@ -128,13 +128,13 @@ export default function EditProfilePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Profile Information</h2>
+              <h2 className="text-xl font-bold text-gray-900">基本資訊</h2>
             </div>
 
             <div className="space-y-5">
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email Address
+                  電子郵件地址
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -154,13 +154,13 @@ export default function EditProfilePage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  Email cannot be changed
+                  電子郵件地址無法更改
                 </p>
               </div>
 
               <div>
                 <label htmlFor="displayName" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Display Name
+                  顯示名稱
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -173,18 +173,18 @@ export default function EditProfilePage() {
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Enter your display name"
+                    placeholder="請輸入您的顯示名稱"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  This is how your name will appear to other users
+                  這是其他使用者會看到的名稱
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  User ID
+                  使用者 ID
                 </label>
                 <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
                   <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -205,7 +205,7 @@ export default function EditProfilePage() {
               onClick={() => router.push('/profile')}
               className="flex-1 px-6 py-3.5 border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-xl font-semibold transition-all"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
@@ -218,14 +218,14 @@ export default function EditProfilePage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Saving...
+                  儲存中...
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Save Changes
+                  儲存變更
                 </span>
               )}
             </button>

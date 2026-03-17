@@ -16,10 +16,8 @@ export default function Navigation() {
   };
 
   const navLinks = [
-    { href: '/teamups', label: 'TeamUps' },
-    { href: '/venues', label: 'Venues' },
-    { href: '/events', label: 'Events' },
-    { href: '/tickets', label: 'Tickets' },
+    { href: '/teamups', label: '組隊活動' },
+    { href: '/venues', label: '場地探索' },
   ];
 
   return (
@@ -57,11 +55,11 @@ export default function Navigation() {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
-                      {user.displayName?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                      {user.displayName?.[0]?.toUpperCase() || user.email[0]?.toUpperCase()}
                     </span>
                   </div>
                   <span className="hidden md:block text-sm font-medium text-gray-700">
@@ -91,21 +89,21 @@ export default function Navigation() {
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowUserMenu(false)}
                       >
-                        My TeamUps
+                        我的組隊
                       </Link>
                       <Link
                         href="/user/profile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowUserMenu(false)}
                       >
-                        Profile
+                        個人檔案
                       </Link>
                       <Link
                         href="/bookings"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowUserMenu(false)}
                       >
-                        My Bookings
+                        我的預訂
                       </Link>
                       <hr className="my-1 border-gray-200" />
                       <button
@@ -115,7 +113,7 @@ export default function Navigation() {
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
                       >
-                        Sign Out
+                        登出
                       </button>
                     </div>
                   </>
@@ -127,13 +125,13 @@ export default function Navigation() {
                   href="/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
-                  Sign In
+                  登入
                 </Link>
                 <Link
                   href="/signup"
                   className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Sign Up
+                  註冊
                 </Link>
               </div>
             )}

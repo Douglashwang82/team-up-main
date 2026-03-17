@@ -36,8 +36,8 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to continue your sports journey</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">歡迎回來</h1>
+          <p className="text-gray-600">登入以繼續您的運動旅程</p>
         </div>
 
         {error && (
@@ -52,7 +52,7 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
             <label htmlFor="email" className="block text-sm font-semibold mb-2 text-gray-700">
-              Email Address
+              電子郵件地址
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -74,7 +74,7 @@ export default function LoginPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-semibold mb-2 text-gray-700">
-              Password
+              密碼
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -97,10 +97,10 @@ export default function LoginPage() {
           <div className="flex items-center justify-between text-sm">
             <label className="flex items-center cursor-pointer">
               <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-              <span className="ml-2 text-gray-600">Remember me</span>
+              <span className="ml-2 text-gray-600">記住我</span>
             </label>
             <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium">
-              Forgot password?
+              忘記密碼？
             </Link>
           </div>
 
@@ -115,10 +115,10 @@ export default function LoginPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Signing in...
+                登入中...
               </span>
             ) : (
-              'Sign In'
+              '登入'
             )}
           </button>
         </form>
@@ -129,7 +129,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">New to TeamUp?</span>
+              <span className="px-4 bg-white text-gray-500">剛加入 TeamUp？</span>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function LoginPage() {
             href="/signup"
             className="inline-flex items-center justify-center w-full px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:border-blue-600 hover:text-blue-600 transition-all"
           >
-            Create an Account
+            建立帳戶
           </Link>
         </div>
       </div>

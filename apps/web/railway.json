@@ -1,0 +1,16 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "buildCommand": "pnpm run build",
+    "watchPatterns": [
+      "apps/web/**",
+      "packages/api-client/**"
+    ]
+  },
+  "deploy": {
+    "startCommand": "pnpm run start",
+    "restartPolicyType": "ON_FAILURE",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100
+  }
+}

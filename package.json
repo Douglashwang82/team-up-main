@@ -2,14 +2,17 @@
   "name": "team-up-main",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "openapi:lint": "spectral lint services/api/openapi.yaml",
     "client:clean": "rimraf packages/api-client/src packages/api-client/dist",
     "client:gen": "openapi-generator-cli generate -g typescript-fetch -i docs/openapi.yaml -o packages/api-client/src/gen --global-property=apis,models,supportingFiles,apiTests=false,modelTests=false,apiDocs=false,modelDocs=false --additional-properties=typescriptThreePlus=true,modelPropertyNaming=camelCase,enumPropertyNaming=original,useSingleRequestParameter=true,withInterfaces=true",
     "client:build": "pnpm -C packages/api-client build",
     "codegen": "pnpm openapi:lint && pnpm client:clean && pnpm client:gen && pnpm client:build",
-    "web:dev": "pnpm -C apps/web dev"
+    "web:dev": "pnpm -C apps/web dev",
+    "build:web": "pnpm -C packages/api-client build && pnpm -C apps/web build",
+    "start:web": "pnpm -C apps/web start",
+    "build": "pnpm run build:web",
+    "start": "pnpm run start:web"
   },
   "keywords": [],
   "author": "",
@@ -32,5 +35,11 @@
   ],
   "dependencies": {
     "@openapitools/openapi-generator-cli": "^2.23.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1"
+    }
   }
 }

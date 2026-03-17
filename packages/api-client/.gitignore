@@ -21,5 +21,4 @@ node_modules/
 .DS_Store
 *.swp
 
-# Ignore generated source files
-src/gen/
+

@@ -17,7 +17,7 @@ export default function SignupPage() {
     setError(null);
 
     if (!email || !password) {
-      setError('Email and password are required.');
+      setError('請輸入電子郵件和密碼。');
       return;
     }
 
@@ -27,11 +27,11 @@ export default function SignupPage() {
     } catch (err: any) {
       const message = err?.message || '';
       if (message.includes('409') || message.toLowerCase().includes('exists')) {
-        setError('This email is already registered.');
+        setError('此電子郵件已註冊。');
       } else if (message.includes('400')) {
-        setError('Invalid input. Please check your data.');
+        setError('輸入無效。請檢查您的資料。');
       } else {
-        setError('Signup failed. Please try again.');
+        setError('註冊失敗。請再試一次。');
       }
     } finally {
       setLoading(false);
@@ -49,8 +49,8 @@ export default function SignupPage() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join TeamUp</h1>
-          <p className="text-gray-600">Start connecting with athletes near you</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">加入 TeamUp</h1>
+          <p className="text-gray-600">開始與您附近的運動員聯繫</p>
         </div>
 
         {error && (
@@ -65,7 +65,7 @@ export default function SignupPage() {
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
             <label htmlFor="displayName" className="block text-sm font-semibold mb-2 text-gray-700">
-              Display Name
+              顯示名稱
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -79,15 +79,15 @@ export default function SignupPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Jordan Lee"
+                placeholder="陳大文"
               />
             </div>
-            <p className="mt-1 text-xs text-gray-500">This is how others will see you</p>
+            <p className="mt-1 text-xs text-gray-500">這是其他用戶看到的稱呼</p>
           </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-semibold mb-2 text-gray-700">
-              Email Address
+              電子郵件地址
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -109,7 +109,7 @@ export default function SignupPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-semibold mb-2 text-gray-700">
-              Password
+              密碼
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -128,7 +128,7 @@ export default function SignupPage() {
                 required
               />
             </div>
-            <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
+            <p className="mt-1 text-xs text-gray-500">密碼長度至少為 6 個字元</p>
           </div>
 
           <button
@@ -142,20 +142,20 @@ export default function SignupPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Creating account...
+                正在建立帳戶...
               </span>
             ) : (
-              'Create Account'
+              '建立帳戶'
             )}
           </button>
         </form>
 
         <div className="mt-6">
           <p className="text-xs text-gray-500 text-center">
-            By signing up you agree to our{' '}
-            <Link href="/terms" className="text-blue-600 hover:text-blue-700">Terms of Service</Link>
-            {' '}and{' '}
-            <Link href="/privacy" className="text-blue-600 hover:text-blue-700">Privacy Policy</Link>
+            註冊即表示您同意我們的{' '}
+            <Link href="/terms" className="text-blue-600 hover:text-blue-700">服務條款</Link>
+            {' '}和{' '}
+            <Link href="/privacy" className="text-blue-600 hover:text-blue-700">隱私權政策</Link>
           </p>
         </div>
 
@@ -165,7 +165,7 @@ export default function SignupPage() {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">Already have an account?</span>
+              <span className="px-4 bg-white text-gray-500">已經有帳戶了？</span>
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ export default function SignupPage() {
             href="/login"
             className="inline-flex items-center justify-center w-full px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:border-blue-600 hover:text-blue-600 transition-all"
           >
-            Sign In Instead
+            改為登入
           </Link>
         </div>
       </div>

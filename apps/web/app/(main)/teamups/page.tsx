@@ -1,240 +1,179 @@
 'use client';
 
-import { useState } from 'react';
-import { useTeamUps } from '@/lib/hooks/useTeamUps';
+import { useState, useEffect } from 'react';
+import { apis } from '@/lib/api';
+import { EventOut, ListEventsStatusEnum } from '@team-up-main/api-client';
 import Link from 'next/link';
-import { SearchTeamUpsRequest } from '@team-up-main/api-client';
+import { format } from 'date-fns';
+import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 
 export default function TeamUpsPage() {
-  const [keyword, setKeyword] = useState<string>('');
-  const [limit, setLimit] = useState<number>(10);
-  const [offset, setOffset] = useState<number>(0);
-  const [searchParams, setSearchParams] = useState<SearchTeamUpsRequest | null>(null);
+  const [events, setEvents] = useState<EventOut[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { teamups, isLoading, error } = useTeamUps(searchParams ?? undefined);
+  // Filters
+  const [keyword, setKeyword] = useState('');
+  const [status, setStatus] = useState<ListEventsStatusEnum>(ListEventsStatusEnum.open);
 
-  function getStatusColor(status: string): string {
-    switch (status) {
-      case 'open':
-        return 'bg-green-100 text-green-700 border-green-200';
-      case 'closed':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await apis.events.listEvents({
+        status,
+        keyword: keyword || undefined,
+        limit: 50,
+      });
+      setEvents(data);
+    } catch (err: any) {
+      console.error('Failed to fetch events:', err);
+      setError('載入活動失敗，請稍後再試。');
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  function getProgressPercentage(current: number, max: number): number {
-    return Math.min((current / max) * 100, 100);
-  }
+  useEffect(() => {
+    fetchEvents();
+  }, [status]);
 
-  function getProgressColor(percentage: number): string {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-blue-600';
-  }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchEvents();
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Discover TeamUps</h1>
-              <p className="text-lg text-gray-600">Find and join local sports activities</p>
-            </div>
-            <div className="flex gap-3">
-              <Link
-                href="/teamups/my"
-                className="inline-flex items-center px-5 py-2.5 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:border-blue-600 hover:text-blue-600 transition-all"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                My TeamUps
-              </Link>
-              <Link
-                href="/teamups/new"
-                className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg transform hover:scale-105"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Create TeamUp
-              </Link>
-            </div>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header and Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">探索 TeamUp 活動</h1>
+          <p className="text-gray-600 mt-2">尋找您的下一場比賽，與當地的運動員交流。</p>
         </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Title
-              </label>
-              <input
-                type="text"
-                value={keyword || ''}
-                placeholder='e.g., "basketball", "morning run"'
-                onChange={(e) => setKeyword(e.target.value || '')}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-            {/* Submit Button */}
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  if (keyword.trim() === '') return; // Do not submit if keyword is empty
-                  setSearchParams({ keyword, limit, offset });
-                }}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg"
-              >
-                Search
-              </button>
-            </div>
-
-            {/* Clear Filters */}
-            {/* {(statusFilter || titleFilter) && (
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    setStatusFilter(undefined);
-                    setTitleFilter(undefined);
-                  }}
-                  className="px-5 py-3 text-sm text-blue-600 hover:text-blue-700 font-medium hover:bg-blue-50 rounded-xl transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            )} */}
-          </div>
-        </div>
-
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-            <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-sm text-red-800 flex-1">{error.message}</p>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-t-4 border-blue-600 mb-4"></div>
-            <p className="text-gray-600">Loading TeamUps...</p>
-          </div>
-        )}
-
-        {!isLoading && teamups.length === 0 && (
-          <div className="text-center py-20">
-            <div className="mb-6">
-              <svg className="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No TeamUps Found</h3>
-            <p className="text-gray-600 mb-6">Try adjusting your filters or create the first one!</p>
-            <Link
-              href="/teamups/new"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create Your First TeamUp
-            </Link>
-          </div>
-        )}
-
-        {/* TeamUps Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {teamups.map((teamup) => {
-            const progress = getProgressPercentage(teamup.currentParticipants, teamup.maxParticipants);
-            return (
-              <Link
-                key={teamup.id}
-                href={`/teamups/${teamup.id}`}
-                className="group bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:shadow-xl transition-all duration-300 overflow-hidden"
-              >
-                <div className="p-6">
-                  {/* Status Badges */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(teamup.status)}`}>
-                      {teamup.status.toUpperCase()}
-                    </span>
-                    {teamup.visibility === 'private' && (
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                        <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Private
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                    {teamup.title}
-                  </h3>
-
-                  {/* Description */}
-                  {teamup.description && (
-                    <p className="text-gray-600 mb-4 line-clamp-2">
-                      {teamup.description}
-                    </p>
-                  )}
-
-                  {/* Meta Info */}
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {new Date(teamup.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {/* Participants Progress */}
-                  <div>
-                    <div className="flex justify-between items-center text-sm mb-2">
-                      <span className="font-semibold text-gray-700">
-                        {teamup.currentParticipants}/{teamup.maxParticipants} Participants
-                      </span>
-                      <span className="text-gray-500 font-medium">
-                        {Math.round(progress)}%
-                      </span>
-                    </div>
-                    <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${getProgressColor(progress)}`}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    {progress >= 90 && (
-                      <p className="text-xs text-red-600 font-medium mt-2">Almost full!</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Footer */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 group-hover:bg-blue-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
-                      {teamup.status === 'open' ? 'View & Join' : 'View Details'}
-                    </span>
-                    <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <Link
+          href="/teamups/create"
+          className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors w-full md:w-auto"
+        >
+          發起活動
+        </Link>
       </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              placeholder="搜尋關鍵字、運動項目或地點..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+            />
+          </div>
+          
+          <div className="sm:w-48">
+            <select
+              className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as ListEventsStatusEnum)}
+            >
+              <option value={ListEventsStatusEnum.open}>招募中</option>
+              <option value={ListEventsStatusEnum.closed}>已結束</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            搜尋
+          </button>
+        </form>
+      </div>
+
+      {/* Content */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : events.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">查無活動</h3>
+          <p className="text-gray-500 max-w-sm mx-auto">
+            找不到符合條件的活動。請嘗試調整篩選條件，或由您發起第一個活動！
+          </p>
+          <button
+            onClick={() => { setKeyword(''); setStatus(ListEventsStatusEnum.open); }}
+            className="mt-6 text-blue-600 font-medium hover:text-blue-700"
+          >
+            清除篩選
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((event) => (
+            <Link key={event.id} href={`/teamups/${event.id}`}>
+              <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group h-full flex flex-col cursor-pointer">
+                {/* Image Placeholder */}
+                <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-blue-600/10 group-hover:bg-transparent transition-colors duration-300"></div>
+                  {/* Status Badge */}
+                  <div className="absolute top-4 right-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      event.status === 'open' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {event.status === 'open' ? '招募中' : '已結束'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 flex-1 flex flex-col">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    {event.title}
+                  </h3>
+                  
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">
+                    {event.description || '未提供活動描述。'}
+                  </p>
+
+                  <div className="mt-auto space-y-3">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Clock className="w-4 h-4 mr-2" />
+                      <span>{format(new Date(event.createdAt), 'yyyy/MM/dd HH:mm')}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-gray-600">
+                        <Users className="w-4 h-4 mr-2" />
+                        <span>已加入 {event.currentParticipants} / 上限 {event.maxParticipants} 人</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
