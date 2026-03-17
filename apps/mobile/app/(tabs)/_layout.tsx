@@ -53,6 +53,13 @@ export default function TabLayout() {
         })}
       />
       <Tabs.Screen
+        name="training"
+        options={{
+          title: "訓練計畫",
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
         name="my-events"
         options={{
           title: "我的活動",
