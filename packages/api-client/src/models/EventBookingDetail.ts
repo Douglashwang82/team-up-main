@@ -49,13 +49,13 @@ export interface EventBookingDetail {
     id: string;
     /**
      * 
-     * @type {EventBookingDetailStatusEnum}
+     * @type {string}
      * @memberof EventBookingDetail
      */
     status: EventBookingDetailStatusEnum;
     /**
      * 
-     * @type {EventBookingDetailPaymentStatusEnum}
+     * @type {string}
      * @memberof EventBookingDetail
      */
     paymentStatus: EventBookingDetailPaymentStatusEnum;
@@ -90,9 +90,9 @@ export interface EventBookingDetail {
  * @export
  */
 export const EventBookingDetailStatusEnum = {
-    Pending: 'pending',
-    Confirmed: 'confirmed',
-    Cancelled: 'cancelled'
+    pending: 'pending',
+    confirmed: 'confirmed',
+    cancelled: 'cancelled'
 } as const;
 export type EventBookingDetailStatusEnum = typeof EventBookingDetailStatusEnum[keyof typeof EventBookingDetailStatusEnum];
 
@@ -100,10 +100,10 @@ export type EventBookingDetailStatusEnum = typeof EventBookingDetailStatusEnum[k
  * @export
  */
 export const EventBookingDetailPaymentStatusEnum = {
-    None: 'none',
-    Pending: 'pending',
-    Succeeded: 'succeeded',
-    Failed: 'failed'
+    none: 'none',
+    pending: 'pending',
+    succeeded: 'succeeded',
+    failed: 'failed'
 } as const;
 export type EventBookingDetailPaymentStatusEnum = typeof EventBookingDetailPaymentStatusEnum[keyof typeof EventBookingDetailPaymentStatusEnum];
 

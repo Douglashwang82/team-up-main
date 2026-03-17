@@ -55,9 +55,9 @@ export interface UpdatePasswordOperationRequest {
 export class AuthApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for deleteAccount without sending the request
+     * Delete account
      */
-    async deleteAccountRequestOpts(): Promise<runtime.RequestOpts> {
+    async deleteAccountRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -73,20 +73,12 @@ export class AuthApi extends runtime.BaseAPI {
 
         let urlPath = `/auth/delete_account`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Delete account
-     */
-    async deleteAccountRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
-        const requestOptions = await this.deleteAccountRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }
@@ -100,9 +92,9 @@ export class AuthApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getCurrentUser without sending the request
+     * Get current user info
      */
-    async getCurrentUserRequestOpts(): Promise<runtime.RequestOpts> {
+    async getCurrentUserRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserOut>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -118,20 +110,12 @@ export class AuthApi extends runtime.BaseAPI {
 
         let urlPath = `/auth/me`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Get current user info
-     */
-    async getCurrentUserRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserOut>> {
-        const requestOptions = await this.getCurrentUserRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserOutFromJSON(jsonValue));
     }
@@ -145,9 +129,9 @@ export class AuthApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for login without sending the request
+     * Login user
      */
-    async loginRequestOpts(requestParameters: LoginRequest): Promise<runtime.RequestOpts> {
+    async loginRaw(requestParameters: LoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenOut>> {
         if (requestParameters['loginIn'] == null) {
             throw new runtime.RequiredError(
                 'loginIn',
@@ -164,21 +148,13 @@ export class AuthApi extends runtime.BaseAPI {
 
         let urlPath = `/auth/login`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: LoginInToJSON(requestParameters['loginIn']),
-        };
-    }
-
-    /**
-     * Login user
-     */
-    async loginRaw(requestParameters: LoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenOut>> {
-        const requestOptions = await this.loginRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TokenOutFromJSON(jsonValue));
     }
@@ -192,9 +168,9 @@ export class AuthApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for signup without sending the request
+     * Sign up new user
      */
-    async signupRequestOpts(requestParameters: SignupRequest): Promise<runtime.RequestOpts> {
+    async signupRaw(requestParameters: SignupRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenOut>> {
         if (requestParameters['signupIn'] == null) {
             throw new runtime.RequiredError(
                 'signupIn',
@@ -211,21 +187,13 @@ export class AuthApi extends runtime.BaseAPI {
 
         let urlPath = `/auth/signup`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: SignupInToJSON(requestParameters['signupIn']),
-        };
-    }
-
-    /**
-     * Sign up new user
-     */
-    async signupRaw(requestParameters: SignupRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenOut>> {
-        const requestOptions = await this.signupRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TokenOutFromJSON(jsonValue));
     }
@@ -239,9 +207,9 @@ export class AuthApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updatePassword without sending the request
+     * Update password
      */
-    async updatePasswordRequestOpts(requestParameters: UpdatePasswordOperationRequest): Promise<runtime.RequestOpts> {
+    async updatePasswordRaw(requestParameters: UpdatePasswordOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
         if (requestParameters['updatePasswordRequest'] == null) {
             throw new runtime.RequiredError(
                 'updatePasswordRequest',
@@ -266,21 +234,13 @@ export class AuthApi extends runtime.BaseAPI {
 
         let urlPath = `/auth/update_password`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: UpdatePasswordRequestToJSON(requestParameters['updatePasswordRequest']),
-        };
-    }
-
-    /**
-     * Update password
-     */
-    async updatePasswordRaw(requestParameters: UpdatePasswordOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
-        const requestOptions = await this.updatePasswordRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }

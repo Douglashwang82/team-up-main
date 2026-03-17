@@ -51,10 +51,20 @@ def get_venues():
     distance = request.args.get("distance", "5000")  # Default 5km
     datetime_str = request.args.get("datetime")
     sport_type = request.args.get("sport_type")
+    require_bookable = request.args.get("require_bookable", "false").lower() == "true"
 
     with SessionLocal() as s:
         # Start with base query - get distinct venues first
-        q = select(Venue.id).join(Venue.courts).join(Court.time_slots).distinct()
+        q = select(Venue.id).distinct()
+
+        # Conditionally join on Courts and TimeSlots based on filters
+        needs_courts = bool(sport_type or datetime_str or require_bookable)
+        needs_timeslots = bool(datetime_str or require_bookable)
+
+        if needs_courts:
+            q = q.join(Venue.courts)
+        if needs_timeslots:
+            q = q.join(Court.time_slots)
 
         # Apply geolocation filter if coordinates provided
         if lat and lng:
@@ -106,8 +116,8 @@ def get_venues():
                     ))
             except ValueError:
                 return jsonify({"error": "Invalid datetime format. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS"}), 400
-        else:
-            # No datetime filter - only show bookable time slots
+        elif require_bookable:
+            # No datetime filter, but explicitly requires bookable slots
             q = q.where(TimeSlot.is_bookable == True)
 
         # Get venue IDs that match criteria

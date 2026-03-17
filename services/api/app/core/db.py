@@ -27,8 +27,17 @@ def ensure_postgis_extension():
 
 def create_all_tables():
     """Create all database tables."""
+    import time
     from app.models.user import User  # noqa
     from app.models.event import Event  # noqa
     from app.models.venue import Venue, Court, TimeSlot  # noqa
     from app.models.booking import Booking  # noqa
-    Base.metadata.create_all(engine)
+    for attempt in range(3):
+        try:
+            Base.metadata.create_all(engine, checkfirst=True)
+            return
+        except Exception:
+            if attempt < 2:
+                time.sleep(1)
+            else:
+                raise

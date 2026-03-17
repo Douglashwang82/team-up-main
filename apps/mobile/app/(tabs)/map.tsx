@@ -16,12 +16,11 @@ import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { GlassView } from "expo-glass-effect";
 
 import { Colors } from "../../constants/Colors";
 import { apis } from "../../lib/api";
-import LiquidSearchBar from "../../components/LiquidSearchBar";
-import EventFilterModal, { EventFilterState } from "../../components/EventFilterModal";
+import LiquidSearchBar from "../../components/ui/LiquidSearchBar";
+import EventFilterModal, { EventFilterState } from "../../components/events/EventFilterModal";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -82,17 +81,7 @@ export default function MapScreen() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<EventFilterState>({});
 
-  // Map Chinese UI categories to English DB fields
-  const CATEGORY_MAP: Record<string, string> = {
-    '籃球': 'basketball',
-    '羽球': 'badminton',
-    '排球': 'volleyball',
-    '網球': 'tennis',
-    '桌球': 'table_tennis',
-    '撞球': 'billiards',
-    '游泳': 'swimming',
-    '健身': 'fitness'
-  };
+
 
   // Fetch venues
   useEffect(() => {
@@ -101,30 +90,37 @@ export default function MapScreen() {
         const lat = location?.coords.latitude || DEFAULT_LAT;
         const lng = location?.coords.longitude || DEFAULT_LNG;
 
-        const sportType = activeFilters.category ? CATEGORY_MAP[activeFilters.category] || activeFilters.category : undefined;
+        const sportType = activeFilters.category;
 
         const response = await apis.venues.searchVenues({
           lat: lat,
           lng: lng,
           distance: 10000, // 10km radius
           sportType: sportType,
+          requireBookable: false,
         });
 
         // @ts-ignore
         const mappedVenues = response
           .map((item: any) => {
             const v = item.venue || item;
+
+            // Critical: Ensure latitude and longitude are numbers. 
+            // String coordinates from API crash the react-native-maps module natively.
+            let cLat = v.latitude !== undefined && v.latitude !== null ? Number(v.latitude) : lat;
+            let cLng = v.longitude !== undefined && v.longitude !== null ? Number(v.longitude) : lng;
+
             return {
               id: v.id,
               name: v.name,
-              latitude: v.latitude || lat,
-              longitude: v.longitude || lng,
+              latitude: cLat,
+              longitude: cLng,
               address: v.address,
               city: v.city,
               distance_meters: item.distance_meters,
             };
           })
-          .filter((v: Venue) => v.latitude && v.longitude);
+          .filter((v: Venue) => !isNaN(v.latitude) && !isNaN(v.longitude));
 
         setVenues(mappedVenues);
       } catch (error) {
@@ -339,12 +335,12 @@ export default function MapScreen() {
           />
         )}
 
-        {venues.map((field) => (
+        {venues.map((court) => (
           <Marker
-            key={field.id}
+            key={court.id}
             coordinate={{
-              latitude: field.latitude,
-              longitude: field.longitude,
+              latitude: court.latitude,
+              longitude: court.longitude,
             }}
           >
             <View style={styles.customMarker}>
@@ -352,12 +348,12 @@ export default function MapScreen() {
             </View>
             <Callout
               tooltip
-              onPress={() => router.push(`/field/${field.id}`)}
+              onPress={() => router.push(`/venue/${court.id}`)}
             >
               <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>{field.name}</Text>
+                <Text style={styles.calloutTitle}>{court.name}</Text>
                 <Text style={styles.calloutDescription} numberOfLines={2}>
-                  {field.address}
+                  {court.address}
                 </Text>
                 <View style={styles.calloutFooter}>
                   <Text style={styles.calloutLink}>點擊查看詳情</Text>
@@ -407,7 +403,7 @@ export default function MapScreen() {
         {/* Autocomplete dropdown styled as index.tsx SuggestionsList */}
         {showAutocomplete && placePredictions.length > 0 && (
           <View style={styles.suggestionsContainer}>
-            <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: '#ffffff', opacity: 0.95 }]} />
             <FlatList
               data={placePredictions}
               keyExtractor={(item) => item.place_id}
@@ -455,7 +451,7 @@ export default function MapScreen() {
         }}
         activeOpacity={0.8}
       >
-        <GlassView style={StyleSheet.absoluteFillObject} glassEffectStyle="regular" />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#ffffff', opacity: 0.9 }]} />
         <Ionicons name="locate" size={24} color={Colors.gray[800]} />
       </TouchableOpacity>
     </View>

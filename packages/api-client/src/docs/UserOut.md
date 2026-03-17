@@ -11,6 +11,11 @@ Name | Type
 `displayName` | string
 `createdAt` | Date
 `updatedAt` | Date
+`preferredSports` | Array&lt;string&gt;
+`skillLevels` | { [key: string]: string; }
+`preferredTimeSlots` | Array&lt;string&gt;
+`preferredLanguage` | string
+`customPreferences` | string
 
 ## Example
 
@@ -24,6 +29,11 @@ const example = {
   "displayName": null,
   "createdAt": null,
   "updatedAt": null,
+  "preferredSports": null,
+  "skillLevels": null,
+  "preferredTimeSlots": null,
+  "preferredLanguage": null,
+  "customPreferences": null,
 } satisfies UserOut
 
 console.log(example)

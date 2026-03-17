@@ -1,22 +1,56 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import Card from "../../components/Card";
-import Button from "../../components/Button";
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
 import { Colors } from "../../constants/Colors";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { apis } from "../../lib/api";
+import { styles } from "./profile.styles";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [createdCount, setCreatedCount] = useState<number>(0);
+  const [joinedCount, setJoinedCount] = useState<number>(0);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    if (!user) {
+      setIsLoadingStats(false);
+      return;
+    }
+    setIsLoadingStats(true);
+    try {
+      const [created, joined] = await Promise.all([
+        apis.events.getMyCreatedEvents(),
+        apis.events.getMyJoinedEvents(),
+      ]);
+      setCreatedCount(created.length);
+      setJoinedCount(joined.length);
+    } catch (error) {
+      console.warn("Failed to fetch profile stats:", error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, [user]);
+
+  // Refetch stats when the tab is focused (e.g. after creating/joining events)
+  useFocusEffect(
+    useCallback(() => {
+      fetchStats();
+    }, [fetchStats])
+  );
 
   const menuItems = [
     {
@@ -24,7 +58,7 @@ export default function ProfileScreen() {
       title: "編輯個人資料",
       subtitle: "更新您的個人資訊",
       onPress: () => {
-        // TODO: Navigate to edit profile
+        router.push("/edit-profile");
       },
     },
     {
@@ -32,7 +66,7 @@ export default function ProfileScreen() {
       title: "通知設定",
       subtitle: "管理通知偏好",
       onPress: () => {
-        // TODO: Navigate to notifications settings
+        Alert.alert("即將推出", "通知設定功能即將推出，敬請期待！");
       },
     },
     {
@@ -40,7 +74,7 @@ export default function ProfileScreen() {
       title: "隱私與安全",
       subtitle: "控制您的隱私設定",
       onPress: () => {
-        // TODO: Navigate to privacy settings
+        Alert.alert("即將推出", "隱私與安全功能即將推出，敬請期待！");
       },
     },
     {
@@ -48,7 +82,7 @@ export default function ProfileScreen() {
       title: "幫助與支援",
       subtitle: "取得幫助或聯繫客服",
       onPress: () => {
-        // TODO: Navigate to help
+        Alert.alert("即將推出", "幫助與支援功能即將推出，敬請期待！");
       },
     },
   ];
@@ -67,20 +101,28 @@ export default function ProfileScreen() {
               <Ionicons name="person" size={40} color={Colors.primary} />
             </View>
             <Text style={styles.name}>
-              {user ? `${user.display_name}` : "John Doe"}
+              {user ? `${user.display_name}` : "使用者"}
             </Text>
             <Text style={styles.email}>
-              {user?.email || "john.doe@example.com"}
+              {user?.email || ""}
             </Text>
 
             <View style={styles.stats}>
               <View style={styles.stat}>
-                <Text style={styles.statValue}>5</Text>
+                {isLoadingStats ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Text style={styles.statValue}>{createdCount}</Text>
+                )}
                 <Text style={styles.statLabel}>已建立</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.stat}>
-                <Text style={styles.statValue}>12</Text>
+                {isLoadingStats ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Text style={styles.statValue}>{joinedCount}</Text>
+                )}
                 <Text style={styles.statLabel}>已加入</Text>
               </View>
             </View>
@@ -129,124 +171,3 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.base,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: Colors.base,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: Colors.gray[900],
-  },
-  content: {
-    padding: 20,
-  },
-  profileCard: {
-    alignItems: "center",
-    backgroundColor: Colors.white,
-    marginBottom: 24,
-    borderColor: Colors.gray[200],
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.tertiary,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: Colors.gray[900],
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 14,
-    color: Colors.gray[600],
-    marginBottom: 20,
-  },
-  stats: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray[200],
-    width: "100%",
-  },
-  stat: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: Colors.primary,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: Colors.gray[600],
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: Colors.gray[200],
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.gray[800],
-    marginBottom: 12,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.white,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.gray[200],
-  },
-  menuIcon: {
-    marginRight: 16,
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.gray[900],
-    marginBottom: 2,
-  },
-  menuSubtitle: {
-    fontSize: 12,
-    color: Colors.gray[600],
-  },
-  logoutButton: {
-    marginBottom: 16,
-    borderColor: Colors.error[500],
-  },
-  version: {
-    fontSize: 12,
-    color: Colors.gray[500],
-    textAlign: "center",
-  },
-});

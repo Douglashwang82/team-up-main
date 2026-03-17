@@ -4,8 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "start:local": "expo start -c",
-    "start:remote": "EXPO_PUBLIC_API_URL=https://api-production-0020e.up.railway.app expo start",
+    "start:local": "EXPO_PUBLIC_API_URL= expo start -c",
+    "start:remote": "EXPO_PUBLIC_API_URL=https://api-production-0020e.up.railway.app expo start -c",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "ios:17": "expo run:ios --device 'iPhone 17'",
@@ -32,6 +32,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-calendars": "^1.1314.0",
     "react-native-gesture-handler": "^2.30.0",
     "react-native-image-colors": "^2.5.1",
     "react-native-maps": "1.20.1",

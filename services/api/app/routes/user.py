@@ -213,7 +213,12 @@ def get_user_info():
             "email": u.email,
             "display_name": u.display_name,
             "avatar_url": u.avatar_url,
-            "phone": u.phone
+            "phone": u.phone,
+            "preferred_sports": u.preferred_sports,
+            "skill_levels": u.skill_levels,
+            "preferred_time_slots": u.preferred_time_slots,
+            "preferred_language": u.preferred_language,
+            "custom_preferences": u.custom_preferences
         })
 
 @bp.put("/info")
@@ -227,6 +232,11 @@ def update_user_info():
         if "display_name" in data: u.display_name = data["display_name"]
         if "avatar_url" in data: u.avatar_url = data["avatar_url"]
         if "phone" in data: u.phone = data["phone"]
+        if "preferred_sports" in data: u.preferred_sports = data["preferred_sports"]
+        if "skill_levels" in data: u.skill_levels = data["skill_levels"]
+        if "preferred_time_slots" in data: u.preferred_time_slots = data["preferred_time_slots"]
+        if "preferred_language" in data: u.preferred_language = data["preferred_language"]
+        if "custom_preferences" in data: u.custom_preferences = data["custom_preferences"]
         
         s.commit()
         s.refresh(u)
@@ -236,5 +246,91 @@ def update_user_info():
             "email": u.email,
             "display_name": u.display_name,
             "avatar_url": u.avatar_url,
-            "phone": u.phone
+            "phone": u.phone,
+            "preferred_sports": u.preferred_sports,
+            "skill_levels": u.skill_levels,
+            "preferred_time_slots": u.preferred_time_slots,
+            "preferred_language": u.preferred_language,
+            "custom_preferences": u.custom_preferences
         })
+
+
+# ===[ Skill-based Matchmaking ]===
+
+SKILL_ORDER = ["beginner", "intermediate", "advanced"]
+
+def _skill_distance(a: str | None, b: str | None) -> int | None:
+    """Return distance between two skill levels, or None if either is missing."""
+    if not a or not b:
+        return None
+    a_lower, b_lower = a.lower(), b.lower()
+    if a_lower not in SKILL_ORDER or b_lower not in SKILL_ORDER:
+        return None
+    return abs(SKILL_ORDER.index(a_lower) - SKILL_ORDER.index(b_lower))
+
+
+@bp.get("/matchmaking")
+@require_auth
+def get_matched_users():
+    """Find users with similar sports and skill levels."""
+    limit = min(int(request.args.get("limit", 20)), 50)
+
+    with SessionLocal() as s:
+        me = s.get(User, g.user_id)
+        if not me:
+            return jsonify({"error": "User not found"}), 404
+
+        my_sports = set(me.preferred_sports or [])
+        my_skills = me.skill_levels or {}
+
+        if not my_sports:
+            return jsonify([])  # Can't match without sport preferences
+
+        # Query other users that have at least some preferred_sports set
+        candidates = s.execute(
+            select(User).where(
+                User.id != g.user_id,
+                User.preferred_sports.isnot(None),
+            )
+        ).scalars().all()
+
+        scored = []
+        for user in candidates:
+            their_sports = set(user.preferred_sports or [])
+            their_skills = user.skill_levels or {}
+
+            shared = my_sports & their_sports
+            if not shared:
+                continue
+
+            score = 0
+            skill_compat = {}
+
+            for sport in shared:
+                score += 3  # shared sport bonus
+
+                dist = _skill_distance(my_skills.get(sport), their_skills.get(sport))
+                if dist == 0:
+                    score += 3
+                    skill_compat[sport] = "exact"
+                elif dist == 1:
+                    score += 1
+                    skill_compat[sport] = "close"
+                else:
+                    skill_compat[sport] = "different" if dist is not None else "unknown"
+
+            scored.append({
+                "user": {
+                    "id": str(user.id),
+                    "display_name": user.display_name,
+                    "avatar_url": user.avatar_url,
+                    "preferred_sports": user.preferred_sports,
+                    "skill_levels": user.skill_levels,
+                },
+                "match_score": score,
+                "shared_sports": sorted(shared),
+                "skill_compatibility": skill_compat,
+            })
+
+        scored.sort(key=lambda x: x["match_score"], reverse=True)
+        return jsonify(scored[:limit])

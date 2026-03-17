@@ -116,9 +116,10 @@ export interface UpdateEventRequest {
 export class EventsApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for bookTimeslotForEvent without sending the request
+     * Event owner can book multiple time slots for the team
+     * Book a timeslot for Event (owner only)
      */
-    async bookTimeslotForEventRequestOpts(requestParameters: BookTimeslotForEventRequest): Promise<runtime.RequestOpts> {
+    async bookTimeslotForEventRaw(requestParameters: BookTimeslotForEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventBookingResponse>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -151,22 +152,13 @@ export class EventsApi extends runtime.BaseAPI {
         let urlPath = `/events/{event_id}/book`;
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: EventBookTimeSlotInToJSON(requestParameters['eventBookTimeSlotIn']),
-        };
-    }
-
-    /**
-     * Event owner can book multiple time slots for the team
-     * Book a timeslot for Event (owner only)
-     */
-    async bookTimeslotForEventRaw(requestParameters: BookTimeslotForEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventBookingResponse>> {
-        const requestOptions = await this.bookTimeslotForEventRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EventBookingResponseFromJSON(jsonValue));
     }
@@ -181,9 +173,9 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for createEvent without sending the request
+     * Create a new Event
      */
-    async createEventRequestOpts(requestParameters: CreateEventRequest): Promise<runtime.RequestOpts> {
+    async createEventRaw(requestParameters: CreateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventOut>> {
         if (requestParameters['eventCreateIn'] == null) {
             throw new runtime.RequiredError(
                 'eventCreateIn',
@@ -208,21 +200,13 @@ export class EventsApi extends runtime.BaseAPI {
 
         let urlPath = `/events`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: EventCreateInToJSON(requestParameters['eventCreateIn']),
-        };
-    }
-
-    /**
-     * Create a new Event
-     */
-    async createEventRaw(requestParameters: CreateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventOut>> {
-        const requestOptions = await this.createEventRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EventOutFromJSON(jsonValue));
     }
@@ -236,9 +220,9 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteEvent without sending the request
+     * Delete Event
      */
-    async deleteEventRequestOpts(requestParameters: DeleteEventRequest): Promise<runtime.RequestOpts> {
+    async deleteEventRaw(requestParameters: DeleteEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -262,20 +246,12 @@ export class EventsApi extends runtime.BaseAPI {
         let urlPath = `/events/{event_id}`;
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Delete Event
-     */
-    async deleteEventRaw(requestParameters: DeleteEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
-        const requestOptions = await this.deleteEventRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }
@@ -289,9 +265,9 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getEventById without sending the request
+     * Get Event details
      */
-    async getEventByIdRequestOpts(requestParameters: GetEventByIdRequest): Promise<runtime.RequestOpts> {
+    async getEventByIdRaw(requestParameters: GetEventByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventDetailOut>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -307,20 +283,12 @@ export class EventsApi extends runtime.BaseAPI {
         let urlPath = `/events/{event_id}`;
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Get Event details
-     */
-    async getEventByIdRaw(requestParameters: GetEventByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventDetailOut>> {
-        const requestOptions = await this.getEventByIdRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EventDetailOutFromJSON(jsonValue));
     }
@@ -334,9 +302,10 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getMyCreatedEvents without sending the request
+     * Returns all events owned by the authenticated user
+     * Get events created by the authenticated user
      */
-    async getMyCreatedEventsRequestOpts(): Promise<runtime.RequestOpts> {
+    async getMyCreatedEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -352,21 +321,12 @@ export class EventsApi extends runtime.BaseAPI {
 
         let urlPath = `/events/my/created`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns all events owned by the authenticated user
-     * Get events created by the authenticated user
-     */
-    async getMyCreatedEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
-        const requestOptions = await this.getMyCreatedEventsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventOutFromJSON));
     }
@@ -381,9 +341,10 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getMyJoinedEvents without sending the request
+     * Returns all events where the authenticated user is a participant (member role)
+     * Get events joined by the authenticated user
      */
-    async getMyJoinedEventsRequestOpts(): Promise<runtime.RequestOpts> {
+    async getMyJoinedEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -399,21 +360,12 @@ export class EventsApi extends runtime.BaseAPI {
 
         let urlPath = `/events/my/joined`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns all events where the authenticated user is a participant (member role)
-     * Get events joined by the authenticated user
-     */
-    async getMyJoinedEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
-        const requestOptions = await this.getMyJoinedEventsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventOutFromJSON));
     }
@@ -428,9 +380,10 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getMyPendingEvents without sending the request
+     * Returns all events where the authenticated user has submitted join requests
+     * Get events with pending join requests
      */
-    async getMyPendingEventsRequestOpts(): Promise<runtime.RequestOpts> {
+    async getMyPendingEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -446,21 +399,12 @@ export class EventsApi extends runtime.BaseAPI {
 
         let urlPath = `/events/my/pending`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns all events where the authenticated user has submitted join requests
-     * Get events with pending join requests
-     */
-    async getMyPendingEventsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
-        const requestOptions = await this.getMyPendingEventsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventOutFromJSON));
     }
@@ -475,9 +419,10 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for joinEvent without sending the request
+     * Submit a join request to join a Event. Authenticated users auto-fill their info, non-authenticated users must provide details. 
+     * Submit join request to Event
      */
-    async joinEventRequestOpts(requestParameters: JoinEventRequest): Promise<runtime.RequestOpts> {
+    async joinEventRaw(requestParameters: JoinEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JoinRequestSubmitResponse>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -503,22 +448,13 @@ export class EventsApi extends runtime.BaseAPI {
         let urlPath = `/events/{event_id}/join`;
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: JoinRequestCreateInToJSON(requestParameters['joinRequestCreateIn']),
-        };
-    }
-
-    /**
-     * Submit a join request to join a Event. Authenticated users auto-fill their info, non-authenticated users must provide details. 
-     * Submit join request to Event
-     */
-    async joinEventRaw(requestParameters: JoinEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JoinRequestSubmitResponse>> {
-        const requestOptions = await this.joinEventRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => JoinRequestSubmitResponseFromJSON(jsonValue));
     }
@@ -533,9 +469,9 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listEventBookings without sending the request
+     * List all bookings for a Event
      */
-    async listEventBookingsRequestOpts(requestParameters: ListEventBookingsRequest): Promise<runtime.RequestOpts> {
+    async listEventBookingsRaw(requestParameters: ListEventBookingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventBookingDetail>>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -551,20 +487,12 @@ export class EventsApi extends runtime.BaseAPI {
         let urlPath = `/events/{event_id}/bookings`;
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * List all bookings for a Event
-     */
-    async listEventBookingsRaw(requestParameters: ListEventBookingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventBookingDetail>>> {
-        const requestOptions = await this.listEventBookingsRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventBookingDetailFromJSON));
     }
@@ -578,9 +506,10 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listEvents without sending the request
+     * List Events with optional filtering and search. Supports filtering by status, visibility, and keyword search on title. 
+     * List and search Events
      */
-    async listEventsRequestOpts(requestParameters: ListEventsRequest): Promise<runtime.RequestOpts> {
+    async listEventsRaw(requestParameters: ListEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
         const queryParameters: any = {};
 
         if (requestParameters['status'] != null) {
@@ -628,21 +557,12 @@ export class EventsApi extends runtime.BaseAPI {
 
         let urlPath = `/events`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * List Events with optional filtering and search. Supports filtering by status, visibility, and keyword search on title. 
-     * List and search Events
-     */
-    async listEventsRaw(requestParameters: ListEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventOut>>> {
-        const requestOptions = await this.listEventsRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventOutFromJSON));
     }
@@ -657,9 +577,9 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listJoinRequests without sending the request
+     * List join requests (owner only)
      */
-    async listJoinRequestsRequestOpts(requestParameters: ListJoinRequestsRequest): Promise<runtime.RequestOpts> {
+    async listJoinRequestsRaw(requestParameters: ListJoinRequestsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<JoinRequestOut>>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -683,20 +603,12 @@ export class EventsApi extends runtime.BaseAPI {
         let urlPath = `/events/{event_id}/join-requests`;
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * List join requests (owner only)
-     */
-    async listJoinRequestsRaw(requestParameters: ListJoinRequestsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<JoinRequestOut>>> {
-        const requestOptions = await this.listJoinRequestsRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(JoinRequestOutFromJSON));
     }
@@ -710,9 +622,10 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for reviewJoinRequest without sending the request
+     * Approve or reject a join request
+     * Review join request (owner only)
      */
-    async reviewJoinRequestRequestOpts(requestParameters: ReviewJoinRequestRequest): Promise<runtime.RequestOpts> {
+    async reviewJoinRequestRaw(requestParameters: ReviewJoinRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JoinRequestReviewResponse>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -753,22 +666,13 @@ export class EventsApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
         urlPath = urlPath.replace(`{${"request_id"}}`, encodeURIComponent(String(requestParameters['requestId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: JoinRequestReviewInToJSON(requestParameters['joinRequestReviewIn']),
-        };
-    }
-
-    /**
-     * Approve or reject a join request
-     * Review join request (owner only)
-     */
-    async reviewJoinRequestRaw(requestParameters: ReviewJoinRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JoinRequestReviewResponse>> {
-        const requestOptions = await this.reviewJoinRequestRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => JoinRequestReviewResponseFromJSON(jsonValue));
     }
@@ -783,9 +687,9 @@ export class EventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateEvent without sending the request
+     * Update Event
      */
-    async updateEventRequestOpts(requestParameters: UpdateEventRequest): Promise<runtime.RequestOpts> {
+    async updateEventRaw(requestParameters: UpdateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventDetailOut>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -818,21 +722,13 @@ export class EventsApi extends runtime.BaseAPI {
         let urlPath = `/events/{event_id}`;
         urlPath = urlPath.replace(`{${"event_id"}}`, encodeURIComponent(String(requestParameters['eventId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: EventUpdateInToJSON(requestParameters['eventUpdateIn']),
-        };
-    }
-
-    /**
-     * Update Event
-     */
-    async updateEventRaw(requestParameters: UpdateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventDetailOut>> {
-        const requestOptions = await this.updateEventRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EventDetailOutFromJSON(jsonValue));
     }
@@ -851,15 +747,15 @@ export class EventsApi extends runtime.BaseAPI {
  * @export
  */
 export const ListEventsStatusEnum = {
-    Open: 'open',
-    Closed: 'closed'
+    open: 'open',
+    closed: 'closed'
 } as const;
 export type ListEventsStatusEnum = typeof ListEventsStatusEnum[keyof typeof ListEventsStatusEnum];
 /**
  * @export
  */
 export const ListEventsVisibilityEnum = {
-    Public: 'public',
-    Private: 'private'
+    public: 'public',
+    private: 'private'
 } as const;
 export type ListEventsVisibilityEnum = typeof ListEventsVisibilityEnum[keyof typeof ListEventsVisibilityEnum];

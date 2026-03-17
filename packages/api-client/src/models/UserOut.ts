@@ -49,6 +49,36 @@ export interface UserOut {
      * @memberof UserOut
      */
     updatedAt: Date;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof UserOut
+     */
+    preferredSports?: Array<string> | null;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof UserOut
+     */
+    skillLevels?: { [key: string]: string; } | null;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof UserOut
+     */
+    preferredTimeSlots?: Array<string> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserOut
+     */
+    preferredLanguage?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserOut
+     */
+    customPreferences?: string | null;
 }
 
 /**
@@ -78,6 +108,11 @@ export function UserOutFromJSONTyped(json: any, ignoreDiscriminator: boolean): U
         'displayName': json['display_name'],
         'createdAt': (new Date(json['created_at'])),
         'updatedAt': (new Date(json['updated_at'])),
+        'preferredSports': json['preferred_sports'] == null ? undefined : json['preferred_sports'],
+        'skillLevels': json['skill_levels'] == null ? undefined : json['skill_levels'],
+        'preferredTimeSlots': json['preferred_time_slots'] == null ? undefined : json['preferred_time_slots'],
+        'preferredLanguage': json['preferred_language'] == null ? undefined : json['preferred_language'],
+        'customPreferences': json['custom_preferences'] == null ? undefined : json['custom_preferences'],
     };
 }
 
@@ -97,6 +132,11 @@ export function UserOutToJSONTyped(value?: UserOut | null, ignoreDiscriminator: 
         'display_name': value['displayName'],
         'created_at': value['createdAt'].toISOString(),
         'updated_at': value['updatedAt'].toISOString(),
+        'preferred_sports': value['preferredSports'],
+        'skill_levels': value['skillLevels'],
+        'preferred_time_slots': value['preferredTimeSlots'],
+        'preferred_language': value['preferredLanguage'],
+        'custom_preferences': value['customPreferences'],
     };
 }
 

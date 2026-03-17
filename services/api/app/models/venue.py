@@ -47,6 +47,10 @@ class Venue(Base):
     # 對接第三方夥伴的代碼，若需要獨一可加 unique=True
     partner_code: Mapped[str | None] = mapped_column(sa.Text)
 
+    # 經營管理模式與外部連結
+    management_type: Mapped[str] = mapped_column(sa.Text, default="internal", nullable=False)
+    external_booking_url: Mapped[str | None] = mapped_column(sa.Text)
+
     created_at: Mapped[sa.DateTime] = mapped_column(
         sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
     )
@@ -89,6 +93,11 @@ class Court(Base):
 
     # Simplified sport type (single value instead of junction table)
     sport_type: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+
+    # 環境與場地特性
+    environment: Mapped[str] = mapped_column(sa.Text, default="indoor", nullable=False)
+    surface_type: Mapped[str | None] = mapped_column(sa.Text)
+    metadata_: Mapped[dict | None] = mapped_column("metadata", sa.dialects.postgresql.JSONB, server_default=sa.text("'{}'::jsonb"))
 
     created_at: Mapped[sa.DateTime] = mapped_column(
         sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False

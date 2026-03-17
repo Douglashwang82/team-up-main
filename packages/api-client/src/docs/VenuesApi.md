@@ -674,7 +674,7 @@ No authorization required
 
 ## searchVenues
 
-> Array&lt;VenueSearchResult&gt; searchVenues(lat, lng, distance, datetime, sportType)
+> Array&lt;VenueSearchResult&gt; searchVenues(lat, lng, distance, datetime, sportType, requireBookable)
 
 Search venues with available time slots
 
@@ -704,6 +704,8 @@ async function example() {
     datetime: 2025-10-20,
     // string | Filter by sport type (optional)
     sportType: basketball,
+    // boolean | Only return venues with bookable time slots (default false) (optional)
+    requireBookable: false,
   } satisfies SearchVenuesRequest;
 
   try {
@@ -728,6 +730,7 @@ example().catch(console.error);
 | **distance** | `number` | Search radius in meters (default 5000m) | [Optional] [Defaults to `5000`] |
 | **datetime** | `string` | ISO datetime (YYYY-MM-DDTHH:MM:SS) or date (YYYY-MM-DD) | [Optional] [Defaults to `undefined`] |
 | **sportType** | `string` | Filter by sport type | [Optional] [Defaults to `undefined`] |
+| **requireBookable** | `boolean` | Only return venues with bookable time slots (default false) | [Optional] [Defaults to `false`] |
 
 ### Return type
 

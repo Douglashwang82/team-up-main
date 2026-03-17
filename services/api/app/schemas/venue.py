@@ -12,6 +12,8 @@ class VenueOut(BaseModel):
     name: str
     address: str
     city: Optional[str] = None
+    management_type: str
+    external_booking_url: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     distance_meters: Optional[float] = None  # Only present when lat/lng provided
@@ -21,6 +23,9 @@ class CourtOut(BaseModel):
     id: UUID
     name: str
     sport_type: Optional[str] = None
+    environment: str
+    surface_type: Optional[str] = None
+    metadata_: Optional[dict] = None
 
 class TimeSlotOut(BaseModel):
     """Timeslot information"""
@@ -47,6 +52,8 @@ class VenueDetailOut(BaseModel):
     city: Optional[str] = None
     contact_phone: Optional[str] = None
     partner_code: Optional[str] = None
+    management_type: str
+    external_booking_url: Optional[str] = None
     courts: list[CourtOut]
     created_at: datetime
     updated_at: datetime

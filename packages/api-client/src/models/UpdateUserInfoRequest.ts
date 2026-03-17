@@ -25,6 +25,36 @@ export interface UpdateUserInfoRequest {
      * @memberof UpdateUserInfoRequest
      */
     displayName?: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof UpdateUserInfoRequest
+     */
+    preferredSports?: Array<string> | null;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof UpdateUserInfoRequest
+     */
+    skillLevels?: { [key: string]: string; } | null;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof UpdateUserInfoRequest
+     */
+    preferredTimeSlots?: Array<string> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateUserInfoRequest
+     */
+    preferredLanguage?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateUserInfoRequest
+     */
+    customPreferences?: string | null;
 }
 
 /**
@@ -45,6 +75,11 @@ export function UpdateUserInfoRequestFromJSONTyped(json: any, ignoreDiscriminato
     return {
         
         'displayName': json['display_name'] == null ? undefined : json['display_name'],
+        'preferredSports': json['preferred_sports'] == null ? undefined : json['preferred_sports'],
+        'skillLevels': json['skill_levels'] == null ? undefined : json['skill_levels'],
+        'preferredTimeSlots': json['preferred_time_slots'] == null ? undefined : json['preferred_time_slots'],
+        'preferredLanguage': json['preferred_language'] == null ? undefined : json['preferred_language'],
+        'customPreferences': json['custom_preferences'] == null ? undefined : json['custom_preferences'],
     };
 }
 
@@ -60,6 +95,11 @@ export function UpdateUserInfoRequestToJSONTyped(value?: UpdateUserInfoRequest |
     return {
         
         'display_name': value['displayName'],
+        'preferred_sports': value['preferredSports'],
+        'skill_levels': value['skillLevels'],
+        'preferred_time_slots': value['preferredTimeSlots'],
+        'preferred_language': value['preferredLanguage'],
+        'custom_preferences': value['customPreferences'],
     };
 }
 

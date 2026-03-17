@@ -31,9 +31,6 @@ import type {
   BookingListParams,
   CreateBookingRequest,
   UpdateBookingRequest,
-  Ticket,
-  TicketDetails,
-  CreateTicketRequest,
   Notification,
   APIError,
 } from "./types";
@@ -264,6 +261,27 @@ export const eventsApi = {
     });
   },
 
+  splitBill: async (
+    id: string,
+    data: { total_amount: number; participant_ids?: string[] },
+  ): Promise<any> => {
+    return request(`/events/${id}/split-bill`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateParticipantPayment: async (
+    id: string,
+    participantId: string,
+    paymentStatus: "paid" | "unpaid",
+  ): Promise<any> => {
+    return request(`/events/${id}/participants/${participantId}/payment`, {
+      method: "PATCH",
+      body: JSON.stringify({ payment_status: paymentStatus }),
+    });
+  },
+
   listJoinRequests: async (id: string): Promise<EventJoinRequest[]> => {
     return request<EventJoinRequest[]>(`/events/${id}/join-requests`);
   },
@@ -291,6 +309,17 @@ export const eventsApi = {
 
   listBookings: async (id: string): Promise<EventBooking[]> => {
     return request<EventBooking[]>(`/events/${id}/bookings`);
+  },
+
+  getOwnedEvents: async (): Promise<{ id: string; title: string; max_participants: number; participant_count: number }[]> => {
+    return request(`/events/owned`);
+  },
+
+  inviteUser: async (eventId: string, userId: string): Promise<{ ok: boolean; message: string }> => {
+    return request(`/events/${eventId}/invite`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    });
   },
 };
 
@@ -368,26 +397,7 @@ export const bookingsApi = {
   },
 };
 
-// ===[ Tickets API ]===
 
-export const ticketsApi = {
-  create: async (
-    data: CreateTicketRequest,
-  ): Promise<{ id: string; status: string; message: string }> => {
-    return request("/tickets", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  list: async (): Promise<Ticket[]> => {
-    return request<Ticket[]>("/tickets");
-  },
-
-  get: async (id: string): Promise<TicketDetails> => {
-    return request<TicketDetails>(`/tickets/${id}`);
-  },
-};
 
 // ===[ Notifications API ]===
 
@@ -411,15 +421,26 @@ export const healthApi = {
   },
 };
 
+// ===[ User API ]===
+
+export const userApi = {
+  updateUserInfo: async (data: Partial<UpdateUserRequest>): Promise<User> => {
+    return request<User>("/user/info", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
 // Export all APIs
 export const api = {
   auth: authApi,
   events: eventsApi,
   venues: venuesApi,
   bookings: bookingsApi,
-  tickets: ticketsApi,
   notifications: notificationsApi,
   health: healthApi,
+  user: userApi,
 };
 
 export default api;

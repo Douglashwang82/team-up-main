@@ -39,19 +39,19 @@ export interface EventUpdateIn {
     maxParticipants?: number;
     /**
      * 
-     * @type {EventUpdateInVisibilityEnum}
+     * @type {string}
      * @memberof EventUpdateIn
      */
     visibility?: EventUpdateInVisibilityEnum;
     /**
      * 
-     * @type {EventUpdateInDurationTypeEnum}
+     * @type {string}
      * @memberof EventUpdateIn
      */
     durationType?: EventUpdateInDurationTypeEnum;
     /**
      * 
-     * @type {EventUpdateInStatusEnum}
+     * @type {string}
      * @memberof EventUpdateIn
      */
     status?: EventUpdateInStatusEnum;
@@ -62,8 +62,8 @@ export interface EventUpdateIn {
  * @export
  */
 export const EventUpdateInVisibilityEnum = {
-    Public: 'public',
-    Private: 'private'
+    public: 'public',
+    private: 'private'
 } as const;
 export type EventUpdateInVisibilityEnum = typeof EventUpdateInVisibilityEnum[keyof typeof EventUpdateInVisibilityEnum];
 
@@ -71,8 +71,8 @@ export type EventUpdateInVisibilityEnum = typeof EventUpdateInVisibilityEnum[key
  * @export
  */
 export const EventUpdateInDurationTypeEnum = {
-    Temporary: 'temporary',
-    Permanent: 'permanent'
+    temporary: 'temporary',
+    permanent: 'permanent'
 } as const;
 export type EventUpdateInDurationTypeEnum = typeof EventUpdateInDurationTypeEnum[keyof typeof EventUpdateInDurationTypeEnum];
 
@@ -80,8 +80,8 @@ export type EventUpdateInDurationTypeEnum = typeof EventUpdateInDurationTypeEnum
  * @export
  */
 export const EventUpdateInStatusEnum = {
-    Open: 'open',
-    Closed: 'closed'
+    open: 'open',
+    closed: 'closed'
 } as const;
 export type EventUpdateInStatusEnum = typeof EventUpdateInStatusEnum[keyof typeof EventUpdateInStatusEnum];
 

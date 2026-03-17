@@ -39,13 +39,13 @@ export interface EventBookingResponse {
     timeSlotId: string;
     /**
      * 
-     * @type {EventBookingResponseStatusEnum}
+     * @type {string}
      * @memberof EventBookingResponse
      */
     status: EventBookingResponseStatusEnum;
     /**
      * 
-     * @type {EventBookingResponsePaymentStatusEnum}
+     * @type {string}
      * @memberof EventBookingResponse
      */
     paymentStatus: EventBookingResponsePaymentStatusEnum;
@@ -62,9 +62,9 @@ export interface EventBookingResponse {
  * @export
  */
 export const EventBookingResponseStatusEnum = {
-    Pending: 'pending',
-    Confirmed: 'confirmed',
-    Cancelled: 'cancelled'
+    pending: 'pending',
+    confirmed: 'confirmed',
+    cancelled: 'cancelled'
 } as const;
 export type EventBookingResponseStatusEnum = typeof EventBookingResponseStatusEnum[keyof typeof EventBookingResponseStatusEnum];
 
@@ -72,10 +72,10 @@ export type EventBookingResponseStatusEnum = typeof EventBookingResponseStatusEn
  * @export
  */
 export const EventBookingResponsePaymentStatusEnum = {
-    None: 'none',
-    Pending: 'pending',
-    Succeeded: 'succeeded',
-    Failed: 'failed'
+    none: 'none',
+    pending: 'pending',
+    succeeded: 'succeeded',
+    failed: 'failed'
 } as const;
 export type EventBookingResponsePaymentStatusEnum = typeof EventBookingResponsePaymentStatusEnum[keyof typeof EventBookingResponsePaymentStatusEnum];
 

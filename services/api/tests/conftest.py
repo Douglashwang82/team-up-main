@@ -2,12 +2,13 @@ import pytest
 from flask import Flask
 from dotenv import load_dotenv
 import os
+import sqlalchemy as sa
 
 # Load .env file before importing app modules
 load_dotenv()
 
 from app.core.db import Base, engine, SessionLocal
-from app.models import User, Venue, Court, TimeSlot, Event, Booking, Notification, Ticket
+from app.models import User, Venue, Court, TimeSlot, Event, Booking, Notification
 from passlib.hash import bcrypt
 from datetime import datetime, timedelta, time, date
 from uuid import UUID
@@ -28,18 +29,22 @@ def app():
     from app.routes.health import bp as health_bp
     from app.routes.auth import bp as auth_bp
     from app.routes.venues import bp as venues_bp
-    from app.routes.tickets import bp as tickets_bp
+
     from app.routes.bookings import bp as bookings_bp
     from app.routes.notifications import bp as notifications_bp
     from app.routes.events import bp as events_bp
+    from app.routes.user import bp as user_bp
+    from app.routes.chat import bp as chat_bp
 
     test_app.register_blueprint(health_bp)
     test_app.register_blueprint(auth_bp, url_prefix="/auth")
     test_app.register_blueprint(venues_bp, url_prefix="/venues")
-    test_app.register_blueprint(tickets_bp, url_prefix="/tickets")
+
     test_app.register_blueprint(bookings_bp, url_prefix="/bookings")
     test_app.register_blueprint(notifications_bp, url_prefix="/notifications")
     test_app.register_blueprint(events_bp, url_prefix="/events")
+    test_app.register_blueprint(user_bp, url_prefix="/user")
+    test_app.register_blueprint(chat_bp, url_prefix="/chat")
 
     return test_app
 
@@ -53,6 +58,9 @@ def client(app):
 @pytest.fixture(scope="function")
 def db():
     """Create a database session for testing"""
+    # Ensure schema matches current models even if local DB already had older tables.
+    Base.metadata.drop_all(bind=engine)
+
     # Create all tables
     Base.metadata.create_all(bind=engine)
 
@@ -68,8 +76,11 @@ def db():
         password_hash=SYSTEM_USER_PASSWORD_HASH,
         display_name=SYSTEM_USER_DISPLAY_NAME
     )
-    session.add(system_user)
-    session.commit()
+    try:
+        session.add(system_user)
+        session.commit()
+    except sa.exc.IntegrityError:
+        session.rollback()
 
     yield session
 
@@ -140,7 +151,9 @@ def venue(db):
         name="Test Basketball Court",
         address="123 Test St",
         city="Test City",
-        geo_point=WKTElement('POINT(121.5654 25.0330)', srid=4326)
+        geo_point=WKTElement('POINT(121.5654 25.0330)', srid=4326),
+        latitude=25.0330,
+        longitude=121.5654
     )
     db.add(venue)
     db.flush()

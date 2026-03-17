@@ -68,9 +68,9 @@ export interface UpdateBookingFullyRequest {
 export class BookingsApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for cancelBooking without sending the request
+     * Cancel booking
      */
-    async cancelBookingRequestOpts(requestParameters: CancelBookingRequest): Promise<runtime.RequestOpts> {
+    async cancelBookingRaw(requestParameters: CancelBookingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
         if (requestParameters['bookingId'] == null) {
             throw new runtime.RequiredError(
                 'bookingId',
@@ -94,20 +94,12 @@ export class BookingsApi extends runtime.BaseAPI {
         let urlPath = `/bookings/{booking_id}`;
         urlPath = urlPath.replace(`{${"booking_id"}}`, encodeURIComponent(String(requestParameters['bookingId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Cancel booking
-     */
-    async cancelBookingRaw(requestParameters: CancelBookingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeleteAccount200Response>> {
-        const requestOptions = await this.cancelBookingRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DeleteAccount200ResponseFromJSON(jsonValue));
     }
@@ -121,9 +113,9 @@ export class BookingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for createBooking without sending the request
+     * Create a new booking
      */
-    async createBookingRequestOpts(requestParameters: CreateBookingRequest): Promise<runtime.RequestOpts> {
+    async createBookingRaw(requestParameters: CreateBookingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingOut>> {
         if (requestParameters['bookingCreateIn'] == null) {
             throw new runtime.RequiredError(
                 'bookingCreateIn',
@@ -148,21 +140,13 @@ export class BookingsApi extends runtime.BaseAPI {
 
         let urlPath = `/bookings`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: BookingCreateInToJSON(requestParameters['bookingCreateIn']),
-        };
-    }
-
-    /**
-     * Create a new booking
-     */
-    async createBookingRaw(requestParameters: CreateBookingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingOut>> {
-        const requestOptions = await this.createBookingRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BookingOutFromJSON(jsonValue));
     }
@@ -176,9 +160,9 @@ export class BookingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getBookingById without sending the request
+     * Get booking details
      */
-    async getBookingByIdRequestOpts(requestParameters: GetBookingByIdRequest): Promise<runtime.RequestOpts> {
+    async getBookingByIdRaw(requestParameters: GetBookingByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingDetailOut>> {
         if (requestParameters['bookingId'] == null) {
             throw new runtime.RequiredError(
                 'bookingId',
@@ -202,20 +186,12 @@ export class BookingsApi extends runtime.BaseAPI {
         let urlPath = `/bookings/{booking_id}`;
         urlPath = urlPath.replace(`{${"booking_id"}}`, encodeURIComponent(String(requestParameters['bookingId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Get booking details
-     */
-    async getBookingByIdRaw(requestParameters: GetBookingByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingDetailOut>> {
-        const requestOptions = await this.getBookingByIdRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BookingDetailOutFromJSON(jsonValue));
     }
@@ -229,9 +205,9 @@ export class BookingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listBookings without sending the request
+     * List user\'s bookings
      */
-    async listBookingsRequestOpts(requestParameters: ListBookingsRequest): Promise<runtime.RequestOpts> {
+    async listBookingsRaw(requestParameters: ListBookingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<BookingOut>>> {
         const queryParameters: any = {};
 
         if (requestParameters['status'] != null) {
@@ -259,20 +235,12 @@ export class BookingsApi extends runtime.BaseAPI {
 
         let urlPath = `/bookings`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * List user\'s bookings
-     */
-    async listBookingsRaw(requestParameters: ListBookingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<BookingOut>>> {
-        const requestOptions = await this.listBookingsRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BookingOutFromJSON));
     }
@@ -286,9 +254,9 @@ export class BookingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateBooking without sending the request
+     * Update booking status
      */
-    async updateBookingRequestOpts(requestParameters: UpdateBookingRequest): Promise<runtime.RequestOpts> {
+    async updateBookingRaw(requestParameters: UpdateBookingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingOut>> {
         if (requestParameters['bookingId'] == null) {
             throw new runtime.RequiredError(
                 'bookingId',
@@ -321,21 +289,13 @@ export class BookingsApi extends runtime.BaseAPI {
         let urlPath = `/bookings/{booking_id}`;
         urlPath = urlPath.replace(`{${"booking_id"}}`, encodeURIComponent(String(requestParameters['bookingId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: BookingUpdateInToJSON(requestParameters['bookingUpdateIn']),
-        };
-    }
-
-    /**
-     * Update booking status
-     */
-    async updateBookingRaw(requestParameters: UpdateBookingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingOut>> {
-        const requestOptions = await this.updateBookingRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BookingOutFromJSON(jsonValue));
     }
@@ -349,9 +309,9 @@ export class BookingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateBookingFully without sending the request
+     * Update booking fully (admin)
      */
-    async updateBookingFullyRequestOpts(requestParameters: UpdateBookingFullyRequest): Promise<runtime.RequestOpts> {
+    async updateBookingFullyRaw(requestParameters: UpdateBookingFullyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingOut>> {
         if (requestParameters['bookingId'] == null) {
             throw new runtime.RequiredError(
                 'bookingId',
@@ -384,21 +344,13 @@ export class BookingsApi extends runtime.BaseAPI {
         let urlPath = `/bookings/{booking_id}`;
         urlPath = urlPath.replace(`{${"booking_id"}}`, encodeURIComponent(String(requestParameters['bookingId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: BookingUpdateInToJSON(requestParameters['bookingUpdateIn']),
-        };
-    }
-
-    /**
-     * Update booking fully (admin)
-     */
-    async updateBookingFullyRaw(requestParameters: UpdateBookingFullyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookingOut>> {
-        const requestOptions = await this.updateBookingFullyRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BookingOutFromJSON(jsonValue));
     }
@@ -417,8 +369,8 @@ export class BookingsApi extends runtime.BaseAPI {
  * @export
  */
 export const ListBookingsStatusEnum = {
-    Pending: 'pending',
-    Confirmed: 'confirmed',
-    Cancelled: 'cancelled'
+    pending: 'pending',
+    confirmed: 'confirmed',
+    cancelled: 'cancelled'
 } as const;
 export type ListBookingsStatusEnum = typeof ListBookingsStatusEnum[keyof typeof ListBookingsStatusEnum];

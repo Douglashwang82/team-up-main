@@ -51,7 +51,7 @@ export interface EventParticipantOut {
     phone: string;
     /**
      * 
-     * @type {EventParticipantOutRoleEnum}
+     * @type {string}
      * @memberof EventParticipantOut
      */
     role: EventParticipantOutRoleEnum;
@@ -74,8 +74,8 @@ export interface EventParticipantOut {
  * @export
  */
 export const EventParticipantOutRoleEnum = {
-    Owner: 'owner',
-    Member: 'member'
+    owner: 'owner',
+    member: 'member'
 } as const;
 export type EventParticipantOutRoleEnum = typeof EventParticipantOutRoleEnum[keyof typeof EventParticipantOutRoleEnum];
 

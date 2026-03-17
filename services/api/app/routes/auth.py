@@ -67,7 +67,12 @@ def me():
             "email": u.email,
             "display_name": u.display_name,
             "avatar_url": u.avatar_url,
-            "phone": u.phone
+            "phone": u.phone,
+            "preferred_sports": u.preferred_sports,
+            "skill_levels": u.skill_levels,
+            "preferred_time_slots": u.preferred_time_slots,
+            "preferred_language": u.preferred_language,
+            "custom_preferences": u.custom_preferences
         })
 
 @bp.patch("/me")
@@ -111,7 +116,12 @@ def update_me():
             "email": u.email,
             "display_name": u.display_name,
             "avatar_url": u.avatar_url,
-            "phone": u.phone
+            "phone": u.phone,
+            "preferred_sports": u.preferred_sports,
+            "skill_levels": u.skill_levels,
+            "preferred_time_slots": u.preferred_time_slots,
+            "preferred_language": u.preferred_language,
+            "custom_preferences": u.custom_preferences
         })
 
 @bp.delete("/delete_account")

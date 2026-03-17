@@ -67,7 +67,7 @@ export interface EventOut {
     description?: string | null;
     /**
      * 
-     * @type {EventOutStatusEnum}
+     * @type {string}
      * @memberof EventOut
      */
     status: EventOutStatusEnum;
@@ -91,13 +91,13 @@ export interface EventOut {
     owner?: OwnerOut;
     /**
      * 
-     * @type {EventOutVisibilityEnum}
+     * @type {string}
      * @memberof EventOut
      */
     visibility: EventOutVisibilityEnum;
     /**
      * 
-     * @type {EventOutDurationTypeEnum}
+     * @type {string}
      * @memberof EventOut
      */
     durationType: EventOutDurationTypeEnum;
@@ -121,7 +121,7 @@ export interface EventOut {
     bookings?: Array<EventBookingDetail> | null;
     /**
      * 
-     * @type {EventOutUserJoinStatusEnum}
+     * @type {string}
      * @memberof EventOut
      */
     userJoinStatus?: EventOutUserJoinStatusEnum;
@@ -132,8 +132,8 @@ export interface EventOut {
  * @export
  */
 export const EventOutStatusEnum = {
-    Open: 'open',
-    Closed: 'closed'
+    open: 'open',
+    closed: 'closed'
 } as const;
 export type EventOutStatusEnum = typeof EventOutStatusEnum[keyof typeof EventOutStatusEnum];
 
@@ -141,8 +141,8 @@ export type EventOutStatusEnum = typeof EventOutStatusEnum[keyof typeof EventOut
  * @export
  */
 export const EventOutVisibilityEnum = {
-    Public: 'public',
-    Private: 'private'
+    public: 'public',
+    private: 'private'
 } as const;
 export type EventOutVisibilityEnum = typeof EventOutVisibilityEnum[keyof typeof EventOutVisibilityEnum];
 
@@ -150,8 +150,8 @@ export type EventOutVisibilityEnum = typeof EventOutVisibilityEnum[keyof typeof 
  * @export
  */
 export const EventOutDurationTypeEnum = {
-    Temporary: 'temporary',
-    Permanent: 'permanent'
+    temporary: 'temporary',
+    permanent: 'permanent'
 } as const;
 export type EventOutDurationTypeEnum = typeof EventOutDurationTypeEnum[keyof typeof EventOutDurationTypeEnum];
 
@@ -159,9 +159,9 @@ export type EventOutDurationTypeEnum = typeof EventOutDurationTypeEnum[keyof typ
  * @export
  */
 export const EventOutUserJoinStatusEnum = {
-    None: 'none',
-    Pending: 'pending',
-    Joined: 'joined'
+    none: 'none',
+    pending: 'pending',
+    joined: 'joined'
 } as const;
 export type EventOutUserJoinStatusEnum = typeof EventOutUserJoinStatusEnum[keyof typeof EventOutUserJoinStatusEnum];
 

@@ -21,13 +21,13 @@ import { mapValues } from '../runtime';
 export interface BookingUpdateIn {
     /**
      * 
-     * @type {BookingUpdateInStatusEnum}
+     * @type {string}
      * @memberof BookingUpdateIn
      */
     status?: BookingUpdateInStatusEnum;
     /**
      * 
-     * @type {BookingUpdateInPaymentStatusEnum}
+     * @type {string}
      * @memberof BookingUpdateIn
      */
     paymentStatus?: BookingUpdateInPaymentStatusEnum;
@@ -38,9 +38,9 @@ export interface BookingUpdateIn {
  * @export
  */
 export const BookingUpdateInStatusEnum = {
-    Pending: 'pending',
-    Confirmed: 'confirmed',
-    Cancelled: 'cancelled'
+    pending: 'pending',
+    confirmed: 'confirmed',
+    cancelled: 'cancelled'
 } as const;
 export type BookingUpdateInStatusEnum = typeof BookingUpdateInStatusEnum[keyof typeof BookingUpdateInStatusEnum];
 
@@ -48,10 +48,10 @@ export type BookingUpdateInStatusEnum = typeof BookingUpdateInStatusEnum[keyof t
  * @export
  */
 export const BookingUpdateInPaymentStatusEnum = {
-    None: 'none',
-    Pending: 'pending',
-    Succeeded: 'succeeded',
-    Failed: 'failed'
+    none: 'none',
+    pending: 'pending',
+    succeeded: 'succeeded',
+    failed: 'failed'
 } as const;
 export type BookingUpdateInPaymentStatusEnum = typeof BookingUpdateInPaymentStatusEnum[keyof typeof BookingUpdateInPaymentStatusEnum];
 

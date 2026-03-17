@@ -7,17 +7,21 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-import Button from "../../components/Button";
-import Card from "../../components/Card";
+import Button from "../../components/ui/Button";
+import Card from "../../components/ui/Card";
 import { Colors } from "../../constants/Colors";
-import { api } from "../../lib/apiClient";
-import { useAuth } from "../../lib/AuthContext";
+import { setTokens, clearTokens, api } from "../../lib/apiClient";
+import { useAuth } from "../../contexts/AuthContext";
 import type { EventDetails } from "../../lib/types";
 
 export default function EventDetailScreen() {
@@ -29,6 +33,11 @@ export default function EventDetailScreen() {
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joinStatus, setJoinStatus] = useState<'none' | 'pending' | 'joined'>('none');
+
+  // Split Bill State
+  const [splitBillModalVisible, setSplitBillModalVisible] = useState(false);
+  const [totalAmount, setTotalAmount] = useState("");
+  const [isSplitting, setIsSplitting] = useState(false);
 
   useEffect(() => {
     loadEvent();
@@ -52,6 +61,41 @@ export default function EventDetailScreen() {
       setError("Failed to load event details.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSplitBill = async () => {
+    if (!event || !totalAmount) return;
+    const amount = parseInt(totalAmount, 10);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert("錯誤", "請輸入有效的總金額");
+      return;
+    }
+
+    setIsSplitting(true);
+    try {
+      await api.events.splitBill(event.id, { total_amount: amount });
+      Alert.alert("成功", "已完成結算分帳！");
+      setSplitBillModalVisible(false);
+      setTotalAmount("");
+      loadEvent(); // Refresh to catch amounts and payment_status
+    } catch (err) {
+      Alert.alert("錯誤", err instanceof Error ? err.message : "分帳失敗");
+    } finally {
+      setIsSplitting(false);
+    }
+  };
+
+  const togglePaymentStatus = async (participantId: string, currentStatus: string) => {
+    if (!event) return;
+    const newStatus = currentStatus === "paid" ? "unpaid" : "paid";
+    try {
+      await api.events.updateParticipantPayment(event.id, participantId, newStatus);
+      // Optimistically update local state instead of full reload for snappiness, or just reload
+      loadEvent();
+    } catch (err) {
+      console.error(err);
+      Alert.alert("錯誤", "無法更新付款狀態");
     }
   };
 
@@ -196,7 +240,19 @@ export default function EventDetailScreen() {
 
           {/* Participants Info */}
           <Card style={styles.participantsCard}>
-            <Text style={styles.sectionTitle}>參加者</Text>
+            <View style={styles.participantsHeader}>
+              <Text style={styles.sectionTitle}>參加者</Text>
+              {isOwner && event.participants.length > 1 && (
+                <TouchableOpacity
+                  style={styles.splitBillButton}
+                  onPress={() => setSplitBillModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="calculator" size={16} color={Colors.white} />
+                  <Text style={styles.splitBillButtonText}>結算分帳</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             <View style={styles.participantsInfo}>
               <Text style={styles.participantsCount}>
                 {event.current_participants} / {event.max_participants} 已加入
@@ -236,6 +292,24 @@ export default function EventDetailScreen() {
                         </View>
                       )}
                     </View>
+
+                    {participant.role !== "owner" && (participant.amount_due > 0 || participant.payment_status === "paid") && (
+                      <TouchableOpacity
+                        disabled={!isOwner}
+                        onPress={() => togglePaymentStatus(participant.id, participant.payment_status)}
+                        style={[
+                          styles.paymentBadge,
+                          participant.payment_status === "paid" ? styles.paymentBadgePaid : styles.paymentBadgeUnpaid
+                        ]}
+                      >
+                        <Text style={[
+                          styles.paymentBadgeText,
+                          participant.payment_status === "paid" ? styles.paymentBadgeTextPaid : styles.paymentBadgeTextUnpaid
+                        ]}>
+                          {participant.payment_status === "paid" ? "🟢 已付款" : `🔴 未付款 (${participant.amount_due}元)`}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ))}
               </View>
@@ -310,6 +384,52 @@ export default function EventDetailScreen() {
             </View>
           </View>
         )}
+
+        {/* Split Bill Modal */}
+        <Modal
+          visible={splitBillModalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setSplitBillModalVisible(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>結算分帳</Text>
+                <TouchableOpacity onPress={() => setSplitBillModalVisible(false)} style={styles.closeButton}>
+                  <Ionicons name="close" size={24} color={Colors.gray[500]} />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.modalDescription}>
+                請輸入本次活動的總花費 (例如：場地費 + 球錢)。系統會自動將金額平分給所有已加入的團員。
+              </Text>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.currencySymbol}>$</Text>
+                <TextInput
+                  style={styles.amountInput}
+                  placeholder="0"
+                  placeholderTextColor={Colors.gray[400]}
+                  keyboardType="number-pad"
+                  value={totalAmount}
+                  onChangeText={setTotalAmount}
+                  autoFocus
+                />
+              </View>
+
+              <Button
+                title={isSplitting ? "處理中..." : "開始平分"}
+                onPress={handleSplitBill}
+                disabled={!totalAmount || isSplitting}
+                style={styles.submitSplitButton}
+              />
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+
       </SafeAreaView>
     </View>
   );
@@ -580,5 +700,108 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#388E3C",
+  },
+
+  // Split Bill UI Styles
+  participantsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  splitBillButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  splitBillButtonText: {
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  paymentBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 'auto',
+  },
+  paymentBadgePaid: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+  },
+  paymentBadgeUnpaid: {
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+  },
+  paymentBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  paymentBadgeTextPaid: {
+    color: '#388E3C',
+  },
+  paymentBadgeTextUnpaid: {
+    color: '#D32F2F',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === "ios" ? 40 : 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.gray[900],
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: Colors.gray[600],
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+    backgroundColor: Colors.gray[50],
+  },
+  currencySymbol: {
+    fontSize: 24,
+    color: Colors.gray[600],
+    marginRight: 8,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.gray[900],
+    paddingVertical: 16,
+  },
+  submitSplitButton: {
+    width: '100%',
   },
 });

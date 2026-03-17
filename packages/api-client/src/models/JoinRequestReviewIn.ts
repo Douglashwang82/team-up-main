@@ -21,7 +21,7 @@ import { mapValues } from '../runtime';
 export interface JoinRequestReviewIn {
     /**
      * 
-     * @type {JoinRequestReviewInActionEnum}
+     * @type {string}
      * @memberof JoinRequestReviewIn
      */
     action: JoinRequestReviewInActionEnum;
@@ -32,8 +32,8 @@ export interface JoinRequestReviewIn {
  * @export
  */
 export const JoinRequestReviewInActionEnum = {
-    Approve: 'approve',
-    Reject: 'reject'
+    approve: 'approve',
+    reject: 'reject'
 } as const;
 export type JoinRequestReviewInActionEnum = typeof JoinRequestReviewInActionEnum[keyof typeof JoinRequestReviewInActionEnum];
 

@@ -18,6 +18,10 @@ class EventParticipant(Base):
     )
     role: Mapped[str] = mapped_column(sa.Text, default="member", nullable=False)
     
+    # 分帳與收款管理 (Split Billing & Finances)
+    amount_due: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=False)
+    payment_status: Mapped[str] = mapped_column(sa.Text, default="unpaid", nullable=False) # unpaid, paid
+    
     display_name: Mapped[str]
     email: Mapped[str]
     phone: Mapped[str]
@@ -36,6 +40,7 @@ class EventParticipant(Base):
     
     __table_args__ = (
         sa.CheckConstraint("role IN ('owner', 'member')", name="ck_event_participants_role"),
+        sa.CheckConstraint("payment_status IN ('unpaid', 'paid')", name="ck_event_participants_payment_status"),
         # 確保每個 Event 只有一個 owner (partial unique index)
         sa.Index("uq_event_participants_owner", "event_id", unique=True, postgresql_where=sa.text("role = 'owner'")),
         sa.Index("ix_event_participants_event", "event_id"),

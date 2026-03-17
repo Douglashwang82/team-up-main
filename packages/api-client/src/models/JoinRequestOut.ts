@@ -57,7 +57,7 @@ export interface JoinRequestOut {
     message?: string | null;
     /**
      * 
-     * @type {JoinRequestOutStatusEnum}
+     * @type {string}
      * @memberof JoinRequestOut
      */
     status: JoinRequestOutStatusEnum;
@@ -80,9 +80,9 @@ export interface JoinRequestOut {
  * @export
  */
 export const JoinRequestOutStatusEnum = {
-    Submitted: 'submitted',
-    Approved: 'approved',
-    Rejected: 'rejected'
+    submitted: 'submitted',
+    approved: 'approved',
+    rejected: 'rejected'
 } as const;
 export type JoinRequestOutStatusEnum = typeof JoinRequestOutStatusEnum[keyof typeof JoinRequestOutStatusEnum];
 

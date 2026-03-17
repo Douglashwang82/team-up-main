@@ -51,19 +51,19 @@ export interface EventCreateIn {
     courtId?: string | null;
     /**
      * 
-     * @type {EventCreateInVisibilityEnum}
+     * @type {string}
      * @memberof EventCreateIn
      */
     visibility?: EventCreateInVisibilityEnum;
     /**
      * 
-     * @type {EventCreateInDurationTypeEnum}
+     * @type {string}
      * @memberof EventCreateIn
      */
     durationType?: EventCreateInDurationTypeEnum;
     /**
      * 
-     * @type {EventCreateInStatusEnum}
+     * @type {string}
      * @memberof EventCreateIn
      */
     status?: EventCreateInStatusEnum;
@@ -74,8 +74,8 @@ export interface EventCreateIn {
  * @export
  */
 export const EventCreateInVisibilityEnum = {
-    Public: 'public',
-    Private: 'private'
+    public: 'public',
+    private: 'private'
 } as const;
 export type EventCreateInVisibilityEnum = typeof EventCreateInVisibilityEnum[keyof typeof EventCreateInVisibilityEnum];
 
@@ -83,8 +83,8 @@ export type EventCreateInVisibilityEnum = typeof EventCreateInVisibilityEnum[key
  * @export
  */
 export const EventCreateInDurationTypeEnum = {
-    Temporary: 'temporary',
-    Permanent: 'permanent'
+    temporary: 'temporary',
+    permanent: 'permanent'
 } as const;
 export type EventCreateInDurationTypeEnum = typeof EventCreateInDurationTypeEnum[keyof typeof EventCreateInDurationTypeEnum];
 
@@ -92,8 +92,8 @@ export type EventCreateInDurationTypeEnum = typeof EventCreateInDurationTypeEnum
  * @export
  */
 export const EventCreateInStatusEnum = {
-    Open: 'open',
-    Closed: 'closed'
+    open: 'open',
+    closed: 'closed'
 } as const;
 export type EventCreateInStatusEnum = typeof EventCreateInStatusEnum[keyof typeof EventCreateInStatusEnum];
 

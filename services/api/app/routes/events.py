@@ -872,3 +872,197 @@ def review_join_request(event_id, request_id):
             "message": f"Request {action}d successfully"
         })
 
+# ===[ Split Bill ]===
+@bp.post("/<uuid:event_id>/split-bill")
+@require_auth
+def split_bill(event_id):
+    """Calculate and assign split bills to participants (Owner only)"""
+    data = request.get_json(silent=True) or {}
+    total_amount = data.get("total_amount")
+    
+    if total_amount is None or not isinstance(total_amount, (int, float)) or total_amount < 0:
+        return jsonify({"error": "invalid_amount", "message": "total_amount must be a positive number"}), 400
+
+    participant_ids_to_split = data.get("participant_ids") # Optional UUIDs
+        
+    with SessionLocal() as s:
+        event = s.get(Event, event_id)
+        if not event:
+            return jsonify({"error": "event_not_found"}), 404
+            
+        if str(event.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+            
+        # Get participants to split among
+        query = select(EventParticipant).where(EventParticipant.event_id == event_id)
+        
+        if participant_ids_to_split:
+            try:
+                valid_uuids = [UUID(str(pid)) for pid in participant_ids_to_split]
+                query = query.where(EventParticipant.id.in_(valid_uuids))
+            except ValueError:
+                return jsonify({"error": "invalid_participant_ids"}), 400
+                
+        participants = s.execute(query).scalars().all()
+        
+        if not participants:
+            return jsonify({"error": "no_participants"}), 400
+            
+        num_participants = len(participants)
+        split_amount = int(total_amount // num_participants)
+        remainder = int(total_amount % num_participants)
+        
+        updated_participants = []
+        for i, participant in enumerate(participants):
+            # Assign remainder to the first few participants
+            amount_for_this_person = split_amount + (1 if i < remainder else 0)
+            participant.amount_due = amount_for_this_person
+            participant.payment_status = "unpaid"
+            updated_participants.append({
+                "id": str(participant.id),
+                "amount_due": participant.amount_due,
+                "payment_status": participant.payment_status,
+            })
+            
+        s.commit()
+        
+        return jsonify({
+            "ok": True,
+            "total_amount": total_amount,
+            "split_among": num_participants,
+            "participants": updated_participants
+        })
+
+# ===[ Update Participant Payment Status ]===
+@bp.patch("/<uuid:event_id>/participants/<uuid:participant_id>/payment")
+@require_auth
+def update_participant_payment(event_id, participant_id):
+    """Update a participant's payment status (Owner only)"""
+    data = request.get_json(silent=True) or {}
+    new_status = data.get("payment_status")
+    
+    if new_status not in ("unpaid", "paid"):
+        return jsonify({"error": "invalid_status", "message": "payment_status must be 'paid' or 'unpaid'"}), 400
+        
+    with SessionLocal() as s:
+        event = s.get(Event, event_id)
+        if not event:
+            return jsonify({"error": "event_not_found"}), 404
+            
+        if str(event.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+            
+        participant = s.get(EventParticipant, participant_id)
+        if not participant or participant.event_id != event_id:
+            return jsonify({"error": "participant_not_found"}), 404
+            
+        participant.payment_status = new_status
+        s.commit()
+        
+        return jsonify({
+            "ok": True,
+            "participant_id": str(participant.id),
+            "payment_status": participant.payment_status
+        })
+
+
+# ===[ List Owned Events ]===
+@bp.get("/owned")
+@require_auth
+def list_owned_events():
+    """List open events owned by the current user."""
+    with SessionLocal() as s:
+        events = s.execute(
+            select(Event).where(
+                Event.owner_user_id == g.user_id,
+                Event.status == "open",
+            ).order_by(Event.created_at.desc())
+        ).scalars().all()
+
+        return jsonify([{
+            "id": str(e.id),
+            "title": e.title,
+            "max_participants": e.max_participants,
+            "participant_count": s.scalar(
+                select(func.count()).select_from(EventParticipant)
+                .where(EventParticipant.event_id == e.id)
+            ) or 0,
+        } for e in events])
+
+
+# ===[ Invite User to Event ]===
+@bp.post("/<uuid:event_id>/invite")
+@require_auth
+def invite_user(event_id):
+    """Owner invites a user to join their event."""
+    data = request.get_json(silent=True) or {}
+    invitee_id = data.get("user_id")
+
+    if not invitee_id:
+        return jsonify({"error": "missing_user_id"}), 400
+
+    with SessionLocal() as s:
+        event = s.get(Event, event_id)
+        if not event:
+            return jsonify({"error": "event_not_found"}), 404
+
+        if str(event.owner_user_id) != str(g.user_id):
+            return jsonify({"error": "not_owner"}), 403
+
+        if event.status != "open":
+            return jsonify({"error": "event_not_open"}), 400
+
+        # Check capacity
+        current_count = s.scalar(
+            select(func.count()).select_from(EventParticipant)
+            .where(EventParticipant.event_id == event_id)
+        ) or 0
+        if current_count >= event.max_participants:
+            return jsonify({"error": "event_full"}), 400
+
+        # Check already a participant
+        existing = s.execute(
+            select(EventParticipant).where(
+                and_(
+                    EventParticipant.event_id == event_id,
+                    EventParticipant.user_id == UUID(invitee_id),
+                )
+            )
+        ).scalar_one_or_none()
+        if existing:
+            return jsonify({"error": "already_joined"}), 400
+
+        # Look up invitee
+        invitee = s.get(User, UUID(invitee_id))
+        if not invitee:
+            return jsonify({"error": "user_not_found"}), 404
+
+        # Create participant
+        participant = EventParticipant(
+            event_id=event_id,
+            user_id=invitee.id,
+            role="member",
+            display_name=invitee.display_name or invitee.email,
+            email=invitee.email,
+            phone=invitee.phone or "",
+        )
+        s.add(participant)
+
+        # Notify invitee
+        owner = s.get(User, g.user_id)
+        owner_name = owner.display_name if owner else "Unknown"
+        notification = Notification(
+            user_id=invitee.id,
+            message=f"{owner_name} 邀請你加入活動「{event.title}」",
+            type="event_invite",
+            related_event_ids=[event_id],
+        )
+        s.add(notification)
+
+        s.commit()
+
+        return jsonify({
+            "ok": True,
+            "participant_id": str(participant.id),
+            "message": f"已成功邀請 {invitee.display_name} 加入活動",
+        }), 201

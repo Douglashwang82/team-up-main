@@ -7,6 +7,11 @@
 Name | Type
 ------------ | -------------
 `displayName` | string
+`preferredSports` | Array&lt;string&gt;
+`skillLevels` | { [key: string]: string; }
+`preferredTimeSlots` | Array&lt;string&gt;
+`preferredLanguage` | string
+`customPreferences` | string
 
 ## Example
 
@@ -16,6 +21,11 @@ import type { UpdateUserInfoRequest } from ''
 // TODO: Update the object below with actual values
 const example = {
   "displayName": null,
+  "preferredSports": null,
+  "skillLevels": null,
+  "preferredTimeSlots": null,
+  "preferredLanguage": null,
+  "customPreferences": null,
 } satisfies UpdateUserInfoRequest
 
 console.log(example)

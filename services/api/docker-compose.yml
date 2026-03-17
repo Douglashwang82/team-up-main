@@ -35,5 +35,18 @@ services:
       - "8080:8080"
     volumes:
       - .:/app
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: teamup-cloudflared
+    # 若要使用固定的網域，請在 .env 中設定 TUNNEL_TOKEN，然後取消註解下面這行：
+    # command: tunnel run
+    # 若只是要臨時的測試隨機網址，請使用下面這行：
+    command: tunnel --url http://api:8080
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN:-}
+    depends_on:
+      - api
+
 volumes:
   pgdata:

@@ -10,10 +10,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
 import { Colors } from "../../constants/Colors";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -61,12 +62,12 @@ export default function SignupScreen() {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>建立帳號</Text>
-            <Text style={styles.subtitle}>加入 TeamUp 並開始您的運動生活</Text>
-          </View>
+          <Animated.View entering={FadeInDown.springify().damping(15).delay(100)} style={styles.header}>
+            <Text style={styles.title}>Welcome 🙌</Text>
+            <Text style={styles.subtitle}>加入 Team-Up，發掘專屬於你的運動宇宙</Text>
+          </Animated.View>
 
-          <View style={styles.form}>
+          <Animated.View entering={FadeInDown.springify().damping(15).delay(300)} style={styles.form}>
             <View style={styles.row}>
               <Input
                 label="名字"
@@ -130,7 +131,7 @@ export default function SignupScreen() {
                 <Text style={styles.loginLink}>登入</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -158,13 +159,25 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: Colors.gray[900],
     marginBottom: 8,
+    textAlign: "center",
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.gray[600],
+    color: Colors.gray[500],
+    textAlign: "center",
+    marginBottom: 16,
   },
   form: {
     width: "100%",
+    backgroundColor: "white",
+    padding: 24,
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
   row: {
     flexDirection: "row",
