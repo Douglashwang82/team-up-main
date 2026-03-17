@@ -19,6 +19,7 @@ const ROUTE_ICONS: Record<string, { default: keyof typeof Ionicons.glyphMap; foc
     map: { default: "map-outline", focused: "map" },
     "event-create": { default: "add", focused: "add" },
     chat: { default: "chatbubbles-outline", focused: "chatbubbles" },
+    training: { default: "barbell-outline", focused: "barbell" },
     "my-events": { default: "calendar-outline", focused: "calendar" },
     profile: { default: "person-outline", focused: "person" },
 };
